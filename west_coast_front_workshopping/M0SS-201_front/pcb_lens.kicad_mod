@@ -1,0 +1,169 @@
+(footprint "pcb_lens"
+	(version 20240108)
+	(generator "pcbnew")
+	(generator_version "8.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at 0 3.81 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(hide yes)
+		(uuid "34d8907c-faad-451f-b4ab-78d4a578e4d7")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "pcb_lens"
+		(at 0 -2.54 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "0a41bac4-892a-472a-b391-6ac410b6cc2e")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Footprint" "B2B:pcb_lens"
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "9f25744b-2438-4a96-a67c-70cada2e31ef")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "fac86c48-d432-4571-8c58-3ba2206f474f")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "5c89f5a4-a8c5-40ae-b902-84ece2c7c917")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(attr smd)
+	(fp_circle
+		(center 0 0)
+		(end 1.666 0)
+		(stroke
+			(width 0)
+			(type solid)
+		)
+		(fill solid)
+		(layer "B.Mask")
+		(uuid "66d1040d-4013-48dd-9fb1-2f74677f62e6")
+	)
+	(fp_circle
+		(center 0 0)
+		(end 1.666 0)
+		(stroke
+			(width 0)
+			(type solid)
+		)
+		(fill solid)
+		(layer "F.Mask")
+		(uuid "2cd70e7b-c258-4a43-91ee-9d0254cba5ac")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 2.5 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "3fa6af86-10fc-46c4-b87b-d5b5f8162602")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(zone
+		(net 0)
+		(net_name "")
+		(layers "*.Cu" "*.Adhes" "*.Paste" "*.SilkS")
+		(uuid "c45ae4fe-25da-4db7-b563-09ae44875a1c")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(filled_areas_thickness no)
+		(keepout
+			(tracks not_allowed)
+			(vias not_allowed)
+			(pads not_allowed)
+			(copperpour not_allowed)
+			(footprints not_allowed)
+		)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+		)
+		(polygon
+			(pts
+				(xy 99.9676 68.7666) (xy 99.948992 68.518296) (xy 99.893584 68.275538) (xy 99.802614 68.04375) (xy 99.678114 67.828109)
+				(xy 99.522864 67.633432) (xy 99.340334 67.464069) (xy 99.1346 67.323802) (xy 98.910258 67.215764)
+				(xy 98.67232 67.14237) (xy 98.4261 67.105258) (xy 98.1771 67.105258) (xy 97.93088 67.14237) (xy 97.692942 67.215764)
+				(xy 97.4686 67.323802) (xy 97.262866 67.464069) (xy 97.080336 67.633432) (xy 96.925086 67.828109)
+				(xy 96.800586 68.04375) (xy 96.709616 68.275538) (xy 96.654208 68.518296) (xy 96.6356 68.7666) (xy 96.654208 69.014904)
+				(xy 96.709616 69.257662) (xy 96.800586 69.48945) (xy 96.925086 69.705091) (xy 97.080336 69.899768)
+				(xy 97.262866 70.069131) (xy 97.4686 70.209398) (xy 97.692942 70.317436) (xy 97.93088 70.39083)
+				(xy 98.1771 70.427942) (xy 98.4261 70.427942) (xy 98.67232 70.39083) (xy 98.910258 70.317436) (xy 99.1346 70.209398)
+				(xy 99.340334 70.069131) (xy 99.522864 69.899768) (xy 99.678114 69.705091) (xy 99.802614 69.48945)
+				(xy 99.893584 69.257662) (xy 99.948992 69.014904)
+			)
+		)
+	)
+	(zone
+		(net 0)
+		(net_name "")
+		(layer "B.Mask")
+		(uuid "ac87b2c7-4510-4451-a4fb-eebc95138ab3")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0.5)
+		)
+		(min_thickness 0.25)
+		(filled_areas_thickness no)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+		)
+		(polygon
+			(pts
+				(xy 99.9676 68.7666) (xy 99.948992 68.518296) (xy 99.893584 68.275538) (xy 99.802614 68.04375) (xy 99.678114 67.828109)
+				(xy 99.522864 67.633432) (xy 99.340334 67.464069) (xy 99.1346 67.323802) (xy 98.910258 67.215764)
+				(xy 98.67232 67.14237) (xy 98.4261 67.105258) (xy 98.1771 67.105258) (xy 97.93088 67.14237) (xy 97.692942 67.215764)
+				(xy 97.4686 67.323802) (xy 97.262866 67.464069) (xy 97.080336 67.633432) (xy 96.925086 67.828109)
+				(xy 96.800586 68.04375) (xy 96.709616 68.275538) (xy 96.654208 68.518296) (xy 96.6356 68.7666) (xy 96.654208 69.014904)
+				(xy 96.709616 69.257662) (xy 96.800586 69.48945) (xy 96.925086 69.705091) (xy 97.080336 69.899768)
+				(xy 97.262866 70.069131) (xy 97.4686 70.209398) (xy 97.692942 70.317436) (xy 97.93088 70.39083)
+				(xy 98.1771 70.427942) (xy 98.4261 70.427942) (xy 98.67232 70.39083) (xy 98.910258 70.317436) (xy 99.1346 70.209398)
+				(xy 99.340334 70.069131) (xy 99.522864 69.899768) (xy 99.678114 69.705091) (xy 99.802614 69.48945)
+				(xy 99.893584 69.257662) (xy 99.948992 69.014904)
+			)
+		)
+	)
+)

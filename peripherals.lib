@@ -1,0 +1,61 @@
+ba = library("basics.lib");
+no = library("noises.lib");
+si = library("signals.lib");
+
+
+mp = environment {
+    // STOCHASTIC_GENERATOR
+    max_buffer_length = 32;
+    rand_gen(len, recall, rate, smooth, gate, use_gate) = (buffer ~ choose(rand_val2) : si.smooth(smooth_amt)), internal_gate
+    with {
+        internal_gate = os.lf_squarewavepos(rate), gate : select2(use_gate);
+        write_idx = internal_gate : ba.counter : %(len+1);
+        read_idx = write_idx + 1 : %(len+1);
+        rand_val1 = no.multinoise(2) : !,_ : ba.latch(internal_gate) : +(1) : /(2);
+        rand_val2 = no.multinoise(2) : _,! : ba.latch(internal_gate);
+        choose = ba.if(rand_val1 > recall);
+        buffer = rwtable(max_buffer_length, 0.0, write_idx, _, read_idx);
+
+        smooth_amt = (1/rate) : *(smooth) : ba.tau2pole;
+    };
+
+    // LOOPING ENVELOPE
+
+    // from the envelopes standard libary
+    bias_curve_d_dx(b, x) = 0-(-1+b)*b/((1-x+b*(-1+2*x))^2);
+    bias_curve_inverse(b,y) = (b-1)*y / (2*b*y-b-y);
+    bias_clip = aa.clip(.03, .97);
+
+    looping_ar_bias(att, rel, bias_att, bias_rel, trig) = envelope
+    with {
+        fb(_state, _y, _gate) = nextState, nextY, gate_
+        with {
+            // Deltas per samples
+            adelta = 1/max(1, att*ma.SR);
+            rdelta = -1/max(1, rel*ma.SR);
+
+            att_state = 0;
+            rel_state = 1;
+            t = trig : ba.impulsify;
+            b = bias_att, bias_rel : select2(_state) : bias_clip;
+            pct = _y : bias_curve_inverse(b);
+            slope = adelta, rdelta : select2(_state) : _*bias_curve_d_dx(b, pct);
+            nextY = _y + slope : aa.clip(0, 1) : ba.if(t, 0);
+            nextState = select2(t, 
+                select2(_state,
+                    ba.if(_y < 1, att_state, // stay in attack
+                        rel_state  // goto release
+                    ),
+                    ba.if(_y > 0, rel_state, // stay in release
+                        att_state // goto attack
+                    )
+                ), att_state
+            );
+            gate_ = 0, 1 : select2((_state == rel_state & nextState == att_state) | t);
+        };
+        envelope = fb ~ (_,_,_) : !, _, _;
+    };
+};
+
+looping_env = environment {
+};
