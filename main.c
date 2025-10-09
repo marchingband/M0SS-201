@@ -136,8 +136,8 @@ int main(void)
     buttons_init();
 
     /* start usb */
-    // printf("usbh_initialize\r\n");
-    // usbh_initialize();
+    printf("usbh_initialize\r\n");
+    usbh_initialize();
 
     /* dsp init */
     printf("dsp_init\r\n");
@@ -148,8 +148,12 @@ int main(void)
     audio_dac_init();
 
     /* uart midi */
-    // printf("uart_receive_init\r\n");
-    // uart_receive_init();
+    printf("uart_receive_init\r\n");
+    uart_receive_init();
+
+    /* usb midi host */
+    printf("usb_midi_init\r\n");
+    usb_midi_init();
 
     /* start the LEDs */
     // printf("rgb_led_init\r\n");

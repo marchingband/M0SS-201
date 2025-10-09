@@ -11,13 +11,7 @@ USE PYTHON TOOL TO FLASH
 export PYTHONPATH="/Users/andy/bflb-mcu-tool/bflb_mcu_tool:$PYTHONPATH"
 python3 /Users/andy/bflb-mcu-tool/bflb_mcu_tool/core/bflb_mcu_tool.py --chipname=bl616 --port=/dev/cu.usbserial-A50285BI --firmware='/Users/andy/bl_mcu_sdk/m0synth/build/build_out/audac_play_from_mem_bl616.bin'
 
-
-BENCHMARKS
-audio render takes about 3ms (3000us) which is 5ms of samples
-rendering the LEDs takes about 0.037ms (37us)
-
-MEMORY CONSTRAINS
-faust -lang c -json ./m0ss.dsp
-faust patch can be up to 176724 bytes
-
-CURRENTLY USING moss_merge.dsp
+PCB NOTES
+BUS button is routed wrong
+TUNE on OSC2 may not be needed
+DAC pin 3 is wrong for PWM

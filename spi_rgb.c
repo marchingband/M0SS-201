@@ -55,8 +55,8 @@ void spi_rgb_init(){
     bflb_spi_link_txdma(spi0, true);
 
     tx_transfers[0].dst_addr = (uint32_t)DMA_ADDR_SPI0_TDR;
-    // tx_transfers[0].nbytes = 256 * 4; // 201
-    tx_transfers[0].nbytes = 128 * 4;
+    tx_transfers[0].nbytes = 256 * 4; // 201
+    // tx_transfers[0].nbytes = 128 * 4;
 
     dma0_ch1 = bflb_device_get_by_name("dma0_ch1");
     bflb_dma_channel_init(dma0_ch1, &tx_config);

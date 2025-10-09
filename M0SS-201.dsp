@@ -1,6 +1,6 @@
 import("stdfaust.lib");
 import("peripherals.lib");
-declare options "[midi:on][nvoices:mono]";
+// declare options "[midi:on][nvoices:mono]";
 
 ui(x) = tgroup("ui", x);
 main_ui(x) = ui(vgroup("[0]main", x));
@@ -20,13 +20,15 @@ sg_ui(x) = bot_ui(hgroup("[2]stochastic generator", x));
 le_ui(x) = bot_ui(hgroup("[3]envelope", x));
 
 // midi entry
-midi_freq = posc_ui(nentry("freq[hidden:1][pitch]",200,50,1000,0.01)) : log : si.smooth(ba.tau2pole(glide)) : exp;
+// midi_freq = posc_ui(nentry("freq[hidden:1][pitch]",200,50,1000,0.01)) : log : si.smooth(ba.tau2pole(glide)) : exp;
+midi_freq = posc_ui(nentry("freq[hidden:1][pitch]",200,50,1000,0.01)) : ba.midikey2hz : si.smooth(ba.tau2pole(glide));
 midi_gate = posc_ui(button("gate[hidden:1][gate]"));
 
 fbmod_ui(x) = ui(vgroup("[1]fb mod", x));
 fbsg_ui(x) = fbmod_ui(hgroup("[0]from SG", x));
 fble_ui(x) = fbmod_ui(hgroup("[1]from LE", x));
 fbmo_ui(x) = fbmod_ui(hgroup("[2]from MO", x));
+
 le2sg_len     = fble_ui(vslider("[0]le2sg_len    ", 0, 0, 1, 0.001));
 le2sg_rate    = fble_ui(vslider("[1]le2sg_rate   ", 0, 0, 1, 0.001));
 le2sg_recall  = fble_ui(vslider("[2]le2sg_recall ", 0, 0, 1, 0.001));
@@ -143,7 +145,7 @@ mosc_freq_course_slider = mosc_ui(hslider("[0]course[mod:2][midi:9]", 0.5, 0, 1,
 mosc_freq_fine_slider = mosc_ui(hslider("[1]fine[alt:2][midi:10]", 0, -0.03, 0.03, 0.0001));
 mosc_wave_sel = mosc_ui(hslider("[2]waveform[style:radio{'TRI':0;'SQR':1;'SAW':2}][sel:6][midi:11]", 0, 0, 2, 1));
 mosc_hi_lo_sel = mosc_ui(checkbox("[3]LFO[sel:4][midi:12]"));
-mosc_track_sel = mosc_ui(checkbox("[4]TRACK[alt_sel:4]"));
+mosc_track_sel = mosc_ui(checkbox("[4]TRACK[alt-sel:4]"));
 
 fb_mosc(freq_in) = mosc_freq : mosc_osc
 with {
@@ -172,7 +174,7 @@ mo2amp_ = mosc_sig * mo2amp;
 
 // mod bus
 mod_index_slider = oscmod_ui(hslider("[0]index[mod:8][midi:13]", 0, 0, 1, 0.001));
-mod_type_sel = oscmod_ui(hslider("[1]type[style:radio{'AM':0;'FM':1;'TM':2}]", 1, 0, 2, 1));
+mod_type_sel = oscmod_ui(hslider("[1]type[style:radio{'AM':0;'FM':1;'TM':2}][alt-sel:8][midi:14]", 1, 0, 2, 1));
 mod_index = mod_index_slider + sg2vca_ctrl_ + le2vca_ctrl_ + mo2vca_ctrl_: aa.clip(0, 1);
 index_input_sig = (mo2vca_input_ + le2vca_input_ + sg2vca_input_);
 idx2amp = 1 + mod_index * index_input_sig;
@@ -219,7 +221,7 @@ with {
 };
 
 // amplifier
-amp_mode_sel = amp_ui(vslider("[0]mode[style:radio{'LPG':0;'VCA':1}][sel:19][midi:24]", 0, 0, 1, 1));
+amp_mode_sel = amp_ui(vslider("[0]mode[style:radio{'LPG':0;'VCA':1}][alt-sel:19][midi:24]", 0, 0, 1, 1));
 vol = amp_ui(vslider("[1]volume[alt:19][midi:25]", 0.4, 0, 1, 0.001)) : si.smoo;
 glide = amp_ui(vslider("[2]glide[alt:23][midi:26]", 0.001, 0.001, 0.99, 0.001));
 amp = _ <: amp_lpg, amp_vca : select2(amp_mode_sel)
@@ -241,4 +243,6 @@ with {
     wet_amt = delay_wet_slider;
     dry_amt = 1 - wet_amt;
 }; 
+
 process = mixed_sig : folder : amp : delay : *(vol) <: _,_;
+// process = os.square(1000);

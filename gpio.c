@@ -158,25 +158,17 @@ void read_buttons(){
         for(int k=0; k<3; k++)
         {
             uint8_t idx = i + (k * 8);
-            if(idx == 15 && idx == 21){
+            if(idx == 15 || idx == 21){
                 // these are bad buttons
+                button_state[idx] = 1;
                 continue;
             }
             button_state[idx] = bflb_gpio_read(b_gpio, mux_drain_pins[k]);
-            // if(button_state[idx] == 0)
-            // {
-            //     if(idx != 15 && idx != 21){
-            //         printf("pressed %d\n", idx);
-            //     }
-            // }
         }
     }
     button_state[24] = bflb_gpio_read(b_gpio, BUTTON_25_PIN);
     button_state[25] = bflb_gpio_read(b_gpio, BUTTON_26_PIN);
     button_state[26] = bflb_gpio_read(b_gpio, ENCODER_BUTTON_PIN);
-    // if(button_state[24] == 0){printf("pressed 24\n");}
-    // if(button_state[25] == 0){printf("pressed 25\n");}
-    // if(button_state[26] == 0){printf("pressed 26\n");}
 }
 
 bool alt_consumed = false;
