@@ -57,9 +57,12 @@ static struct Asb Asbs[NUM_BUTTONS] = {0};
 static struct Sigs Signals = {
     .pitch = 0,
     .gate = 0,
+    .sg = 0,
+    .le = 0,
+    .mo = 0,
     // .lfo = 0,
     // .env = 0,
-    // .pitch_bend = 0,
+    .pitch_bend = 0,
     // .vca = 0,
 };
 
@@ -260,6 +263,21 @@ void declare(UIGlue *uiInterface, float *p, const char* key, const char* val){
         Signals.gate = p;
         *Signals.gate = 0;
     }
+    if(strcmp("SG", key) == 0) // its the gate
+    {
+        printf("got SG pointer [%s]\n", key);
+        Signals.sg = p;
+    }
+    if(strcmp("LE", key) == 0) // its the gate
+    {
+        printf("got LE pointer [%s]\n", key);
+        Signals.le = p;
+    }
+    if(strcmp("MO", key) == 0) // its the gate
+    {
+        printf("got MO pointer [%s]\n", key);
+        Signals.mo = p;
+    }
     // if(strcmp("vca", key) == 0) // its the gate
     // {
     //     // printf("got vca pointer\n\r\r");
@@ -348,6 +366,136 @@ void handle_encoder_press(bool down)
     encoder_pressed = down;
 }
 
+int matrix_row_selected = -1;
+int matrix_column_selected = -1;
+
+const int param_matrix[3][12] = {
+    {54,55,56,57,58,59,60,61,62,63,64,65},
+    {42,43,44,45,46,47,48,49,50,51,52,53},
+    {30,31,32,33,34,35,36,37,38,39,40,41},
+};
+
+void matrix_pick(int num){
+    struct CC cc = get_ccs()[num];
+    if(cc.p !=0){
+        // set_led_bar(cc.p, cc.min, cc.max);
+        set_param_selected(num, false, true);
+    }
+}
+
+bool check_martix_press(int num){
+    matrix_column_selected = -1;
+    matrix_row_selected = ENV_held() ? 2 : SG_held() ? 1 : OS1_held() ? 0 : -1;
+    if(matrix_row_selected == -1){
+        return false;
+    }
+    printf("%s held", matrix_row_selected == 2 ? "ENV" : matrix_row_selected == 1 ? "SG" : matrix_row_selected == 0 ? "OS1" : "NONE");
+    switch (num){
+        case BUTTON_NUM_MATRIX_COLUMN_LEN:
+            matrix_column_selected = 0;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_RATE:
+            matrix_column_selected = 1;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_RCL:
+            matrix_column_selected = 2;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_SMTH:
+            matrix_column_selected = 3;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_ATT:
+            matrix_column_selected = 4;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_REL:
+            matrix_column_selected = 5;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_OS1:
+            matrix_column_selected = 6;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_OS2:
+            matrix_column_selected = 7;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_BUS :
+            matrix_column_selected = 8;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_IDX:
+            matrix_column_selected = 9;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_TIMB:
+            matrix_column_selected = 10;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_AMP:
+            matrix_column_selected = 11;
+            break;          
+        default:
+            break;
+    }
+    if(matrix_column_selected != -1 && matrix_row_selected != -1){
+        int param = param_matrix[matrix_row_selected][matrix_column_selected];
+        matrix_pick(param);
+        printf("matrix picked %d", param);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void handle_matrix_press(int num){
+    switch (num){
+        case BUTTON_NUM_MATRIX_ROW_OS1:
+            matrix_row_selected = 0;
+            break;
+        case BUTTON_NUM_MATRIX_ROW_SG:
+            matrix_row_selected = 1;
+            break;
+        case BUTTON_NUM_MATRIX_ROW_ENV:
+            matrix_row_selected = 2;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_LEN:
+            matrix_column_selected = 0;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_RATE:
+            matrix_column_selected = 1;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_RCL:
+            matrix_column_selected = 2;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_SMTH:
+            matrix_column_selected = 3;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_ATT:
+            matrix_column_selected = 4;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_REL:
+            matrix_column_selected = 5;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_OS1:
+            matrix_column_selected = 6;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_OS2:
+            matrix_column_selected = 7;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_BUS :
+            matrix_column_selected = 8;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_IDX:
+            matrix_column_selected = 9;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_TIMB:
+            matrix_column_selected = 10;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_AMP:
+            matrix_column_selected = 11;
+            break;          
+        default:
+            break;
+    }
+    if(matrix_column_selected != -1 && matrix_row_selected != -1){
+        int param = param_matrix[matrix_row_selected][matrix_column_selected];
+        matrix_pick(param);
+    }
+}
+
 void handle_button_press(int num)
 // handles load, save, learn and cancelling the mode by pressing alt again
 {
@@ -415,11 +563,6 @@ void handle_button_press(int num)
     } 
     else if(ui_mode == UI_MODE_LEARN)
     {
-        // int label = button_label(num);
-        // if(label < 8)
-        // {
-        //     mode_learn_current_cc = label + 1;
-        // }
         int cc_num = get_cc(num, alt_held());
         printf("learn cc %d\n", cc_num);
         if(cc_num != -1){
@@ -430,6 +573,7 @@ void handle_button_press(int num)
     }
     else if(ui_mode == UI_MODE_PLAY)
     {
+        // handle_matrix_press(num);
         struct Sel *sel = &Sels[num];
         if(sel->p == 0) // no sel for that button press
         {
@@ -452,7 +596,6 @@ void handle_button_press(int num)
         {
             if(label < NUM_PRESETS)
             {
-                // load(label - 1);
                 load_preset(label - 1);
             }
         }

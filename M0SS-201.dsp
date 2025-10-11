@@ -21,7 +21,7 @@ le_ui(x) = bot_ui(hgroup("[3]envelope", x));
 
 // midi entry
 // midi_freq = posc_ui(nentry("freq[hidden:1][pitch]",200,50,1000,0.01)) : log : si.smooth(ba.tau2pole(glide)) : exp;
-midi_freq = posc_ui(nentry("freq[hidden:1][pitch]",200,50,1000,0.01)) : ba.midikey2hz : si.smooth(ba.tau2pole(glide));
+midi_freq = posc_ui(nentry("freq[hidden:1][pitch]",40,0,127,1)) : ba.midikey2hz : si.smooth(ba.tau2pole(glide));
 midi_gate = posc_ui(button("gate[hidden:1][gate]"));
 
 fbmod_ui(x) = ui(vgroup("[1]fb mod", x));
@@ -29,44 +29,42 @@ fbsg_ui(x) = fbmod_ui(hgroup("[0]from SG", x));
 fble_ui(x) = fbmod_ui(hgroup("[1]from LE", x));
 fbmo_ui(x) = fbmod_ui(hgroup("[2]from MO", x));
 
-le2sg_len     = fble_ui(vslider("[0]le2sg_len    ", 0, 0, 1, 0.001));
-le2sg_rate    = fble_ui(vslider("[1]le2sg_rate   ", 0, 0, 1, 0.001));
-le2sg_recall  = fble_ui(vslider("[2]le2sg_recall ", 0, 0, 1, 0.001));
-le2sg_smooth  = fble_ui(vslider("[3]le2sg_smooth ", 0, 0, 1, 0.001));
-le2le_attack  = fble_ui(vslider("[4]le2le_attack ", 0, 0, 1, 0.001));
-le2le_release = fble_ui(vslider("[5]le2le_release", 0, 0, 1, 0.001));
-le2mo_freq    = fble_ui(vslider("[6]le2mo_freq   ", 0, 0, 1, 0.001));
-le2po_freq    = fble_ui(vslider("[7]le2po_freq   ", 0, 0, 1, 0.001));
-le2vca_ctrl   = fble_ui(vslider("[8]le2vca_ctrl  ", 0, 0, 1, 0.001));
-le2vca_input  = fble_ui(vslider("[9]le2vca_input ", 0, 0, 1, 0.001));
-le2fold       = fble_ui(vslider("[10]le2fold     ", 0, 0, 1, 0.001));
-le2amp        = fble_ui(vslider("[11]le2amp      ", 1, 0, 1, 0.001));
-
-sg2sg_len     = fbsg_ui(vslider("[0]sg2sg_len    ", 0, 0, 1, 0.001));
-sg2sg_rate    = fbsg_ui(vslider("[1]sg2sg_rate   ", 0, 0, 1, 0.001));
-sg2sg_recall  = fbsg_ui(vslider("[2]sg2sg_recall ", 0, 0, 1, 0.001));
-sg2sg_smooth  = fbsg_ui(vslider("[3]sg2sg_smooth ", 0, 0, 1, 0.001));
-sg2le_attack  = fbsg_ui(vslider("[4]sg2le_attack ", 0, 0, 1, 0.001));
-sg2le_release = fbsg_ui(vslider("[5]sg2le_release", 0, 0, 1, 0.001));
-sg2mo_freq    = fbsg_ui(vslider("[6]sg2mo_freq   ", 0, 0, 1, 0.001));
-sg2po_freq    = fbsg_ui(vslider("[7]sg2po_freq   ", 0, 0, 1, 0.001));
-sg2vca_ctrl   = fbsg_ui(vslider("[8]sg2vca_ctrl  ", 0, 0, 1, 0.001));
-sg2vca_input  = fbsg_ui(vslider("[9]sg2vca_input ", 0, 0, 1, 0.001));
-sg2fold       = fbsg_ui(vslider("[10]sg2fold     ", 0, 0, 1, 0.001));
-sg2amp        = fbsg_ui(vslider("[11]sg2amp      ", 0, 0, 1, 0.001));
-
-mo2sg_len     = fbmo_ui(vslider("[0]mo2sg_len    ", 0, 0, 1, 0.001));
-mo2sg_rate    = fbmo_ui(vslider("[1]mo2sg_rate   ", 0, 0, 1, 0.001));
-mo2sg_recall  = fbmo_ui(vslider("[2]mo2sg_recall ", 0, 0, 1, 0.001));
-mo2sg_smooth  = fbmo_ui(vslider("[3]mo2sg_smooth ", 0, 0, 1, 0.001));
-mo2le_attack  = fbmo_ui(vslider("[4]mo2le_attack ", 0, 0, 1, 0.001));
-mo2le_release = fbmo_ui(vslider("[5]mo2le_release", 0, 0, 1, 0.001));
-mo2mo_freq    = fbmo_ui(vslider("[6]mo2mo_freq   ", 0, 0, 1, 0.001));
-mo2po_freq    = fbmo_ui(vslider("[7]mo2po_freq   ", 0, 0, 1, 0.001));
-mo2vca_ctrl   = fbmo_ui(vslider("[8]mo2vca_ctrl  ", 0, 0, 1, 0.001));
-mo2vca_input  = fbmo_ui(vslider("[9]mo2vca_input ", 1, 0, 1, 0.001));
-mo2fold       = fbmo_ui(vslider("[10]mo2fold     ", 0, 0, 1, 0.001));
-mo2amp        = fbmo_ui(vslider("[11]mo2amp      ", 0, 0, 1, 0.001));
+le2sg_len     = fble_ui(vslider("[0]le2sg_len[midi:30]    ", 0, 0, 1, 0.001));
+le2sg_rate    = fble_ui(vslider("[1]le2sg_rate[midi:31]   ", 0, 0, 1, 0.001));
+le2sg_recall  = fble_ui(vslider("[2]le2sg_recall[midi:32] ", 0, 0, 1, 0.001));
+le2sg_smooth  = fble_ui(vslider("[3]le2sg_smooth[midi:33] ", 0, 0, 1, 0.001));
+le2le_attack  = fble_ui(vslider("[4]le2le_attack[midi:34] ", 0, 0, 1, 0.001));
+le2le_release = fble_ui(vslider("[5]le2le_release[midi:35]", 0, 0, 1, 0.001));
+le2mo_freq    = fble_ui(vslider("[6]le2mo_freq[midi:36]   ", 0, 0, 1, 0.001));
+le2po_freq    = fble_ui(vslider("[7]le2po_freq[midi:37]   ", 0, 0, 1, 0.001));
+le2vca_ctrl   = fble_ui(vslider("[8]le2vca_ctrl[midi:38]  ", 0, 0, 1, 0.001));
+le2vca_input  = fble_ui(vslider("[9]le2vca_input[midi:39] ", 0, 0, 1, 0.001));
+le2fold       = fble_ui(vslider("[10]le2fold[midi:40]     ", 0, 0, 1, 0.001));
+le2amp        = fble_ui(vslider("[11]le2amp[midi:41]      ", 1, 0, 1, 0.001));
+sg2sg_len     = fbsg_ui(vslider("[0]sg2sg_len[midi:42]    ", 0, 0, 1, 0.001));
+sg2sg_rate    = fbsg_ui(vslider("[1]sg2sg_rate[midi:43]   ", 0, 0, 1, 0.001));
+sg2sg_recall  = fbsg_ui(vslider("[2]sg2sg_recall[midi:44] ", 0, 0, 1, 0.001));
+sg2sg_smooth  = fbsg_ui(vslider("[3]sg2sg_smooth[midi:45] ", 0, 0, 1, 0.001));
+sg2le_attack  = fbsg_ui(vslider("[4]sg2le_attack[midi:46] ", 0, 0, 1, 0.001));
+sg2le_release = fbsg_ui(vslider("[5]sg2le_release[midi:47]", 0, 0, 1, 0.001));
+sg2mo_freq    = fbsg_ui(vslider("[6]sg2mo_freq[midi:48]   ", 0, 0, 1, 0.001));
+sg2po_freq    = fbsg_ui(vslider("[7]sg2po_freq[midi:49]   ", 0, 0, 1, 0.001));
+sg2vca_ctrl   = fbsg_ui(vslider("[8]sg2vca_ctrl[midi:50]  ", 0, 0, 1, 0.001));
+sg2vca_input  = fbsg_ui(vslider("[9]sg2vca_input[midi:51] ", 0, 0, 1, 0.001));
+sg2fold       = fbsg_ui(vslider("[10]sg2fold[midi:52]     ", 0, 0, 1, 0.001));
+sg2amp        = fbsg_ui(vslider("[11]sg2amp[midi:53]      ", 0, 0, 1, 0.001));
+mo2sg_len     = fbmo_ui(vslider("[0]mo2sg_len[midi:54]    ", 0, 0, 1, 0.001));
+mo2sg_rate    = fbmo_ui(vslider("[1]mo2sg_rate[midi:55]   ", 0, 0, 1, 0.001));
+mo2sg_recall  = fbmo_ui(vslider("[2]mo2sg_recall[midi:56] ", 0, 0, 1, 0.001));
+mo2sg_smooth  = fbmo_ui(vslider("[3]mo2sg_smooth[midi:57] ", 0, 0, 1, 0.001));
+mo2le_attack  = fbmo_ui(vslider("[4]mo2le_attack[midi:58] ", 0, 0, 1, 0.001));
+mo2le_release = fbmo_ui(vslider("[5]mo2le_release[midi:59]", 0, 0, 1, 0.001));
+mo2mo_freq    = fbmo_ui(vslider("[6]mo2mo_freq[midi:60]   ", 0, 0, 1, 0.001));
+mo2po_freq    = fbmo_ui(vslider("[7]mo2po_freq[midi:61]   ", 0, 0, 1, 0.001));
+mo2vca_ctrl   = fbmo_ui(vslider("[8]mo2vca_ctrl[midi:62]  ", 0, 0, 1, 0.001));
+mo2vca_input  = fbmo_ui(vslider("[9]mo2vca_input[midi:63] ", 1, 0, 1, 0.001));
+mo2fold       = fbmo_ui(vslider("[10]mo2fold[midi:64]     ", 0, 0, 1, 0.001));
+mo2amp        = fbmo_ui(vslider("[11]mo2amp[midi:65]      ", 0, 0, 1, 0.001));
 
 
 // STOCHASTIC GENERATOR
@@ -134,9 +132,9 @@ with {
 };
 mod_block = (fb_sg, fb_le, fb_mosc) ~ fb_block;
 sg_gate_out = mod_block : !, _, !, !, !;
-sg_sig = mod_block : _, !, !, !, ! <: attach(sg_ui(vbargraph("[9]SG", -1, 1)));
-le_sig = mod_block : !, !, _, !, ! <: attach(le_ui(vbargraph("[9]LE", 0, 1)));
-mosc_sig = mod_block : !, !, !, !, _ <: attach(mosc_ui(vbargraph("[9]MO", -1, 1)));
+sg_sig = mod_block : _, !, !, !, ! <: attach(sg_ui(vbargraph("[9]SG[SG]", -1, 1)));
+le_sig = mod_block : !, !, _, !, ! <: attach(le_ui(vbargraph("[9]LE[LE]", 0, 1)));
+mosc_sig = mod_block : !, !, !, !, _ <: attach(mosc_ui(vbargraph("[9]MO[MO]", -1, 1)));
 
 // COMPLEX OSCILLATOR
 

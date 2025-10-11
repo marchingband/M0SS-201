@@ -145,9 +145,9 @@ static float led_disp_min = 0;
 static float led_disp_max = 0;
 
 void set_led_display(float *val, float min, float max){
-    // led_disp_val_p = val;
-    // led_disp_min = min;
-    // led_disp_max = max;
+    led_disp_val_p = val;
+    led_disp_min = min;
+    led_disp_max = max;
 }
 
 void update_led_display(void){
@@ -180,13 +180,17 @@ void update_led_display(void){
 
 void render_lights(void){
 
+    update_led_display();
+
     int current_slot = get_current_slot();
+    struct CC *ccs = get_ccs();
     struct Sel *sels = get_sels();
     struct Mod *mods = get_mods();
     struct Sigs *sigs = get_signals();
     struct AltSel *altSels = get_alt_sels();
     struct Config *config = get_config();
 
+    // number led bar
     pixel_buf[0] =  led_display[0]  == 1 ? pixel_on : led_display[0]  == 0 ? pixel_off : pixel_fade(led_display[0]);  // 0
     pixel_buf[1] =  led_display[1]  == 1 ? pixel_on : led_display[1]  == 0 ? pixel_off : pixel_fade(led_display[1]);  // 1
     pixel_buf[2] =  led_display[2]  == 1 ? pixel_on : led_display[2]  == 0 ? pixel_off : pixel_fade(led_display[2]);  // 2
@@ -199,63 +203,89 @@ void render_lights(void){
     pixel_buf[9] =  led_display[9]  == 1 ? pixel_on : led_display[9]  == 0 ? pixel_off : pixel_fade(led_display[9]);  // 9
     pixel_buf[10] = led_display[10] == 1 ? pixel_on : led_display[10] == 0 ? pixel_off : pixel_fade(led_display[10]); // 10
 
-    pixel_buf[11] = 0; // env-amp
-    pixel_buf[12] = 0; // env-timb
-    pixel_buf[13] = 0; // env-idx
-    pixel_buf[14] = 0; // env-bus
-    pixel_buf[15] = 0; // env-os2
-    pixel_buf[16] = 0; // env-os1
-    pixel_buf[17] = 0; // env-rel
-    pixel_buf[18] = 0; // env-att
-    pixel_buf[19] = 0; // env-smth
-    pixel_buf[20] = 0; // env-rcl
-    pixel_buf[21] = 0; // env-rate
-    pixel_buf[22] = 0; // env-len
-    pixel_buf[23] = 0; // sg-len
-    pixel_buf[24] = 0; // sg-rate
-    pixel_buf[25] = 0; // sg-rcl
-    pixel_buf[26] = 0; // sg-smth
-    pixel_buf[27] = 0; // sg-att
-    pixel_buf[28] = 0; // sg-rel
-    pixel_buf[29] = 0; // sg-os1
-    pixel_buf[30] = 0; // sg-os2
-    pixel_buf[31] = 0; // sg-bus
-    pixel_buf[32] = 0; // sg-idx
-    pixel_buf[33] = 0; // sg-timb
-    pixel_buf[34] = 0; // sg-amp
-    pixel_buf[35] = 0; // os1-amp
-    pixel_buf[36] = 0; // os1-timb
-    pixel_buf[37] = 0; // os1-idx
-    pixel_buf[38] = 0; // os1-bus
-    pixel_buf[39] = 0; // os1-os2
-    pixel_buf[40] = 0; // os1-os1
-    pixel_buf[41] = 0; // os1-rel
-    pixel_buf[42] = 0; // os1-att
-    pixel_buf[43] = 0; // os1-smth
-    pixel_buf[44] = 0; // os1-rcl
-    pixel_buf[45] = 0; // os1-rate
-    pixel_buf[46] = 0; // os1-len
+    // matrix
+    pixel_buf[11] = pixel_fade((*(sigs->le)) * (*(ccs[41].p))); // env-amp
+    pixel_buf[12] = pixel_fade((*(sigs->le)) * (*(ccs[40].p))); // env-timb
+    pixel_buf[13] = pixel_fade((*(sigs->le)) * (*(ccs[39].p))); // env-idx
+    pixel_buf[14] = pixel_fade((*(sigs->le)) * (*(ccs[38].p))); // env-bus
+    pixel_buf[15] = pixel_fade((*(sigs->le)) * (*(ccs[37].p))); // env-os2
+    pixel_buf[16] = pixel_fade((*(sigs->le)) * (*(ccs[36].p))); // env-os1
+    pixel_buf[17] = pixel_fade((*(sigs->le)) * (*(ccs[35].p))); // env-rel
+    pixel_buf[18] = pixel_fade((*(sigs->le)) * (*(ccs[34].p))); // env-att
+    pixel_buf[19] = pixel_fade((*(sigs->le)) * (*(ccs[33].p))); // env-smth
+    pixel_buf[20] = pixel_fade((*(sigs->le)) * (*(ccs[32].p))); // env-rcl
+    pixel_buf[21] = pixel_fade((*(sigs->le)) * (*(ccs[31].p))); // env-rate
+    pixel_buf[22] = pixel_fade((*(sigs->le)) * (*(ccs[30].p))); // env-len
+    pixel_buf[23] = pixel_fade((*(sigs->sg)) * (*(ccs[42].p))); // sg-len
+    pixel_buf[24] = pixel_fade((*(sigs->sg)) * (*(ccs[43].p))); // sg-rate
+    pixel_buf[25] = pixel_fade((*(sigs->sg)) * (*(ccs[44].p))); // sg-rcl
+    pixel_buf[26] = pixel_fade((*(sigs->sg)) * (*(ccs[45].p))); // sg-smth
+    pixel_buf[27] = pixel_fade((*(sigs->sg)) * (*(ccs[46].p))); // sg-att
+    pixel_buf[28] = pixel_fade((*(sigs->sg)) * (*(ccs[47].p))); // sg-rel
+    pixel_buf[29] = pixel_fade((*(sigs->sg)) * (*(ccs[48].p))); // sg-os1
+    pixel_buf[30] = pixel_fade((*(sigs->sg)) * (*(ccs[49].p))); // sg-os2
+    pixel_buf[31] = pixel_fade((*(sigs->sg)) * (*(ccs[50].p))); // sg-bus
+    pixel_buf[32] = pixel_fade((*(sigs->sg)) * (*(ccs[51].p))); // sg-idx
+    pixel_buf[33] = pixel_fade((*(sigs->sg)) * (*(ccs[52].p))); // sg-timb
+    pixel_buf[34] = pixel_fade((*(sigs->sg)) * (*(ccs[53].p))); // sg-amp
+    pixel_buf[35] = pixel_fade((*(sigs->mo)) * (*(ccs[65].p))); // os1-amp
+    pixel_buf[36] = pixel_fade((*(sigs->mo)) * (*(ccs[64].p))); // os1-timb
+    pixel_buf[37] = pixel_fade((*(sigs->mo)) * (*(ccs[63].p))); // os1-idx
+    pixel_buf[38] = pixel_fade((*(sigs->mo)) * (*(ccs[62].p))); // os1-bus
+    pixel_buf[39] = pixel_fade((*(sigs->mo)) * (*(ccs[61].p))); // os1-os2
+    pixel_buf[40] = pixel_fade((*(sigs->mo)) * (*(ccs[60].p))); // os1-os1
+    pixel_buf[41] = pixel_fade((*(sigs->mo)) * (*(ccs[59].p))); // os1-rel
+    pixel_buf[42] = pixel_fade((*(sigs->mo)) * (*(ccs[58].p))); // os1-att
+    pixel_buf[43] = pixel_fade((*(sigs->mo)) * (*(ccs[57].p))); // os1-smth
+    pixel_buf[44] = pixel_fade((*(sigs->mo)) * (*(ccs[56].p))); // os1-rcl
+    pixel_buf[45] = pixel_fade((*(sigs->mo)) * (*(ccs[55].p))); // os1-rate
+    pixel_buf[46] = pixel_fade((*(sigs->mo)) * (*(ccs[54].p))); // os1-len
 
-    pixel_buf[47] = altSels[19] == 1 ? pixel_on : pixel_off; // amp-vca
-    pixel_buf[48] = altSels[19] == 0 ? pixel_on : pixel_off; // amp-lpg
-    pixel_buf[49] = 0; // AMP
-    pixel_buf[50] = sels[17] == 1 || sels[17] == 2 ? pixel_on : pixel_off; // os2-tri
-    pixel_buf[51] = sels[17] == 0 || sels[17] == 2 ? pixel_on : pixel_off; // os2-sin
-    pixel_buf[52] = altSels[8] == 0 ? pixel_on : pixel_off; // bus-am
-    pixel_buf[53] = altSels[8] == 1 ? pixel_on : pixel_off; // bus-fm
-    pixel_buf[54] = altSels[8] == 2 ? pixel_on : pixel_off; // bus-tm
-    pixel_buf[55] = sels[6] == 0 ? pixel_on : pixel_off; // os1-tri
-    pixel_buf[56] = sels[6] == 1 ? pixel_on : pixel_off; // os1-sqr
-    pixel_buf[57] = sels[6] == 2 ? pixel_on : pixel_off; // os1-saw
-    pixel_buf[58] = 0; // OS1
-    pixel_buf[59] = 0; // SG
-    pixel_buf[60] = 0; // ENV
-    pixel_buf[61] = sels[12] == 2 ? pixel_on : pixel_off; // env-arl
-    pixel_buf[62] = sels[12] == 1 ? pixel_on : pixel_off; // env-asr
-    pixel_buf[63] = sels[12] == 0 ? pixel_on : pixel_off; // env-ar
-    pixel_buf[64] = sels[11] == 0 ? pixel_on : pixel_off; // gate-int/midi
-    pixel_buf[65] = sels[11] == 1 ? pixel_on : pixel_off; // gate-int/sg
-    pixel_buf[66] = sels[11] == 2 ? pixel_on : pixel_off; // gate-env-midi
+    pixel_buf[47] = *(altSels[19].p) == 1 ? pixel_on : pixel_off; // amp-vca
+    pixel_buf[48] = *(altSels[19].p) == 0 ? pixel_on : pixel_off; // amp-lpg
+    pixel_buf[49] = pixel_off; // AMP
+    pixel_buf[50] = *(sels[17].p) == 1 || *(sels[17].p) == 2 ? pixel_on : pixel_off; // os2-tri
+    pixel_buf[51] = *(sels[17].p) == 0 || *(sels[17].p) == 2 ? pixel_on : pixel_off; // os2-sin
+    pixel_buf[52] = *(altSels[8].p) == 0 ? pixel_on : pixel_off; // bus-am
+    pixel_buf[53] = *(altSels[8].p) == 1 ? pixel_on : pixel_off; // bus-fm
+    pixel_buf[54] = *(altSels[8].p) == 2 ? pixel_on : pixel_off; // bus-tm
+    pixel_buf[55] = *(sels[6].p) == 0 ? pixel_on : pixel_off; // os1-tri
+    pixel_buf[56] = *(sels[6].p) == 1 ? pixel_on : pixel_off; // os1-sqr
+    pixel_buf[57] = *(sels[6].p) == 2 ? pixel_on : pixel_off; // os1-saw
+    pixel_buf[58] = pixel_off; // OS1
+    pixel_buf[59] = pixel_fade(*(sigs->sg)); // SG
+    pixel_buf[60] = pixel_fade(*(sigs->le)); // ENV
+    pixel_buf[61] = *(sels[12].p) == 2 ? pixel_on : pixel_off; // env-arl
+    pixel_buf[62] = *(sels[12].p) == 1 ? pixel_on : pixel_off; // env-asr
+    pixel_buf[63] = *(sels[12].p) == 0 ? pixel_on : pixel_off; // env-ar
+    pixel_buf[64] = *(sels[11].p) == 0 ? pixel_on : pixel_off; // gate-int/midi
+    pixel_buf[65] = *(sels[11].p) == 1 ? pixel_on : pixel_off; // gate-int/sg
+    pixel_buf[66] = *(sels[11].p) == 2 ? pixel_on : pixel_off; // gate-env-midi
+
+    // tint row
+    // int start = matrix_row_selected == 0 ? 35 : matrix_row_selected == 1 ? 23 : 11; 
+    // if(matrix_row_selected != -1)
+    // {
+    //     for(int i=0; i<12; i++)
+    //     {
+    //         pixel_buf[start + i].red++;
+    //         pixel_buf[start + i].green++;
+    //     }
+    // }
+
+    // tint column
+    // if(matrix_column_selected != -1)
+    // {
+    //     int led_1 = 11 + (11 - matrix_column_selected);
+    //     int led_2 = 11 + matrix_column_selected + 12;
+    //     int led_3 = 11 + (11 - matrix_column_selected) + 24;
+    //     pixel_buf[led_1].red++;
+    //     pixel_buf[led_1].green++;
+    //     pixel_buf[led_2].red++;
+    //     pixel_buf[led_2].green++;
+    //     pixel_buf[led_3].red++;
+    //     pixel_buf[led_3].green++;
+    // }
 }
 
 // TEST 201 (also modify spi_rgb.c for larger xfer)

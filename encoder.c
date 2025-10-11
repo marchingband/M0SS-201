@@ -113,6 +113,25 @@ static void on_encoder(bool up){
             }
 
         }
+        else if(param.cc)
+        {
+            struct CC *CCs = get_ccs();
+            struct CC cc = CCs[param.button];
+            if(cc.p == 0)
+            {
+                // printf("got unknown Mod %d\n\r", param.button);
+            }
+            else
+            {
+                float cur = *cc.p;
+                float step = cc.step * cc.mul * click_multiplier;
+                float next = up ? cur + step : cur - step;
+                float clamped = next > cc.max ? cc.max : next < cc.min ? cc.min : next;
+                *cc.p = clamped;
+                // printf("set led %f %f %f\n\r", clamped, mod.min, mod.max);
+                set_led_display(cc.p, cc.min, cc.max);
+            }
+        }
         else
         {
             struct Mod *Mods = get_mods();

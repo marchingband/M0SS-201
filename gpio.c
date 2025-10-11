@@ -24,8 +24,6 @@ const uint8_t mux_code[8][3] = {
     {1,1,1}
 };
 
-const uint8_t mux_pins[24] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23};
-
 #define MUX_A0_PIN 27
 #define MUX_A1_PIN 28
 #define MUX_A2_PIN 29
@@ -39,14 +37,6 @@ const uint8_t mux_pins[24] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,
 #define BUTTON_26_PIN 13
 
 #define DEBOUNCE_TIME 1000 * 50 // 50 ms
-
-// button roles
-// #define BUTTON_NUM_SAVE 3
-// #define BUTTON_NUM_LOAD 1
-// #define BUTTON_NUM_ALT 22
-// #define BUTTON_NUM_LEARN 5
-// #define BUTTON_NUM_ENCODER 26
-// #define BUTTON_NUM_MIDI_CHAN 0 // ?
 
 uint8_t button_pushes[NUM_BUTTONS]    = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 uint8_t button_state[NUM_BUTTONS]     = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -65,7 +55,7 @@ bool set_midi_chan_active = false;
 bool asb_active = false;
 int cur_asb = 0;
 
-void set_param_selected(int num, bool alt)
+void set_param_selected(int num, bool alt, bool cc)
 {
     if(alt)
     {
@@ -78,6 +68,15 @@ void set_param_selected(int num, bool alt)
         // printf("set led %f %f %f\n\r", val, alt.min, alt.max);
         set_led_display(alt.p, alt.min, alt.max);
     }
+    else if(cc)
+    {
+        struct CC *ccs = get_ccs();
+        struct CC cc = ccs[num];
+        if(cc.p == 0){
+            return;
+        }
+        set_led_display(cc.p, cc.min, cc.max);
+    }
     else
     {
         struct Mod *Mods = get_mods();
@@ -88,9 +87,10 @@ void set_param_selected(int num, bool alt)
         // printf("set led %f %f %f\n\r", val, mod.min, mod.max);
         set_led_display(mod.p, mod.min, mod.max);
     }
-    // if we get here it is a valid Alt or Mod
+    // if we get here it is a valid Alt, Mod or CC
     param_selected.button = num;
     param_selected.alt = alt;
+    param_selected.cc = cc;
 }
 
 int button_label(int num){
@@ -173,10 +173,10 @@ void read_buttons(){
 
 bool alt_consumed = false;
 
-bool alt_held(void)
-{
-    return button_state[BUTTON_NUM_ALT] == 0;
-}
+bool alt_held(void){return button_state[BUTTON_NUM_ALT] == 0;}
+bool OS1_held(void){return button_state[BUTTON_NUM_OS1] == 0;}
+bool SG_held(void){return button_state[BUTTON_NUM_SG] == 0;}
+bool ENV_held(void){return button_state[BUTTON_NUM_ENV] == 0;}
 
 static void process_buttons(){
     for (int i =0; i< NUM_BUTTONS; i++)
@@ -212,7 +212,10 @@ static void process_buttons(){
                         cur_disp_num = cur_midi_chan;
                         set_ui_mode(UI_MODE_DISP_NUM);
                     } else if( ui_mode == UI_MODE_PLAY ){
-                        set_param_selected(i, alt_held());
+                        bool consumed = check_martix_press(i);
+                        if(!consumed){
+                            set_param_selected(i, alt_held(), false);
+                        }
                     }
                     printf("button %d pushed\n\r", i);
                 }
@@ -285,16 +288,7 @@ void poll_gpio(){
     process_buttons();
 }
 
-static void button_task(void* arg){
-    while(1)
-    {
-        poll_gpio();
-        vTaskDelay(10);
-    }
-}
-
 void buttons_init(){
     mux_gpio_init();
     connected_buttons_init();
-    // xTaskCreate(button_task, "button_task", 2048, NULL, 2, NULL);
 }
