@@ -54,6 +54,8 @@ struct Param get_param_selected(void){
 bool set_midi_chan_active = false;
 bool asb_active = false;
 int cur_asb = 0;
+bool encoder_pressed = false;
+int alt_switch_state = 0;
 
 void set_param_selected(int num, bool alt, bool cc)
 {
@@ -178,6 +180,84 @@ bool OS1_held(void){return button_state[BUTTON_NUM_OS1] == 0;}
 bool SG_held(void){return button_state[BUTTON_NUM_SG] == 0;}
 bool ENV_held(void){return button_state[BUTTON_NUM_ENV] == 0;}
 
+const int param_matrix[3][12] = {
+    {54,55,56,57,58,59,60,61,62,63,64,65},
+    {42,43,44,45,46,47,48,49,50,51,52,53},
+    {30,31,32,33,34,35,36,37,38,39,40,41},
+};
+
+void matrix_pick(int num){
+    struct CC cc = get_ccs()[num];
+    if(cc.p !=0){
+        set_param_selected(num, false, true);
+    }
+}
+
+bool check_martix_press(int num){
+    int matrix_column_selected = -1;
+    int matrix_row_selected = ENV_held() ? 2 : SG_held() ? 1 : OS1_held() ? 0 : -1;
+    if(matrix_row_selected == -1){
+        return false;
+    }
+    // printf("%s held", matrix_row_selected == 2 ? "ENV" : matrix_row_selected == 1 ? "SG" : matrix_row_selected == 0 ? "OS1" : "NONE");
+    switch (num){
+        case BUTTON_NUM_MATRIX_COLUMN_LEN:
+            matrix_column_selected = 0;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_RATE:
+            matrix_column_selected = 1;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_RCL:
+            matrix_column_selected = 2;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_SMTH:
+            matrix_column_selected = 3;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_ATT:
+            matrix_column_selected = 4;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_REL:
+            matrix_column_selected = 5;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_OS1:
+            matrix_column_selected = 6;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_OS2:
+            matrix_column_selected = 7;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_BUS :
+            matrix_column_selected = 8;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_IDX:
+            matrix_column_selected = 9;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_TIMB:
+            matrix_column_selected = 10;
+            break;
+        case BUTTON_NUM_MATRIX_COLUMN_AMP:
+            matrix_column_selected = 11;
+            break;          
+        default:
+            break;
+    }
+
+    if(matrix_column_selected != -1 && matrix_row_selected != -1){
+        int param = param_matrix[matrix_row_selected][matrix_column_selected];
+        matrix_pick(param);
+        // printf("matrix picked %d", param);
+        return true;
+    }
+
+    return false;
+}
+
+void handle_encoder_press(bool down)
+{
+    struct Sigs *sigs = get_signals();
+    *sigs->gate = down ? 1 : 0;
+    encoder_pressed = down;
+}
+
 static void process_buttons(){
     for (int i =0; i< NUM_BUTTONS; i++)
     {
@@ -195,33 +275,65 @@ static void process_buttons(){
                     button_pushes[i] = 1;
                     button_state[i] = 0;
                     button_time[i] = now;
+
+                    printf("button %d pushed\n", i);
+
                     if( i == BUTTON_NUM_ENCODER ){
                         handle_encoder_press(true);
-                    } else if( i == BUTTON_NUM_ALT ){
-                        // handle_button_press(i);
-                        alt_consumed = false;
-                    } else if( alt_held() && get_asbs()[i].p != 0 ){
-                        // its an asb
-                        // printf("got asb on button %d\n", i);
-                        cur_asb = i;
-                        asb_active = true;
-                        cur_disp_num = (int)*get_asbs()[i].p;
-                        set_ui_mode(UI_MODE_DISP_NUM);
-                    } else if( alt_held() && i == BUTTON_NUM_MIDI_CHAN ){
-                        set_midi_chan_active = true;
-                        cur_disp_num = cur_midi_chan;
-                        set_ui_mode(UI_MODE_DISP_NUM);
-                    } else if( ui_mode == UI_MODE_PLAY ){
-                        bool consumed = check_martix_press(i);
-                        if(!consumed){
-                            set_param_selected(i, alt_held(), false);
-                        }
+                        continue;
                     }
-                    printf("button %d pushed\n\r", i);
+
+                    if(check_martix_press(i)){
+                        continue;
+                    };
+
+                    struct Sel *Sels = get_sels();
+                    struct AltSel *AltSels = get_alt_sels();
+                    struct Mod *Mods = get_mods();
+                    struct Alt *Alts = get_alts();
+
+                    if(alt_held()){
+                        struct AltSel *alt_sel = &AltSels[i];
+                        if(alt_sel->p != 0){
+                            float cur = *alt_sel->p;
+                            if(cur < alt_sel->max){
+                                *alt_sel->p += 1;
+                            }else{
+                                *alt_sel->p = alt_sel->min;
+                            }
+
+                            // toggle switch state
+                            if(i == 4 || i == 20){ // k-t and quantize
+                                alt_switch_state = *alt_sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
+                            }
+                        }
+                        struct Alt *alt = &Alts[i];
+                        if(alt->p != 0){
+                            set_param_selected(i, true, false);
+                        }   
+                     
+                    } else {
+                        struct Sel *sel = &Sels[i];
+                        if(sel->p != 0){
+                            float cur = *sel->p;
+                            if(cur < sel->max){
+                                *sel->p += 1;
+                            }else{
+                                *sel->p = sel->min;
+                            }
+                            // toggle switch state
+                            if(i == 4){ // hi-lo
+                                alt_switch_state = *sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
+                            }
+                        }
+                        struct Mod *mod = &Mods[i];
+                        if(mod->p != 0){
+                            set_param_selected(i, false, false);
+                        }                
+                    }
                 }
             }
         }
-
         // check for releases
         else if(button_pushes[i] == 1) // is pushed
         {
@@ -233,34 +345,16 @@ static void process_buttons(){
                     button_pushes[i] = 0;
                     button_state[i] = 1;
                     button_time[i] = now;
-                    printf("button %d released\n\r", i);
-                    // chack for assignable events
 
-                    if(asb_active && i == cur_asb)
-                    {
-                        asb_active == false;
-                        set_ui_mode(UI_MODE_PLAY);
-                    } 
-                    else if(set_midi_chan_active && i == BUTTON_NUM_MIDI_CHAN)
-                    {
-                        set_midi_chan_active == false;
-                        set_ui_mode(UI_MODE_PLAY);
-                    } 
-                    else if(i == BUTTON_NUM_ENCODER)
-                    {
+                    printf("button %d released\n", i);
+
+                    if( i == BUTTON_NUM_ENCODER ){
                         handle_encoder_press(false);
-                    }
-                    else if(i == BUTTON_NUM_ALT){
+                        continue;
+                    }else if(i == BUTTON_NUM_ALT){
                         alt_switch_state = ALT_SWITCH_STATE_NONE;
-                        if(!alt_consumed){
-                            handle_button_press(i); // trigger alt event on release
-                        }
-                        asb_active = false;
-                    }
-                    else
-                    {
-                        alt_consumed = true;
-                        handle_button_press(i); // trigger event on release
+                    }else if(i == 4 && !alt_held()){ // hi-lo
+                        alt_switch_state = ALT_SWITCH_STATE_NONE;
                     }
                 }
             }

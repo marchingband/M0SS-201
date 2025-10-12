@@ -93,6 +93,8 @@ struct Sigs {
     float *sg;
     float *le;
     float *mo;
+    float *mo_freq;
+    float *amp;
     // float *lfo;
     // float *env;
     float *pitch_bend;
@@ -111,7 +113,6 @@ struct Sigs *get_signals(void);
 uint8_t *get_cc_map(void);
 int get_mode_learn_current_cc(void);
 
-void handle_button_press(int num);
 void uart_receive_init(void);
 
 #endif

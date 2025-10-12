@@ -222,7 +222,7 @@ with {
 amp_mode_sel = amp_ui(vslider("[0]mode[style:radio{'LPG':0;'VCA':1}][alt-sel:19][midi:24]", 0, 0, 1, 1));
 vol = amp_ui(vslider("[1]volume[alt:19][midi:25]", 0.4, 0, 1, 0.001)) : si.smoo;
 glide = amp_ui(vslider("[2]glide[alt:23][midi:26]", 0.001, 0.001, 0.99, 0.001));
-amp = _ <: amp_lpg, amp_vca : select2(amp_mode_sel)
+amp = _ <: amp_lpg, amp_vca : select2(amp_mode_sel) <: attach(vbargraph("[AMP]", 0, 1))
 with {
     amp_ctrl = le2amp_ + sg2amp_ + mo2amp_, 1.0 : select2(le2amp == 0);
     amp_vca = *(amp_ctrl);

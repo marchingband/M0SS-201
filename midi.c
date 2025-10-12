@@ -45,8 +45,6 @@ int cur_midi_chan = MIDI_CHANNEL_OMNI;
 int ch;
 int mode_learn_current_cc = 0;
 int learn_mode_state = LEARN_MODE_READY;
-int alt_switch_state = 0;
-bool encoder_pressed = false;
 
 static struct CC CCs[NUM_CC] = {0};
 static struct Mod Mods[NUM_BUTTONS] = {0};
@@ -60,6 +58,8 @@ static struct Sigs Signals = {
     .sg = 0,
     .le = 0,
     .mo = 0,
+    .mo_freq = 0,
+    .amp = 0,
     // .lfo = 0,
     // .env = 0,
     .pitch_bend = 0,
@@ -273,10 +273,20 @@ void declare(UIGlue *uiInterface, float *p, const char* key, const char* val){
         printf("got LE pointer [%s]\n", key);
         Signals.le = p;
     }
-    if(strcmp("MO", key) == 0) // its the gate
+    if(strcmp("MO", key) == 0) // its the modulation oscillator
     {
         printf("got MO pointer [%s]\n", key);
         Signals.mo = p;
+    }
+    if(strcmp("MOSC_FREQ", key) == 0) // its the MOSC_FREQ
+    {
+        printf("got MOSC_FREQ pointer [%s]\n", key);
+        Signals.mo_freq = p;
+    }
+    if(strcmp("AMP", key) == 0) // its the MOSC_FREQ
+    {
+        printf("got AMP pointer [%s]\n", key);
+        Signals.amp = p;
     }
     // if(strcmp("vca", key) == 0) // its the gate
     // {
@@ -358,262 +368,6 @@ int get_cc(int num, bool alt){
     }
     printf("found something but no CC found for that pointer\n");
     return -1;
-}
-
-void handle_encoder_press(bool down)
-{
-    *Signals.gate = down ? 1 : 0;
-    encoder_pressed = down;
-}
-
-int matrix_row_selected = -1;
-int matrix_column_selected = -1;
-
-const int param_matrix[3][12] = {
-    {54,55,56,57,58,59,60,61,62,63,64,65},
-    {42,43,44,45,46,47,48,49,50,51,52,53},
-    {30,31,32,33,34,35,36,37,38,39,40,41},
-};
-
-void matrix_pick(int num){
-    struct CC cc = get_ccs()[num];
-    if(cc.p !=0){
-        // set_led_bar(cc.p, cc.min, cc.max);
-        set_param_selected(num, false, true);
-    }
-}
-
-bool check_martix_press(int num){
-    matrix_column_selected = -1;
-    matrix_row_selected = ENV_held() ? 2 : SG_held() ? 1 : OS1_held() ? 0 : -1;
-    if(matrix_row_selected == -1){
-        return false;
-    }
-    printf("%s held", matrix_row_selected == 2 ? "ENV" : matrix_row_selected == 1 ? "SG" : matrix_row_selected == 0 ? "OS1" : "NONE");
-    switch (num){
-        case BUTTON_NUM_MATRIX_COLUMN_LEN:
-            matrix_column_selected = 0;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_RATE:
-            matrix_column_selected = 1;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_RCL:
-            matrix_column_selected = 2;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_SMTH:
-            matrix_column_selected = 3;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_ATT:
-            matrix_column_selected = 4;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_REL:
-            matrix_column_selected = 5;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_OS1:
-            matrix_column_selected = 6;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_OS2:
-            matrix_column_selected = 7;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_BUS :
-            matrix_column_selected = 8;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_IDX:
-            matrix_column_selected = 9;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_TIMB:
-            matrix_column_selected = 10;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_AMP:
-            matrix_column_selected = 11;
-            break;          
-        default:
-            break;
-    }
-    if(matrix_column_selected != -1 && matrix_row_selected != -1){
-        int param = param_matrix[matrix_row_selected][matrix_column_selected];
-        matrix_pick(param);
-        printf("matrix picked %d", param);
-        return true;
-    } else {
-        return false;
-    }
-}
-
-void handle_matrix_press(int num){
-    switch (num){
-        case BUTTON_NUM_MATRIX_ROW_OS1:
-            matrix_row_selected = 0;
-            break;
-        case BUTTON_NUM_MATRIX_ROW_SG:
-            matrix_row_selected = 1;
-            break;
-        case BUTTON_NUM_MATRIX_ROW_ENV:
-            matrix_row_selected = 2;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_LEN:
-            matrix_column_selected = 0;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_RATE:
-            matrix_column_selected = 1;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_RCL:
-            matrix_column_selected = 2;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_SMTH:
-            matrix_column_selected = 3;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_ATT:
-            matrix_column_selected = 4;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_REL:
-            matrix_column_selected = 5;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_OS1:
-            matrix_column_selected = 6;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_OS2:
-            matrix_column_selected = 7;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_BUS :
-            matrix_column_selected = 8;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_IDX:
-            matrix_column_selected = 9;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_TIMB:
-            matrix_column_selected = 10;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_AMP:
-            matrix_column_selected = 11;
-            break;          
-        default:
-            break;
-    }
-    if(matrix_column_selected != -1 && matrix_row_selected != -1){
-        int param = param_matrix[matrix_row_selected][matrix_column_selected];
-        matrix_pick(param);
-    }
-}
-
-void handle_button_press(int num)
-// handles load, save, learn and cancelling the mode by pressing alt again
-{
-    printf("press %d\n", num);
-    int ui_mode = get_ui_mode();
-    if(num == BUTTON_NUM_ALT) // alt button
-    {
-        set_ui_mode(UI_MODE_PLAY);
-    }
-    else if(alt_held())
-    {
-        printf("alt held\n");
-        if(ui_mode == UI_MODE_LEARN)
-        {
-            int cc_num = get_cc(num, true);
-            printf("learn cc %d\n", cc_num);
-            if(cc_num != -1){
-                mode_learn_current_cc = cc_num;
-                learn_mode_state = LEARN_MODE_SELECTED;
-            }
-
-        } else {
-            if(num == BUTTON_NUM_LOAD)
-            {
-                set_ui_mode(UI_MODE_LOAD);
-            }
-            else if(num == BUTTON_NUM_SAVE)
-            {
-                set_ui_mode(UI_MODE_SAVE);
-            }
-            else if(num == BUTTON_NUM_LEARN)
-            {
-                set_ui_mode(UI_MODE_LEARN);
-                mode_learn_current_cc = 0;
-                learn_mode_state = LEARN_MODE_READY;
-            }
-            else
-            {
-                struct AltSel *alt_sel = &AltSels[num];
-                if(alt_sel->p == 0) // no alt-sel to do for that button press
-                {
-                    printf("nothing\n");
-                    return;
-                }
-                printf("toggling\n");
-                float cur = *alt_sel->p;
-                if(cur < alt_sel->max)
-                {
-                    *alt_sel->p += 1;
-                }
-                else
-                {
-                    *alt_sel->p = alt_sel->min;
-                }
-                // check for switch displays
-                if(num == 7 || num == 12 || num == 13 || num == 15){
-                    if(*alt_sel->p == 0){
-                        alt_switch_state = ALT_SWITCH_STATE_OFF;
-                    } else {
-                        alt_switch_state = ALT_SWITCH_STATE_ON;
-                    }
-                }
-            }
-        }
-    } 
-    else if(ui_mode == UI_MODE_LEARN)
-    {
-        int cc_num = get_cc(num, alt_held());
-        printf("learn cc %d\n", cc_num);
-        if(cc_num != -1){
-            mode_learn_current_cc = cc_num;
-            learn_mode_state = LEARN_MODE_SELECTED;
-        }
-
-    }
-    else if(ui_mode == UI_MODE_PLAY)
-    {
-        // handle_matrix_press(num);
-        struct Sel *sel = &Sels[num];
-        if(sel->p == 0) // no sel for that button press
-        {
-            return;
-        }
-        float cur = *sel->p;
-        if(cur < sel->max)
-        {
-            *sel->p += 1;
-        }
-        else
-        {
-            *sel->p = sel->min;
-        }
-    }
-    else if(ui_mode == UI_MODE_LOAD)
-    {
-        int label = button_label(num);
-        if(label)
-        {
-            if(label < NUM_PRESETS)
-            {
-                load_preset(label - 1);
-            }
-        }
-        set_ui_mode(UI_MODE_PLAY);
-    }
-    else if(ui_mode == UI_MODE_SAVE)
-    {
-        int label = button_label(num); // label is 1 indexed
-        if(label)
-        {
-            label--; // label is 1 indexed
-            if(label < NUM_PRESETS)
-            {
-                save(label);
-            }
-        }
-        set_ui_mode(UI_MODE_PLAY);
-    }
 }
 
 uint8_t note_lifo[128] = {0};
