@@ -1,5 +1,11 @@
 # M0SS-201
 
+## Compile Faust
+
+```
+faust -lang c -o M0SS-201.h M0SS-201.dsp
+```
+
 ## Compile
 
 ```
