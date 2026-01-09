@@ -1,15 +1,6 @@
-# audac_play_from_mem
-
-
-## Support CHIP
-
-|      CHIP        | Remark |
-|:----------------:|:------:|
-|BL616/BL618       |        |
+# M0SS-201
 
 ## Compile
-
-- BL616/BL618
 
 ```
 make CHIP=bl616 BOARD=bl616dk
@@ -20,3 +11,7 @@ make CHIP=bl616 BOARD=bl616dk
 ```
 make flash CHIP=chip_name COMX=xxx # xxx is your com name
 ```
+
+## Front Panel
+
+<img src="assets/IMG_7108.JPG" width="600">
