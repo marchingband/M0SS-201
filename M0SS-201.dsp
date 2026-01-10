@@ -195,12 +195,12 @@ with {
 
 
 // wavefolder
-wf_fold_slider = wf_ui(vslider("timbre[mod:23][midi:18]", 0.7, 0.7, 2.5, 0.001)) : si.smoo;
+wf_fold_slider = wf_ui(vslider("timbre[mod:23][midi:18]", 0.7, 0.7, 50, 0.001)) : si.smoo;
 wf_bias_slider = wf_ui(vslider("bias[mod:20][midi:19]", 0, -0.5, 0.5, 0.01)) : si.smoo;
 folder = +(wf_bias_slider) : *(wf_freq) : sin : *(wf_gain) : fi.dcblocker
 with {
     base_fold_amt = wf_fold_slider + ba.if(mod_type_sel == 2, idx2timbre, 0);
-    fold = base_fold_amt + le2fold_ + sg2fold_ + mo2fold_: aa.clip(0, 3) : ^(2);
+    fold = base_fold_amt + (le2fold_ + sg2fold_ + mo2fold_)*30 : aa.clip(0, 50);
     wf_freq = ma.PI * fold / 2;
     wf_gain = ba.if(fold < 1, 1/sin(wf_freq), 1);
 };
@@ -242,5 +242,5 @@ with {
     dry_amt = 1 - wet_amt;
 }; 
 
-process = mixed_sig : folder : amp : delay : *(vol) <: _,_;
+process = mixed_sig : folder : amp : fi.dcblocker : delay : *(vol) <: _,_;
 // process = os.square(1000);
