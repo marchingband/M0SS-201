@@ -195,14 +195,42 @@ with {
 
 
 // wavefolder
-wf_fold_slider = wf_ui(vslider("timbre[mod:23][midi:18]", 0.7, 0.7, 50, 0.001)) : si.smoo;
+// wf_fold_slider = wf_ui(vslider("timbre[mod:23][midi:18]", 0.7, 0.7, 50, 0.001)) : si.smoo;
+// wf_bias_slider = wf_ui(vslider("bias[mod:20][midi:19]", 0, -0.5, 0.5, 0.01)) : si.smoo;
+// folder = +(wf_bias_slider) : *(wf_freq) : sin : *(wf_gain) : fi.dcblocker
+// with {
+//     base_fold_amt = wf_fold_slider + ba.if(mod_type_sel == 2, idx2timbre, 0);
+//     fold = base_fold_amt + (le2fold_ + sg2fold_ + mo2fold_)*30 : aa.clip(0, 50);
+//     wf_freq = ma.PI * fold / 2;
+//     wf_gain = ba.if(fold < 1, 1/sin(wf_freq), 1);
+// };
+
+wf_fold_slider = wf_ui(vslider("timbre[mod:23][midi:18]", 0, 0, 40, 0.001)) : si.smoo;
 wf_bias_slider = wf_ui(vslider("bias[mod:20][midi:19]", 0, -0.5, 0.5, 0.01)) : si.smoo;
-folder = +(wf_bias_slider) : *(wf_freq) : sin : *(wf_gain) : fi.dcblocker
+folder = +(wf_bias_slider) : *(fold_amt + 1) : *(1-a) : seq(i, stages, (smoothed_fold : lpf)) : /(1-a)
 with {
-    base_fold_amt = wf_fold_slider + ba.if(mod_type_sel == 2, idx2timbre, 0);
-    fold = base_fold_amt + (le2fold_ + sg2fold_ + mo2fold_)*30 : aa.clip(0, 50);
-    wf_freq = ma.PI * fold / 2;
-    wf_gain = ba.if(fold < 1, 1/sin(wf_freq), 1);
+    fold_modifiers = le2fold_ + sg2fold_ + mo2fold_ + ba.if(mod_type_sel == 2, idx2timbre, 0) : *(20);
+    fold_amt = wf_fold_slider + fold_modifiers : aa.clip(0, 40);
+    stages = 8;
+    a = 0.6;
+    cutoff = 5000;
+    smoothed_fold(x) = out
+    with {
+        b = 1 / (2*a);  // parabolic coefficient
+        // five regions: A, B, C, D, E
+        A = -2 - x;
+        B = b*(x+1)^2 - 1 + a/2;
+        C = x;
+        D = -b*(x-1)^2 + 1 - a/2;
+        E = 2 - x;
+        out = ba.if(x < -1-a, A,
+            ba.if(x < -1+a, B,
+            ba.if(x < 1-a, C,
+            ba.if(x < 1+a, D,
+            E)))
+        );
+    };
+    lpf = fi.lowpass(1, cutoff);
 };
 
 // mixer
