@@ -184,7 +184,7 @@ idx2timbre = mod_index * (index_input_sig/2 + 1);
 posc_tune_slider = posc_ui(hslider("[0]tune[alt:17][midi:15]", 0, -2, 2, 0.001));
 posc_wave_sel = posc_ui(hslider("[1]waveform[style:radio{'SINE':0;'TRI':1;'BOTH':2}][sel:17][midi:16]", 0, 0, 2, 1));
 posc_quantize = posc_ui(checkbox("[2]quantize[alt-sel:20][midi:17]"));
-posc_sig = posc_freq : posc_osc : *(posc_amp)
+posc_sig = posc_freq : posc_osc : *(posc_amp) : (_@2)
 with {
     posc_base_freq = midi_freq * (2^posc_tune_slider);
     posc_freq_modulated = posc_base_freq * ba.if(mod_type_sel == 1, idx2freq, 1) * le2pfreq_ * sg2pfreq_ * mo2pfreq_;
