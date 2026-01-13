@@ -175,8 +175,8 @@ mod_index_slider = oscmod_ui(hslider("[0]index[mod:8][midi:13]", 0, 0, 1, 0.001)
 mod_type_sel = oscmod_ui(hslider("[1]type[style:radio{'AM':0;'FM':1;'TM':2}][alt-sel:8][midi:14]", 1, 0, 2, 1));
 mod_index = mod_index_slider + sg2vca_ctrl_ + le2vca_ctrl_ + mo2vca_ctrl_: aa.clip(0, 1);
 index_input_sig = (mo2vca_input_ + le2vca_input_ + sg2vca_input_);
-idx2amp = 1 + mod_index * index_input_sig;
-idx2freq = mod_index * index_input_sig * 2 : (2^_);
+idx2amp = 1 - mod_index + mod_index * index_input_sig;
+idx2freq = 1 + mod_index * index_input_sig * 0.75;
 idx2timbre = mod_index * (index_input_sig/2 + 1);
 
 // primary oscillator
