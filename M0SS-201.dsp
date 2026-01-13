@@ -101,8 +101,10 @@ le_mode_sel = le_ui(vslider("[2]mode[style:radio{'AR':0;'ASR':1;'LOOP':2}][sel:1
 fb_le(att_mod, rel_mod, sg_gate_) = (le_ar, le_asr, le_loop_ar : select3(le_mode_sel)), le_gate_out
 with {
     gate = midi_gate, sg_gate_ : select2(gate_sel == 1);
-    a = le_attack_slider + att_mod;
-    r = le_release_slider + rel_mod;
+    a_ = le_attack_slider + att_mod;
+    r_ = le_release_slider + rel_mod;
+    a = ba.if(a_ < 0.01, 0.01, a_);
+    r = ba.if(r_ < 0.01, 0.01, r_);
     b = 0.3;
     le_ar = gate : en.adsr_bias(a, r, 0, r, 1-b, b, b, 1);
     le_asr = gate : en.adsr_bias(a, 0, 1, r, 1-b, b, b, 1);
