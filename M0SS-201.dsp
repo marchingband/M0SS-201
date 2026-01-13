@@ -134,7 +134,7 @@ with {
 };
 mod_block = (fb_sg, fb_le, fb_mosc) ~ fb_block;
 sg_gate_out = mod_block : !, _, !, !, !;
-sg_sig = mod_block : _, !, !, !, ! <: attach(sg_ui(vbargraph("[9]SG[SG]", -1, 1)));
+sg_sig = mod_block : _, !, !, !, ! <: attach(sg_ui(vbargraph("[9]SG[SG]", 0, 1)));
 le_sig = mod_block : !, !, _, !, ! <: attach(le_ui(vbargraph("[9]LE[LE]", 0, 1)));
 mosc_sig = mod_block : !, !, !, !, _ <: attach(mosc_ui(vbargraph("[9]MO[MO]", -1, 1)));
 

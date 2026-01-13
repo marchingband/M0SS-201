@@ -1085,7 +1085,7 @@ void buildUserInterfacemydsp(mydsp* dsp, UIGlue* ui_interface) {
 	ui_interface->addVerticalSlider(ui_interface->uiInterface, "smooth", &dsp->fVslider9, (FAUSTFLOAT)0.01f, (FAUSTFLOAT)0.01f, (FAUSTFLOAT)0.25f, (FAUSTFLOAT)0.001f);
 	ui_interface->declare(ui_interface->uiInterface, &dsp->fVbargraph1, "9", "");
 	ui_interface->declare(ui_interface->uiInterface, &dsp->fVbargraph1, "SG", "");
-	ui_interface->addVerticalBargraph(ui_interface->uiInterface, "SG", &dsp->fVbargraph1, (FAUSTFLOAT)-1.0f, (FAUSTFLOAT)1.0f);
+	ui_interface->addVerticalBargraph(ui_interface->uiInterface, "SG", &dsp->fVbargraph1, (FAUSTFLOAT)0.0f, (FAUSTFLOAT)1.0f);
 	ui_interface->closeBox(ui_interface->uiInterface);
 	ui_interface->declare(ui_interface->uiInterface, 0, "3", "");
 	ui_interface->openHorizontalBox(ui_interface->uiInterface, "envelope");
@@ -1348,7 +1348,7 @@ void computemydsp(mydsp* dsp, int count, FAUSTFLOAT** RESTRICT inputs, FAUSTFLOA
 			int iTemp11 = max_i(1, min_i(32, iSlow20 + (int)(32.0f * (fSlow19 * dsp->fRec3[1] + fSlow18 * dsp->fRec1[1] + fSlow17 * dsp->fRec5[1])))) + 1;
 			dsp->iRec13[0] = dsp->iRec13[1] + (fTemp6 > dsp->fVec1[1]);
 			int iTemp12 = dsp->iRec13[0] % iTemp11;
-			dsp->ftbl0[max_i(0, min_i(iTemp12, 31))] = (((0.5f * (dsp->fRec8[0] + 1.0f)) > fmaxf(0.0f, fminf(1.0f, fSlow14 + fSlow13 * dsp->fRec3[1] + fSlow12 * dsp->fRec1[1] + fSlow11 * dsp->fRec5[1]))) ? dsp->fRec12[0] : dsp->fRec7[1]);
+			dsp->ftbl0[max_i(0, min_i(iTemp12, 31))] = (((0.5f * (dsp->fRec8[0] + 1.0f)) > fmaxf(0.0f, fminf(1.0f, fSlow14 + fSlow13 * dsp->fRec3[1] + fSlow12 * dsp->fRec1[1] + fSlow11 * dsp->fRec5[1]))) ? 0.5f * (dsp->fRec12[0] + 1.0f) : dsp->fRec7[1]);
 			dsp->fRec7[0] = dsp->ftbl0[max_i(0, min_i((iTemp12 + 1) % iTemp11, 31))];
 			dsp->fRec6[0] = dsp->fRec7[0] * (1.0f - fTemp3) + fTemp3 * dsp->fRec6[1];
 			dsp->fRec1[0] = dsp->fRec6[0];
