@@ -207,18 +207,15 @@ with {
 //     wf_gain = ba.if(fold < 1, 1/sin(wf_freq), 1);
 // };
 
-fold_max = 40;
-wf_fold_slider = wf_ui(vslider("timbre[mod:23][midi:18]", 0, 0, fold_max, 0.001)) : si.smoo;
+wf_fold_slider = wf_ui(vslider("timbre[mod:23][midi:18]", 0, 0, 40, 0.001)) : si.smoo;
 wf_bias_slider = wf_ui(vslider("bias[mod:20][midi:19]", 0, -0.5, 0.5, 0.01)) : si.smoo;
 folder = +(wf_bias_slider) : *(fold_amt + 1) : *(1-a) : seq(i, stages, (smoothed_fold : lpf)) : /(1-a)
 with {
     fold_modifiers = le2fold_ + sg2fold_ + mo2fold_ + ba.if(mod_type_sel == 2, idx2timbre, 0) : *(20);
-    fold_amt = wf_fold_slider + fold_modifiers : aa.clip(0, fold_max);
+    fold_amt = wf_fold_slider + fold_modifiers : aa.clip(0, 40);
     stages = 8;
     a = 0.6;
-    cutoff_low = 5000;
-    cutoff_high = 20000;
-    cutoff = cutoff_high - fold_amt * (cutoff_high-cutoff_low) / fold_max;
+    cutoff = 12000;
     smoothed_fold(x) = out
     with {
         b = 1 / (2*a);  // parabolic coefficient
