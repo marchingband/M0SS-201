@@ -1,15 +1,12 @@
-# audac_play_from_mem
+# M0SS-201
 
+## Compile Faust
 
-## Support CHIP
-
-|      CHIP        | Remark |
-|:----------------:|:------:|
-|BL616/BL618       |        |
+```
+faust -lang c -o M0SS-201.h M0SS-201.dsp
+```
 
 ## Compile
-
-- BL616/BL618
 
 ```
 make CHIP=bl616 BOARD=bl616dk
@@ -20,3 +17,7 @@ make CHIP=bl616 BOARD=bl616dk
 ```
 make flash CHIP=chip_name COMX=xxx # xxx is your com name
 ```
+
+## Front Panel
+
+<img src="assets/IMG_7108.JPG" width="600">
