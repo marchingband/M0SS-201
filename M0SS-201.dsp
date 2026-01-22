@@ -147,7 +147,7 @@ mosc_wave_sel = mosc_ui(hslider("[2]waveform[style:radio{'TRI':0;'SQR':1;'SAW':2
 mosc_hi_lo_sel = mosc_ui(checkbox("[3]LFO[sel:4][midi:12]"));
 mosc_track_sel = mosc_ui(checkbox("[4]TRACK[alt-sel:4]"));
 
-fb_mosc(freq_in) = mosc_freq : mosc_osc
+fb_mosc(freq_in) = mosc_freq : mosc_osc : mosc_filter
 with {
     mosc_freq = mosc_base_freq * freq_in
     with {
@@ -165,6 +165,8 @@ with {
     mosc_sqr = _ <: ba.if(mosc_hi_lo_sel == 1, os.lf_squarewave, os.square);
     mosc_saw = _ <: ba.if(mosc_hi_lo_sel == 1, os.lf_saw, os.sawtooth);
     mosc_osc = _ <: mosc_tri, mosc_sqr, mosc_saw : select3(mosc_wave_sel);
+    // the 100 number here should be above the highest value that slow mode can go to
+    mosc_filter = _ <: ba.if(mosc_hi_lo_sel == 1, fi.lowpass(2, 100), (_*1.0));
 };
 mo2pfreq_ = mosc_sig * mo2po_freq * 2 : (2^_);
 mo2vca_ctrl_ = mosc_sig * mo2vca_ctrl * 0.5;
