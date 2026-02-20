@@ -101,8 +101,10 @@ le_mode_sel = le_ui(vslider("[2]mode[style:radio{'AR':0;'ASR':1;'LOOP':2}][sel:1
 fb_le(att_mod, rel_mod, sg_gate_) = (le_ar, le_asr, le_loop_ar : select3(le_mode_sel)), le_gate_out
 with {
     gate = midi_gate, sg_gate_ : select2(gate_sel == 1);
-    a = le_attack_slider + att_mod;
-    r = le_release_slider + rel_mod;
+    a_ = le_attack_slider + att_mod;
+    r_ = le_release_slider + rel_mod;
+    a = ba.if(a_ < 0.01, 0.01, a_);
+    r = ba.if(r_ < 0.01, 0.01, r_);
     b = 0.3;
     le_ar = gate : en.adsr_bias(a, r, 0, r, 1-b, b, b, 1);
     le_asr = gate : en.adsr_bias(a, 0, 1, r, 1-b, b, b, 1);
@@ -132,7 +134,7 @@ with {
 };
 mod_block = (fb_sg, fb_le, fb_mosc) ~ fb_block;
 sg_gate_out = mod_block : !, _, !, !, !;
-sg_sig = mod_block : _, !, !, !, ! <: attach(sg_ui(vbargraph("[9]SG[SG]", -1, 1)));
+sg_sig = mod_block : _, !, !, !, ! <: attach(sg_ui(vbargraph("[9]SG[SG]", 0, 1)));
 le_sig = mod_block : !, !, _, !, ! <: attach(le_ui(vbargraph("[9]LE[LE]", 0, 1)));
 mosc_sig = mod_block : !, !, !, !, _ <: attach(mosc_ui(vbargraph("[9]MO[MO]", -1, 1)));
 
@@ -145,7 +147,7 @@ mosc_wave_sel = mosc_ui(hslider("[2]waveform[style:radio{'TRI':0;'SQR':1;'SAW':2
 mosc_hi_lo_sel = mosc_ui(checkbox("[3]LFO[sel:4][midi:12]"));
 mosc_track_sel = mosc_ui(checkbox("[4]TRACK[alt-sel:4]"));
 
-fb_mosc(freq_in) = mosc_freq : mosc_osc
+fb_mosc(freq_in) = mosc_freq : mosc_osc : mosc_filter
 with {
     mosc_freq = mosc_base_freq * freq_in
     with {
@@ -163,6 +165,8 @@ with {
     mosc_sqr = _ <: ba.if(mosc_hi_lo_sel == 1, os.lf_squarewave, os.square);
     mosc_saw = _ <: ba.if(mosc_hi_lo_sel == 1, os.lf_saw, os.sawtooth);
     mosc_osc = _ <: mosc_tri, mosc_sqr, mosc_saw : select3(mosc_wave_sel);
+    // the 100 number here should be above the highest value that slow mode can go to
+    mosc_filter = _ <: ba.if(mosc_hi_lo_sel == 1, fi.lowpass(2, 100), (_*1.0));
 };
 mo2pfreq_ = mosc_sig * mo2po_freq * 2 : (2^_);
 mo2vca_ctrl_ = mosc_sig * mo2vca_ctrl * 0.5;
@@ -175,8 +179,8 @@ mod_index_slider = oscmod_ui(hslider("[0]index[mod:8][midi:13]", 0, 0, 1, 0.001)
 mod_type_sel = oscmod_ui(hslider("[1]type[style:radio{'AM':0;'FM':1;'TM':2}][alt-sel:8][midi:14]", 1, 0, 2, 1));
 mod_index = mod_index_slider + sg2vca_ctrl_ + le2vca_ctrl_ + mo2vca_ctrl_: aa.clip(0, 1);
 index_input_sig = (mo2vca_input_ + le2vca_input_ + sg2vca_input_);
-idx2amp = 1 + mod_index * index_input_sig;
-idx2freq = mod_index * index_input_sig * 2 : (2^_);
+idx2amp = 1 - mod_index + mod_index * index_input_sig;
+idx2freq = 1 + mod_index * index_input_sig * 0.75;
 idx2timbre = mod_index * (index_input_sig/2 + 1);
 
 // primary oscillator
@@ -184,7 +188,7 @@ idx2timbre = mod_index * (index_input_sig/2 + 1);
 posc_tune_slider = posc_ui(hslider("[0]tune[alt:17][midi:15]", 0, -2, 2, 0.001));
 posc_wave_sel = posc_ui(hslider("[1]waveform[style:radio{'SINE':0;'TRI':1;'BOTH':2}][sel:17][midi:16]", 0, 0, 2, 1));
 posc_quantize = posc_ui(checkbox("[2]quantize[alt-sel:20][midi:17]"));
-posc_sig = posc_freq : posc_osc : *(posc_amp)
+posc_sig = posc_freq : posc_osc : *(posc_amp) : (_@2)
 with {
     posc_base_freq = midi_freq * (2^posc_tune_slider);
     posc_freq_modulated = posc_base_freq * ba.if(mod_type_sel == 1, idx2freq, 1) * le2pfreq_ * sg2pfreq_ * mo2pfreq_;
@@ -195,14 +199,42 @@ with {
 
 
 // wavefolder
-wf_fold_slider = wf_ui(vslider("timbre[mod:23][midi:18]", 0.7, 0.7, 2.5, 0.001)) : si.smoo;
+// wf_fold_slider = wf_ui(vslider("timbre[mod:23][midi:18]", 0.7, 0.7, 50, 0.001)) : si.smoo;
+// wf_bias_slider = wf_ui(vslider("bias[mod:20][midi:19]", 0, -0.5, 0.5, 0.01)) : si.smoo;
+// folder = +(wf_bias_slider) : *(wf_freq) : sin : *(wf_gain) : fi.dcblocker
+// with {
+//     base_fold_amt = wf_fold_slider + ba.if(mod_type_sel == 2, idx2timbre, 0);
+//     fold = base_fold_amt + (le2fold_ + sg2fold_ + mo2fold_)*30 : aa.clip(0, 50);
+//     wf_freq = ma.PI * fold / 2;
+//     wf_gain = ba.if(fold < 1, 1/sin(wf_freq), 1);
+// };
+
+wf_fold_slider = wf_ui(vslider("timbre[mod:23][midi:18]", 0, 0, 40, 0.001)) : si.smoo;
 wf_bias_slider = wf_ui(vslider("bias[mod:20][midi:19]", 0, -0.5, 0.5, 0.01)) : si.smoo;
-folder = +(wf_bias_slider) : *(wf_freq) : sin : *(wf_gain) : fi.dcblocker
+folder = +(wf_bias_slider) : *(fold_amt + 1) : *(1-a) : seq(i, stages, (smoothed_fold : lpf)) : /(1-a)
 with {
-    base_fold_amt = wf_fold_slider + ba.if(mod_type_sel == 2, idx2timbre, 0);
-    fold = base_fold_amt + le2fold_ + sg2fold_ + mo2fold_: aa.clip(0, 3) : ^(2);
-    wf_freq = ma.PI * fold / 2;
-    wf_gain = ba.if(fold < 1, 1/sin(wf_freq), 1);
+    fold_modifiers = le2fold_ + sg2fold_ + mo2fold_ + ba.if(mod_type_sel == 2, idx2timbre, 0) : *(20);
+    fold_amt = wf_fold_slider + fold_modifiers : aa.clip(0, 40);
+    stages = 8;
+    a = 0.6;
+    cutoff = 12000;
+    smoothed_fold(x) = out
+    with {
+        b = 1 / (2*a);  // parabolic coefficient
+        // five regions: A, B, C, D, E
+        A = -2 - x;
+        B = b*(x+1)^2 - 1 + a/2;
+        C = x;
+        D = -b*(x-1)^2 + 1 - a/2;
+        E = 2 - x;
+        out = ba.if(x < -1-a, A,
+            ba.if(x < -1+a, B,
+            ba.if(x < 1-a, C,
+            ba.if(x < 1+a, D,
+            E)))
+        );
+    };
+    lpf = fi.lowpass(1, cutoff);
 };
 
 // mixer
@@ -242,5 +274,5 @@ with {
     dry_amt = 1 - wet_amt;
 }; 
 
-process = mixed_sig : folder : amp : delay : *(vol) <: _,_;
+process = mixed_sig : folder : amp : fi.dcblocker : delay : *(vol) <: _,_;
 // process = os.square(1000);

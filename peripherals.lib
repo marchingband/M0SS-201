@@ -12,7 +12,7 @@ mp = environment {
         write_idx = internal_gate : ba.counter : %(len+1);
         read_idx = write_idx + 1 : %(len+1);
         rand_val1 = no.multinoise(2) : !,_ : ba.latch(internal_gate) : +(1) : /(2);
-        rand_val2 = no.multinoise(2) : _,! : ba.latch(internal_gate);
+        rand_val2 = no.multinoise(2) : _,! : ba.latch(internal_gate) : +(1) : /(2);
         choose = ba.if(rand_val1 > recall);
         buffer = rwtable(max_buffer_length, 0.0, write_idx, _, read_idx);
 
