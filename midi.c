@@ -13,6 +13,7 @@
 
 #define MIDI_NOTE_OFF 8
 #define MIDI_NOTE_ON 9
+#define MIDI_AFTERTOUCH 0xD
 #define MIDI_PITCH_BEND 0xE
 #define MIDI_PROGRAM_CHANGE 12
 #define MIDI_CC 11
@@ -437,6 +438,9 @@ void handle_midi(uint8_t *msg, uint8_t len)
             code = MIDI_NOTE_OFF;
         }
     }
+
+    int ui_mode = get_ui_mode();
+    uint8_t *cc_map = &get_config()->cc_map[0];
     
     switch (code)
     {
@@ -446,9 +450,30 @@ void handle_midi(uint8_t *msg, uint8_t len)
         // uint8_t velocity = msg[2] & 0b01111111;
         // set_note(note);
         // play(note);
-        *Signals.gate = 1;
-        *Signals.pitch = note; // the dsp converts to hz
-        push_note(note);
+        // *Signals.gate = 1;
+        // *Signals.pitch = note; // the dsp converts to hz
+        // push_note(note);
+        uint8_t velocity = msg[2] & 0b01111111;
+        if (ui_mode == UI_MODE_LEARN) {
+            if (mode_learn_current_cc > 0) {
+                cc_map[CC_MAP_VELOCITY_IDX] = mode_learn_current_cc;
+                learn_mode_state = LEARN_MODE_LEARNED;
+            }
+        } else {
+            *Signals.gate = 1;
+            *Signals.pitch = note;
+            push_note(note);
+
+            // handle velocity
+            uint8_t cc_num = cc_map[CC_MAP_VELOCITY_IDX];
+            struct CC cc = CCs[cc_num];
+            if (cc.p != 0) {
+                float steps = cc.mul * (float)velocity;
+                int whole_steps = round(steps);
+                float val = (cc.step * whole_steps) + cc.min;
+                *cc.p = val;
+            }
+        }
         // printf("noteon %d", note);
         break;
     }
@@ -480,15 +505,8 @@ void handle_midi(uint8_t *msg, uint8_t len)
     case MIDI_CC:
     {
         uint8_t cc_num_in = msg[1] & 0b01111111;
-        if((cc_num_in - 1) >= NUM_CC_MAP){
-            // printf("CC %d is too high", cc_num_in);
-            break;
-        }
         uint8_t cc_val = msg[2] & 0b01111111;
-        uint8_t *cc_map = &get_config()->cc_map[0];
         uint8_t cc_num = cc_map[cc_num_in - 1]; // -1 because ccs are indexed at 1
-
-        int ui_mode = get_ui_mode();
 
         if(ui_mode == UI_MODE_LEARN)
         {
@@ -576,6 +594,26 @@ void handle_midi(uint8_t *msg, uint8_t len)
         uint16_t val = msg[1] | (msg[2] << 7);  // 0 to 16,383
         *Signals.pitch_bend = (float)val;
         // printf("pitchbend %d", val) ;
+        break;
+    }
+    case MIDI_AFTERTOUCH: {
+        uint8_t cc_val = msg[1] & 0b01111111;
+        uint8_t cc_num = cc_map[CC_MAP_AFTERTOUCH_IDX];
+
+        if (ui_mode == UI_MODE_LEARN) {
+            if (mode_learn_current_cc > 0) {
+                cc_map[CC_MAP_AFTERTOUCH_IDX] = mode_learn_current_cc;
+                learn_mode_state = LEARN_MODE_LEARNED;
+            }
+        } else {
+            struct CC cc = CCs[cc_num];
+            if (cc.p != 0) {
+                float steps = cc.mul * (float)cc_val;
+                int whole_steps = round(steps);
+                float val = (cc.step * whole_steps) + cc.min;
+                *cc.p = val;
+            }
+        }
         break;
     }
     default:

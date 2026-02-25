@@ -29,6 +29,9 @@
 #define BUTTON_NUM_MATRIX_COLUMN_TIMB 23
 #define BUTTON_NUM_MATRIX_COLUMN_AMP 19
 
+#define CC_MAP_VELOCITY_IDX     128
+#define CC_MAP_AFTERTOUCH_IDX   129
+
 extern int matrix_row_selected;
 extern int matrix_column_selected;
 

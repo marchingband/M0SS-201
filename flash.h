@@ -2,7 +2,7 @@
 #define FLASH_H
 
 #define NUM_PRESETS 17
-#define NUM_CC_MAP 128
+#define NUM_CC_MAP 128 + 1 + 1 // for velocity and aftertouch
 
 struct Config {
     uint8_t empty[NUM_PRESETS];
