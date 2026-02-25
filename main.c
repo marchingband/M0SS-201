@@ -121,11 +121,17 @@ static void m0ss_board_init(bool set_console){
     bflb_irq_restore(flag);
 }
 
+bool is_initial_boot = false;
+
 int main(void)
 {
     /* board init */
     // board_init();
     m0ss_board_init( /*set console*/ false );
+
+    /* dsp init */
+    printf("dsp_init\r\n");
+    dsp_init(BUF_SIZE);
 
     /* load the config struct or initialize it */
     // printf("flash_init\r\n");
@@ -139,10 +145,6 @@ int main(void)
     printf("usbh_initialize\r\n");
     usbh_initialize();
 
-    /* dsp init */
-    printf("dsp_init\r\n");
-    dsp_init(BUF_SIZE);
-
     /* audio dac init */
     printf("audio_dac_init\r\n");
     audio_dac_init();
@@ -150,6 +152,14 @@ int main(void)
     /* uart midi */
     printf("uart_receive_init\r\n");
     uart_receive_init();
+
+    // bring up default patch
+    // if(is_initial_boot){
+    //     save(16);
+    // }
+
+    // bflb_mtimer_delay_ms(100);
+    // load(16);
 
     /* usb midi host */
     printf("usb_midi_init\r\n");

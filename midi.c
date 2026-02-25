@@ -203,6 +203,25 @@ void extract(const char *name, float *p, float init, float min, float max, float
     }
 }
 
+void reset_params(void){
+    int i;
+    for(i=0; i<NUM_BUTTONS; i++){
+        if(Mods[i].p != NULL){
+            *(Mods[i].p) = Mods[i].init;
+        }
+        if(Alts[i].p != NULL){
+            *(Alts[i].p) = Alts[i].init;
+        }
+        if(Sels[i].p != NULL){
+            *(Sels[i].p) = Sels[i].init;
+        }
+        if(AltSels[i].p != NULL){
+            *(AltSels[i].p) = AltSels[i].init;
+        }
+    }
+}
+
+
 void declare(UIGlue *uiInterface, float *p, const char* key, const char* val){
     if(strcmp("midi", key) == 0) // its a cc
     {

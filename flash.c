@@ -9,13 +9,20 @@
 
 #define SECTOR_SIZE 0x1000 // 4096
 
-#define NUM_CONFIG_VARS 1
+#define NUM_CONFIG_VARS (1 + 128) // midi_chan + CC map
 
-#define NUM_FLOATS (NUM_CC + NUM_BUTTONS + NUM_BUTTONS + NUM_BUTTONS + NUM_BUTTONS + NUM_CONFIG_VARS)
+#define NUM_MODS NUM_BUTTONS
+#define NUM_ALTS NUM_BUTTONS
+#define NUM_SELS NUM_BUTTONS
+#define NUM_ALTSELS NUM_BUTTONS
+#define NUM_ASBS NUM_BUTTONS
+
+#define NUM_FLOATS (NUM_CC + NUM_MODS + NUM_ALTS + NUM_SELS + NUM_ALTSELS + NUM_ASBS + NUM_CONFIG_VARS)
 #define NUM_BYTES_PER_PRESET (NUM_FLOATS * sizeof(float)) // 612
 #define TOTAL_BYTES (NUM_BYTES_PER_PRESET * NUM_PRESETS) // 10,414
 
 extern int cur_midi_chan;
+extern bool is_initial_boot;
 
 static float presets[NUM_PRESETS][NUM_FLOATS];
 
@@ -33,7 +40,7 @@ static struct Config default_config = {
         97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,
         113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128
     },
-    .magic = 129,
+    .magic = 4,
 };
 
 static struct Config current_config;
@@ -73,6 +80,7 @@ void flash_init(void)
         bflb_flash_erase(PRESET_BASE, TOTAL_BYTES);
         bflb_flash_write(CONFIG_BASE, &default_config, sizeof(struct Config));
         current_config = default_config;
+        is_initial_boot = true;
     }
     load_all_presets_from_flash();
 }
@@ -90,6 +98,7 @@ void save(int slot)
     struct Mod *mods = get_mods();
     struct Alt *alts = get_alts();
     struct Sel *sels = get_sels();
+    struct AltSel *altsels = get_alt_sels();
     struct Asb *asbs = get_asbs();
 
     int idx = 0;
@@ -101,37 +110,49 @@ void save(int slot)
         floats_buf[idx++] = val;
     }
 
-    for(int i=0; i< NUM_BUTTONS; i++)
+    for(int i=0; i< NUM_MODS; i++)
     {
         float val = mods[i].p ? *mods[i].p : 0.0;
         // printf("writing %f to mods %d\n", val, i);
         floats_buf[idx++] = val;
     }
 
-    for(int i=0; i< NUM_BUTTONS; i++)
+    for(int i=0; i< NUM_ALTS; i++)
     {
         float val = alts[i].p ? *alts[i].p : 0.0;
         // printf("writing %f to alts %d\n", val, i);
         floats_buf[idx++] = val;
     }
 
-    for(int i=0; i< NUM_BUTTONS; i++)
-    {
-        float val = asbs[i].p ? *asbs[i].p : 0.0;
-        // printf("writing %f to alts %d\n", val, i);
-        floats_buf[idx++] = val;
-    }
-
-    for(int i=0; i< NUM_BUTTONS; i++)
+    for(int i=0; i< NUM_SELS; i++)
     {
         float val = sels[i].p ? *sels[i].p : 0.0;
         // printf("writing %f to sels %d\n", val, i);
         floats_buf[idx++] = val;
     }
 
+    for(int i=0; i< NUM_ALTSELS; i++)
+    {
+        float val = altsels[i].p ? *altsels[i].p : 0.0;
+        // printf("writing %f to sels %d\n", val, i);
+        floats_buf[idx++] = val;
+    }
+
+    for(int i=0; i< NUM_ASBS; i++)
+    {
+        float val = asbs[i].p ? *asbs[i].p : 0.0;
+        // printf("writing %f to alts %d\n", val, i);
+        floats_buf[idx++] = val;
+    }
+
     // add config vars
     floats_buf[idx++] = (float)cur_midi_chan;
+    for(int i=0; i<NUM_CC_MAP; i++){
+        floats_buf[idx++] = current_config.cc_map[i];
+    }
 
+    // save to ram presets
+    memcpy(&presets[slot], buf, NUM_BYTES_PER_PRESET);
 
     // printf("erase slot\n");
     ret = bflb_flash_erase(base, sizeof(buf));
@@ -183,6 +204,7 @@ void load(int slot)
     struct Mod *mods = get_mods();
     struct Alt *alts = get_alts();
     struct Sel *sels = get_sels();
+    struct AltSel *altsels = get_alt_sels();
     struct Asb *asbs = get_asbs();
 
     ret = bflb_flash_read(base, buf, sizeof(buf));
@@ -210,7 +232,7 @@ void load(int slot)
         *ccs[i].p = val;
     }
 
-    for(int i=0; i< NUM_BUTTONS; i++)
+    for(int i=0; i< NUM_MODS; i++)
     {
         if(mods[i].p == 0)
         {
@@ -223,7 +245,7 @@ void load(int slot)
         *mods[i].p = val;
     }
 
-    for(int i=0; i< NUM_BUTTONS; i++)
+    for(int i=0; i< NUM_ALTS; i++)
     {
         if(alts[i].p == 0)
         {
@@ -236,9 +258,9 @@ void load(int slot)
         *alts[i].p = val;
     }
 
-    for(int i=0; i< NUM_BUTTONS; i++)
+    for(int i=0; i< NUM_SELS; i++)
     {
-        if(asbs[i].p == 0)
+        if(sels[i].p == 0)
         {
             // printf("alt %d is null\n", i);
             idx++;
@@ -246,12 +268,12 @@ void load(int slot)
         }
         float val = floats_buf[idx++];
         // printf("reading %f to alts %d\n", val, i);
-        *asbs[i].p = val;
+        *sels[i].p = val;
     }
 
-    for(int i=0; i< NUM_BUTTONS; i++)
+    for(int i=0; i< NUM_ALTSELS; i++)
     {
-        if(sels[i].p == 0)
+        if(altsels[i].p == 0)
         {
             // printf("sel %d is null\n", i);
             idx++;
@@ -259,10 +281,26 @@ void load(int slot)
         }
         float val = floats_buf[idx++];
         // printf("reading %f to sels %d\n", val, i);
-        *sels[i].p = val;
+        *altsels[i].p = val;
     }
 
+    for(int i=0; i< NUM_ASBS; i++)
+    {
+        if(asbs[i].p == 0)
+        {
+            // printf("asbs %d is null\n", i);
+            idx++;
+            continue;
+        }    
+        float val = floats_buf[idx++];
+        // printf("reading %f to alts %d\n", val, i);
+        *asbs[i].p = val;
+    }  
+
     cur_midi_chan = (int)floats_buf[idx++];
+    for(int i=0; i<NUM_CC_MAP; i++){
+        current_config.cc_map[i] = floats_buf[idx++];
+    }
 }
 
 void load_all_presets_from_flash(void){
@@ -272,7 +310,6 @@ void load_all_presets_from_flash(void){
             printf("memory slot %d is empty\n", slot);
             continue;
         }
-    
         uint32_t flash_addr = PRESET_BASE + (SECTOR_SIZE * slot);
         float *preset_start = &presets[slot][0];
         uint8_t *dest = (uint8_t *)preset_start;
@@ -303,6 +340,7 @@ void load_preset(int slot){
     struct Mod *mods = get_mods();
     struct Alt *alts = get_alts();
     struct Sel *sels = get_sels();
+    struct Sel *altsels = get_alt_sels();
     struct Asb *asbs = get_asbs();
 
     // ret = bflb_flash_read(base, buf, sizeof(buf));
@@ -331,7 +369,7 @@ void load_preset(int slot){
         *ccs[i].p = val;
     }
 
-    for(int i=0; i< NUM_BUTTONS; i++)
+    for(int i=0; i< NUM_MODS; i++)
     {
         if(mods[i].p == 0)
         {
@@ -357,7 +395,33 @@ void load_preset(int slot){
         *alts[i].p = val;
     }
 
-    for(int i=0; i< NUM_BUTTONS; i++)
+    for(int i=0; i< NUM_SELS; i++)
+    {
+        if(sels[i].p == 0)
+        {
+            // printf("alt %d is null\n", i);
+            idx++;
+            continue;
+        }
+        float val = floats_buf[idx++];
+        // printf("reading %f to alts %d\n", val, i);
+        *sels[i].p = val;
+    }
+
+    for(int i=0; i< NUM_ALTSELS; i++)
+    {
+        if(altsels[i].p == 0)
+        {
+            // printf("sel %d is null\n", i);
+            idx++;
+            continue;
+        }
+        float val = floats_buf[idx++];
+        // printf("reading %f to sels %d\n", val, i);
+        *altsels[i].p = val;
+    }
+
+    for(int i=0; i< NUM_ASBS; i++)
     {
         if(asbs[i].p == 0)
         {
@@ -370,18 +434,8 @@ void load_preset(int slot){
         *asbs[i].p = val;
     }
 
-    for(int i=0; i< NUM_BUTTONS; i++)
-    {
-        if(sels[i].p == 0)
-        {
-            // printf("sel %d is null\n", i);
-            idx++;
-            continue;
-        }
-        float val = floats_buf[idx++];
-        // printf("reading %f to sels %d\n", val, i);
-        *sels[i].p = val;
-    }
-
     cur_midi_chan = (int)floats_buf[idx++];
+    for(int i=0; i<NUM_CC_MAP; i++){
+        current_config.cc_map[i] = floats_buf[idx++];
+    }
 }

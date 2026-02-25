@@ -54,6 +54,7 @@ struct Param get_param_selected(void){
 bool set_midi_chan_active = false;
 bool asb_active = false;
 int cur_asb = 0;
+uint64_t reset_mode_started = 0;
 bool encoder_pressed = false;
 int alt_switch_state = 0;
 
@@ -263,13 +264,32 @@ static void process_buttons(){
     {
         bool state = button_state[i];
         int ui_mode = get_ui_mode();
+        uint64_t now = bflb_mtimer_get_time_us();
+
+        // check params reset logic
+        if(ui_mode == UI_MODE_RST){
+            if(button_state[BUTTON_NUM_ALT] || button_state[8] || button_state[BUTTON_NUM_ENCODER]) // one was released
+            {
+                set_ui_mode(UI_MODE_PLAY);
+            }
+            if(now - reset_mode_started > ONE_SECOND)
+            {
+                if(button_state[0] == 0 && button_state[3] == 0) // factory reset
+                {
+                    // factory reset
+                } else {
+                    reset_params();
+                }
+                set_ui_mode(UI_MODE_PLAY);
+            }
+            return;
+        }
 
         // check for presses
         if(button_pushes[i] == 0) // not pushed
         {
             if(state == 0) // maybe pushed ( 0 is low so maybe pressed )
             {
-                uint64_t now = bflb_mtimer_get_time_us();
                 if( (now - button_time[i]) > DEBOUNCE_TIME ) // pressed
                 {
                     button_pushes[i] = 1;
@@ -279,7 +299,14 @@ static void process_buttons(){
                     printf("button %d pushed\n", i);
 
                     if( i == BUTTON_NUM_ENCODER ){
-                        handle_encoder_press(true);
+                        // check for reset command
+                        if(button_state[BUTTON_NUM_ALT] == 0 && button_state[8] == 0) // alt and idx are held
+                        {
+                            set_ui_mode(UI_MODE_RST);
+                            reset_mode_started = bflb_mtimer_get_time_us();
+                        } else {
+                            handle_encoder_press(true);
+                        }
                         continue;
                     }
 

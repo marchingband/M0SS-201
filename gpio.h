@@ -13,6 +13,8 @@
 #define BUTTON_NUM_ENCODER 26
 #define BUTTON_NUM_MIDI_CHAN 0 // ?
 
+#define ONE_SECOND 1000000
+
 struct Param {
     int button;
     bool alt;

@@ -112,6 +112,7 @@ struct CC *get_ccs(void);
 struct Sigs *get_signals(void);
 uint8_t *get_cc_map(void);
 int get_mode_learn_current_cc(void);
+void reset_params(void);
 
 void uart_receive_init(void);
 
