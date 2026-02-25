@@ -15,6 +15,7 @@ void save(int slot);
 void load(int slot);
 int get_current_slot(void);
 struct Config *get_config(void);
+void factory_reset(void);
 
 void load_preset(int slot);
 void load_all_presets_from_flash(void);

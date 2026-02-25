@@ -325,6 +325,18 @@ void render_lights(void){
             }
             break;
         }
+        case UI_MODE_FACTORY_RST:
+        {
+            uint64_t now = bflb_mtimer_get_time_us();
+            uint64_t elapsed = now - reset_mode_started;
+            uint8_t flash = elapsed / FLASH_INTERVAL;
+            for(int i=0; i<NUM_LED; i++)
+            {
+                pixel_buf[i] = pixel_red; 
+            }
+            break;
+        }
+        default: break;
     }
    
 

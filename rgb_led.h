@@ -7,6 +7,7 @@
 #define UI_MODE_LEARN     3
 #define UI_MODE_DISP_NUM  4
 #define UI_MODE_RST       5
+#define UI_MODE_FACTORY_RST 6
 
 struct pixel_t {
   uint8_t green;

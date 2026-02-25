@@ -3,6 +3,7 @@
 #include "midi.h"
 #include "gpio.h"
 #include "flash.h"
+#include "bl616_glb.h"
 
 #define CONFIG_BASE 0x40000
 #define PRESET_BASE 0x20000
@@ -438,4 +439,9 @@ void load_preset(int slot){
     for(int i=0; i<NUM_CC_MAP; i++){
         current_config.cc_map[i] = floats_buf[idx++];
     }
+}
+
+void factory_reset(void) {
+    bflb_flash_erase(CONFIG_BASE, sizeof(struct Config));
+    GLB_SW_System_Reset();
 }

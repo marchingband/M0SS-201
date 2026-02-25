@@ -6,6 +6,7 @@
 
 #include "midi.h"
 #include "gpio.h"
+#include "flash.h"
 
 extern int alt_switch_state;
 extern int cur_midi_chan;
@@ -272,15 +273,22 @@ static void process_buttons(){
             {
                 set_ui_mode(UI_MODE_PLAY);
             }
+            
             if(now - reset_mode_started > ONE_SECOND)
             {
-                if(button_state[0] == 0 && button_state[3] == 0) // factory reset
+                if(button_state[2] == 0 && button_state[17] == 0) // factory reset
                 {
                     // factory reset
+                    set_ui_mode(UI_MODE_FACTORY_RST);
                 } else {
                     reset_params();
+                    set_ui_mode(UI_MODE_PLAY);
                 }
-                set_ui_mode(UI_MODE_PLAY);
+            }
+            return;
+        } else if (ui_mode == UI_MODE_FACTORY_RST) {
+            if (button_state[BUTTON_NUM_ALT] || button_state[8] || button_state[BUTTON_NUM_ENCODER]) {
+                factory_reset();
             }
             return;
         }
