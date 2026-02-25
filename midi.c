@@ -397,8 +397,8 @@ void push_note(uint8_t note){
     note_lifo[note_lifo_p++] = note;
 }
 
-void pop_note(void){
-    note_lifo_p--;
+void pop_note(void) {
+    if (note_lifo_p > 0) note_lifo_p--;
 }
 
 uint8_t peek_note(void){
