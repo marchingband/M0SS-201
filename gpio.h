@@ -35,5 +35,6 @@ int button_label(int num);
 void set_param_selected(int num, bool alt, bool cc);
 struct Param get_param_selected(void);
 void read_buttons();
+void handle_normal_mode_button_press(int btn_idx);
 
 #endif

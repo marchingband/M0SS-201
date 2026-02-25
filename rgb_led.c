@@ -315,6 +315,15 @@ void render_lights(void){
             pixel_buf[66] = *(sels[11].p) == 2 ? pixel_on : pixel_off; // gate-env-midi
             break;
         }
+        case UI_MODE_LEARN: {
+            for(int i=0; i<NUM_LED; i++)
+            {
+                pixel_buf[i] = learn_mode_state == LEARN_MODE_READY ? light_pink : 
+                            learn_mode_state == LEARN_MODE_SELECTED ? light_green : 
+                            light_blue; 
+            }
+            break;
+        }
         case UI_MODE_RST: {
             uint64_t now = bflb_mtimer_get_time_us();
             uint64_t elapsed = now - reset_mode_started;

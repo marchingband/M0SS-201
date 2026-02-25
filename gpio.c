@@ -260,6 +260,9 @@ void handle_encoder_press(bool down)
     encoder_pressed = down;
 }
 
+extern int mode_learn_current_cc;
+extern int learn_mode_state;
+
 static void process_buttons(){
     for (int i =0; i< NUM_BUTTONS; i++)
     {
@@ -294,104 +297,76 @@ static void process_buttons(){
         }
 
         // check for presses
-        if(button_pushes[i] == 0) // not pushed
+        if(button_pushes[i] == 0 && state == 0 && ((now - button_time[i]) > DEBOUNCE_TIME)) // not pushed
         {
-            if(state == 0) // maybe pushed ( 0 is low so maybe pressed )
-            {
-                if( (now - button_time[i]) > DEBOUNCE_TIME ) // pressed
+            button_pushes[i] = 1;
+            button_state[i] = 0;
+            button_time[i] = now;
+
+            printf("button %d pushed\n", i);
+
+            if( i == BUTTON_NUM_ENCODER ){
+                // check for reset command
+                if(button_state[BUTTON_NUM_ALT] == 0 && button_state[8] == 0) // alt and idx are held
                 {
-                    button_pushes[i] = 1;
-                    button_state[i] = 0;
-                    button_time[i] = now;
-
-                    printf("button %d pushed\n", i);
-
-                    if( i == BUTTON_NUM_ENCODER ){
-                        // check for reset command
-                        if(button_state[BUTTON_NUM_ALT] == 0 && button_state[8] == 0) // alt and idx are held
-                        {
-                            set_ui_mode(UI_MODE_RST);
-                            reset_mode_started = bflb_mtimer_get_time_us();
-                        } else {
-                            handle_encoder_press(true);
-                        }
-                        continue;
-                    }
-
-                    if(check_martix_press(i)){
-                        continue;
-                    };
-
-                    struct Sel *Sels = get_sels();
-                    struct AltSel *AltSels = get_alt_sels();
-                    struct Mod *Mods = get_mods();
-                    struct Alt *Alts = get_alts();
-
-                    if(alt_held()){
-                        struct AltSel *alt_sel = &AltSels[i];
-                        if(alt_sel->p != 0){
-                            float cur = *alt_sel->p;
-                            if(cur < alt_sel->max){
-                                *alt_sel->p += 1;
-                            }else{
-                                *alt_sel->p = alt_sel->min;
-                            }
-
-                            // toggle switch state
-                            if(i == 4 || i == 20){ // k-t and quantize
-                                alt_switch_state = *alt_sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
-                            }
-                        }
-                        struct Alt *alt = &Alts[i];
-                        if(alt->p != 0){
-                            set_param_selected(i, true, false);
-                        }   
-                     
-                    } else {
-                        struct Sel *sel = &Sels[i];
-                        if(sel->p != 0){
-                            float cur = *sel->p;
-                            if(cur < sel->max){
-                                *sel->p += 1;
-                            }else{
-                                *sel->p = sel->min;
-                            }
-                            // toggle switch state
-                            if(i == 4){ // hi-lo
-                                alt_switch_state = *sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
-                            }
-                        }
-                        struct Mod *mod = &Mods[i];
-                        if(mod->p != 0){
-                            set_param_selected(i, false, false);
-                        }                
-                    }
+                    set_ui_mode(UI_MODE_RST);
+                    reset_mode_started = bflb_mtimer_get_time_us();
+                } else {
+                    handle_encoder_press(true);
                 }
+                continue;
+            }
+
+            if(check_martix_press(i)){
+                continue;
+            };
+            
+            // set ui modes
+            if (alt_held() && i == BUTTON_NUM_LEARN) {
+                set_ui_mode(UI_MODE_LEARN);
+                continue;
+            }
+            // same for load and save
+
+            switch (ui_mode) {
+                case UI_MODE_PLAY: {
+                    handle_normal_mode_button_press(i);
+                    break;
+                }
+                // // weird to put default here, but handles exiting out of any of the other UI states
+                // // by pressing the alt button
+                // default: {
+                //     if (i == BUTTON_NUM_ALT) {
+                //         set_ui_mode(UI_MODE_PLAY);
+                //         break;
+                //     }
+                // }
+                // case UI_MODE_LEARN: {
+                //     int cc_num = get_cc(i, true);
+                //     if (cc_num != -1) {
+                //         mode_learn_current_cc = cc_num;
+                //         learn_mode_state = LEARN_MODE_SELECTED;
+                //     }
+                //     break;
+                // }
             }
         }
         // check for releases
-        else if(button_pushes[i] == 1) // is pushed
+        else if(button_pushes[i] == 1 && state == 1 && (now - button_time[i]) > DEBOUNCE_TIME) 
         {
-            if(state == 1) // maybe released ( 1 is high so released)
-            {
-                uint64_t now = bflb_mtimer_get_time_us();
-                if( (now - button_time[i]) > DEBOUNCE_TIME ) // released
-                {
-                    button_pushes[i] = 0;
-                    button_state[i] = 1;
-                    button_time[i] = now;
+            button_pushes[i] = 0;
+            button_state[i] = 1;
+            button_time[i] = now;
 
-                    printf("button %d released\n", i);
+            printf("button %d released\n", i);
 
-                    if( i == BUTTON_NUM_ENCODER ){
-                        handle_encoder_press(false);
-                        continue;
-                    }else if(i == BUTTON_NUM_ALT){
-                        alt_switch_state = ALT_SWITCH_STATE_NONE;
-                    }else if(i == 4 && !alt_held()){ // hi-lo
-                        alt_switch_state = ALT_SWITCH_STATE_NONE;
-                    }
-                }
+            if( i == BUTTON_NUM_ENCODER ){
+                handle_encoder_press(false);
+                continue;
+            }else if(i == BUTTON_NUM_ALT){
+                alt_switch_state = ALT_SWITCH_STATE_NONE;
+            }else if(i == 4 && !alt_held()){ // hi-lo
+                alt_switch_state = ALT_SWITCH_STATE_NONE;
             }
         }
     }
@@ -420,4 +395,50 @@ void poll_gpio(){
 void buttons_init(){
     mux_gpio_init();
     connected_buttons_init();
+}
+
+void handle_normal_mode_button_press(int btn_idx) {
+    struct Sel *Sels = get_sels();
+    struct AltSel *AltSels = get_alt_sels();
+    struct Mod *Mods = get_mods();
+    struct Alt *Alts = get_alts();
+
+    if(alt_held()) {
+        struct AltSel *alt_sel = &AltSels[btn_idx];
+        if(alt_sel->p != 0){
+            float cur = *alt_sel->p;
+            if(cur < alt_sel->max){
+                *alt_sel->p += 1;
+            }else{
+                *alt_sel->p = alt_sel->min;
+            }
+
+            // toggle switch state
+            if(btn_idx == 4 || btn_idx == 20){ // k-t and quantize
+                alt_switch_state = *alt_sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
+            }
+        }
+        struct Alt *alt = &Alts[btn_idx];
+        if(alt->p != 0){
+            set_param_selected(btn_idx, true, false);
+        }   
+    } else {
+        struct Sel *sel = &Sels[btn_idx];
+        if(sel->p != 0){
+            float cur = *sel->p;
+            if(cur < sel->max){
+                *sel->p += 1;
+            }else{
+                *sel->p = sel->min;
+            }
+            // toggle switch state
+            if(btn_idx == 4){ // hi-lo
+                alt_switch_state = *sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
+            }
+        }
+        struct Mod *mod = &Mods[btn_idx];
+        if(mod->p != 0){
+            set_param_selected(btn_idx, false, false);
+        }                
+    }
 }
