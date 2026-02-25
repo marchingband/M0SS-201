@@ -629,15 +629,11 @@ static void uart_receive_isr(int irq, void *arg)
     {
         while (bflb_uart_rxavailable(uart0))
         {
-            uint8_t ch = bflb_uart_getchar(uart0);
-            // int ret = parse(ch);
-            // // printf("got %d, ret is %d", ch, ret);
-            // if (ret)
-            // {
-            //     handle_midi(getMidiMsg(), getMidiMsgLen());
-            // }
-            // // printf("0x%02x\r\n\r", ch);
-            xQueueSendToBackFromISR(uart_queue, &ch, NULL);
+            int ret = bflb_uart_getchar(uart0);
+            if (ret >= 0) {
+                uint8_t ch = (uint8_t)ret;
+                xQueueSendToBackFromISR(uart_queue, &ch, NULL);
+            }
         }
     }
 
@@ -675,7 +671,8 @@ void uart_task(void *args){
     while(1){
         if(xQueueReceive(uart_queue, &ch, portMAX_DELAY)){
             bflb_uart_putchar(uart0, ch); // send to midi out
-            int ret = parse(ch);
+            bool ret = parse(ch);
+            printf("%c", ch);
             if (ret)
             {
                 handle_midi(getMidiMsg(), getMidiMsgLen());
@@ -687,7 +684,7 @@ void uart_task(void *args){
 void uart_receive_init(void)
 {
     uart_queue = xQueueCreate(4096, sizeof(uint8_t));
-    xTaskCreate(uart_task, "uart_task", 2048, NULL, 2, NULL);
+    xTaskCreate(uart_task, "uart_task", 1024 * 2, NULL, 2, NULL);
 
     init_midi_parser();
 
