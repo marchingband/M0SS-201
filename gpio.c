@@ -276,7 +276,7 @@ static void process_buttons(){
             {
                 set_ui_mode(UI_MODE_PLAY);
             }
-            
+             
             if(now - reset_mode_started > ONE_SECOND)
             {
                 if(button_state[2] == 0 && button_state[17] == 0) // factory reset
@@ -320,10 +320,13 @@ static void process_buttons(){
             if(check_martix_press(i)){
                 continue;
             };
+
+            if (i == BUTTON_NUM_ALT) alt_consumed = false;
             
             // set ui modes
             if (alt_held() && i == BUTTON_NUM_LEARN) {
                 set_ui_mode(UI_MODE_LEARN);
+                alt_consumed = true;
                 continue;
             }
             // same for load and save
@@ -333,22 +336,23 @@ static void process_buttons(){
                     handle_normal_mode_button_press(i);
                     break;
                 }
-                // // weird to put default here, but handles exiting out of any of the other UI states
-                // // by pressing the alt button
-                // default: {
-                //     if (i == BUTTON_NUM_ALT) {
-                //         set_ui_mode(UI_MODE_PLAY);
-                //         break;
-                //     }
-                // }
-                // case UI_MODE_LEARN: {
-                //     int cc_num = get_cc(i, true);
-                //     if (cc_num != -1) {
-                //         mode_learn_current_cc = cc_num;
-                //         learn_mode_state = LEARN_MODE_SELECTED;
-                //     }
-                //     break;
-                // }
+                case UI_MODE_LEARN: {
+                    if (alt_held()) {
+                        int cc_num = get_cc(i, true);
+                        if (cc_num != -1) {
+                            mode_learn_current_cc = cc_num;
+                            learn_mode_state = LEARN_MODE_SELECTED;
+                            alt_consumed = true;
+                        } 
+                    } else {
+                        int cc_num = get_cc(i, false);
+                        if (cc_num != -1) {
+                            mode_learn_current_cc = cc_num;
+                            learn_mode_state = LEARN_MODE_SELECTED;
+                        }
+                    }
+                    break;
+                }
             }
         }
         // check for releases
@@ -365,6 +369,7 @@ static void process_buttons(){
                 continue;
             }else if(i == BUTTON_NUM_ALT){
                 alt_switch_state = ALT_SWITCH_STATE_NONE;
+                if (ui_mode != UI_MODE_PLAY && !alt_consumed) set_ui_mode(UI_MODE_PLAY);
             }else if(i == 4 && !alt_held()){ // hi-lo
                 alt_switch_state = ALT_SWITCH_STATE_NONE;
             }
