@@ -274,5 +274,6 @@ with {
     dry_amt = 1 - wet_amt;
 }; 
 
-process = mixed_sig : folder : amp : fi.dcblocker : delay : *(vol) <: _,_;
+// process = mixed_sig : folder : amp : fi.dcblocker : delay : *(vol) <: _,_;
+process = mixed_sig : folder : amp : fi.dcblocker : *(vol) <: _,_;
 // process = os.square(1000);
