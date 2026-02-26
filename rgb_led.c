@@ -193,7 +193,7 @@ void render_lights(void){
 
     bool os1_hi = *sels[4].p == 0;
 
-    float sg = (*sigs->sg + 1) * 0.5;
+    float sg = *sigs->sg;
     float mo = (*sigs->mo + 1) * 0.5;
     // float mo_freq = *sigs->mo_freq / 3000; // the mosc range is about 3000
     float mo_freq = (*mods[17].p + 2) * 0.25;// posc range is [-2..2]
