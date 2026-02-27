@@ -245,6 +245,7 @@ bool check_martix_press(int num){
 
     if(matrix_column_selected != -1 && matrix_row_selected != -1){
         int param = param_matrix[matrix_row_selected][matrix_column_selected];
+        // only pick if in play mode, in save or load mode this selects a preset
         matrix_pick(param);
         // printf("matrix picked %d", param);
         return true;
@@ -253,11 +254,28 @@ bool check_martix_press(int num){
     return false;
 }
 
+int save_load_cursor_pos;
+
 void handle_encoder_press(bool down)
 {
-    struct Sigs *sigs = get_signals();
-    *sigs->gate = down ? 1 : 0;
-    encoder_pressed = down;
+    switch (get_ui_mode()) {
+        case UI_MODE_PLAY: {
+            struct Sigs *sigs = get_signals();
+            *sigs->gate = down ? 1 : 0;
+            encoder_pressed = down;
+            break;
+        }
+        case UI_MODE_LOAD: {
+            load_preset(save_load_cursor_pos);
+            set_ui_mode(UI_MODE_PLAY);
+            break;
+        }
+        case UI_MODE_SAVE: {
+            save(save_load_cursor_pos);
+            set_ui_mode(UI_MODE_PLAY);
+            break;
+        }
+    }
 }
 
 extern int mode_learn_current_cc;
@@ -326,6 +344,24 @@ static void process_buttons(){
             // set ui modes
             if (alt_held() && i == BUTTON_NUM_LEARN) {
                 set_ui_mode(UI_MODE_LEARN);
+                mode_learn_current_cc = 0;
+                learn_mode_state = LEARN_MODE_READY;
+                alt_consumed = true;
+                continue;
+            }
+            if (alt_held() && i == BUTTON_NUM_LOAD) {
+                set_ui_mode(UI_MODE_LOAD);
+                save_load_cursor_pos = get_current_slot();
+                // -1 means not currently in a save slot
+                if (save_load_cursor_pos < 0) save_load_cursor_pos = NUM_PRESETS - 1;
+                alt_consumed = true;
+                continue;
+            }
+            if (alt_held() && i == BUTTON_NUM_SAVE) {
+                set_ui_mode(UI_MODE_SAVE);
+                save_load_cursor_pos = get_current_slot();
+                // -1 means not currently in a save slot
+                if (save_load_cursor_pos < 0) save_load_cursor_pos = NUM_PRESETS - 1;
                 alt_consumed = true;
                 continue;
             }
@@ -351,6 +387,12 @@ static void process_buttons(){
                             learn_mode_state = LEARN_MODE_SELECTED;
                         }
                     }
+                    break;
+                }
+                case UI_MODE_LOAD: {
+                    break;
+                }
+                case UI_MODE_SAVE: {
                     break;
                 }
             }

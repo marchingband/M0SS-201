@@ -13,6 +13,7 @@
 #include "gpio.h"
 #include "midi.h"
 #include "rgb_led.h"
+#include "flash.h"
 
 #define ROT_ENC_A_GPIO 16
 #define ROT_ENC_B_GPIO 17
@@ -34,6 +35,7 @@ extern int cur_asb;
 extern bool set_midi_chan_active;
 extern int cur_midi_chan;
 extern int cur_disp_num;
+extern int save_load_cursor_pos;
 
 
 static void on_encoder(bool up){
@@ -44,6 +46,27 @@ static void on_encoder(bool up){
     // printf("time %llu\n\r", passed);
     // printf("mul %d\n\r", click_multiplier);
     // uint8_t *button_states = get_button_states();
+
+    // handle navigation in save and load mode
+    switch (get_ui_mode()) {
+        case UI_MODE_LOAD: {
+            // while (get_config()->empty[save_load_cursor_pos]) {
+            //     save_load_cursor_pos += up? -1 : 1;
+            //     if (save_load_cursor_pos >= NUM_PRESETS) save_load_cursor_pos -= NUM_PRESETS;
+            //     if (save_load_cursor_pos < 0) save_load_cursor_pos += NUM_PRESETS;
+            // }
+            save_load_cursor_pos += up? -1 : 1;
+            if (save_load_cursor_pos >= NUM_PRESETS) save_load_cursor_pos -= NUM_PRESETS;
+            if (save_load_cursor_pos < 0) save_load_cursor_pos += NUM_PRESETS;
+            return;
+        }
+        case UI_MODE_SAVE: {
+            save_load_cursor_pos += up? -1 : 1;
+            if (save_load_cursor_pos >= NUM_PRESETS) save_load_cursor_pos -= NUM_PRESETS;
+            if (save_load_cursor_pos < 0) save_load_cursor_pos += NUM_PRESETS;
+            return;
+        }
+    }
 
     if(asb_active)
     {

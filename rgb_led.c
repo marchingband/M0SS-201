@@ -21,6 +21,7 @@ void test_lights(void);
 extern int learn_mode_state;
 extern int alt_switch_state;
 extern uint64_t reset_mode_started;
+extern int save_load_cursor_pos;
 int cur_disp_num = 0;
 
 static ATTR_NOCACHE_NOINIT_RAM_SECTION uint32_t data_buf[256] __ALIGNED(4);
@@ -321,6 +322,44 @@ void render_lights(void){
                 pixel_buf[i] = learn_mode_state == LEARN_MODE_READY ? light_pink : 
                             learn_mode_state == LEARN_MODE_SELECTED ? light_green : 
                             light_blue; 
+            }
+            break;
+        }
+        case UI_MODE_LOAD: {
+            for (int i = 0; i < NUM_LED; i++) {
+                pixel_buf[i] = pixel_off;
+            }
+
+            for (int i = LED_NUM_MATRIX_START; i < LED_NUM_MATRIX_END; i++) {
+                struct pixel_t pixel_value = pixel_off;
+                int current_slot_num = i - LED_NUM_MATRIX_START;
+                int slot_is_empty = get_config()->empty[current_slot_num];
+
+                // blue for current slot, green for non-empty slot, red for cursor slot
+                if (!slot_is_empty) pixel_value = light_green;
+                if (current_slot_num == get_current_slot()) pixel_value = light_blue;
+                if (current_slot_num == save_load_cursor_pos) pixel_value = pixel_red;
+
+                pixel_buf[i] = pixel_value;
+            }
+            break;
+        }
+        case UI_MODE_SAVE: {
+            for (int i = 0; i < NUM_LED; i++) {
+                pixel_buf[i] = pixel_off;
+            }
+
+            for (int i = LED_NUM_MATRIX_START; i < LED_NUM_MATRIX_END; i++) {
+                struct pixel_t pixel_value = pixel_off;
+                int current_slot_num = i - LED_NUM_MATRIX_START;
+                int slot_is_empty = get_config()->empty[current_slot_num];
+
+                // blue for current slot, green for non-empty slot, red for cursor slot
+                pixel_value = slot_is_empty? light_pink : light_green;
+                if (current_slot_num == get_current_slot()) pixel_value = light_blue;
+                if (current_slot_num == save_load_cursor_pos) pixel_value = pixel_red;
+
+                pixel_buf[i] = pixel_value;
             }
             break;
         }

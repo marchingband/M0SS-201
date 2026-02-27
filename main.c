@@ -134,8 +134,8 @@ int main(void)
     dsp_init(BUF_SIZE);
 
     /* load the config struct or initialize it */
-    // printf("flash_init\r\n");
-    // flash_init();
+    printf("flash_init\r\n");
+    flash_init();
 
     /* setup button scanners */
     printf("gpio_init\r\n");

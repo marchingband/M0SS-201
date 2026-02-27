@@ -30,8 +30,13 @@ static float presets[NUM_PRESETS][NUM_FLOATS];
 static int current_slot = -1;
 
 static struct Config default_config = {
-    // 17 presets (should be more for the 201)
-    .empty = { true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true },
+    // 36 presets
+    .empty = { true, true, true, true, true, true, 
+               true, true, true, true, true, true, 
+               true, true, true, true, true, true, 
+               true, true, true, true, true, true, 
+               true, true, true, true, true, true, 
+               true, true, true, true, true, true },
     .cc_map = {
         1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
         17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,
@@ -41,7 +46,7 @@ static struct Config default_config = {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0 // 130
     },
-    .magic = 9,
+    .magic = 15,
 };
 
 static struct Config current_config;

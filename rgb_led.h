@@ -9,6 +9,9 @@
 #define UI_MODE_RST       5
 #define UI_MODE_FACTORY_RST 6
 
+#define LED_NUM_MATRIX_START 11
+#define LED_NUM_MATRIX_END 47
+
 struct pixel_t {
   uint8_t green;
   uint8_t red;
