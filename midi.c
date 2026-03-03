@@ -10,6 +10,9 @@
 #include "midi.h"
 #include "rgb_led.h"
 #include "flash.h"
+#include "dsp/interface.h"
+extern DSP_Param_t dsp_ui[];
+extern DSP_All_Signals all_sigs;
 
 #define MIDI_NOTE_OFF 8
 #define MIDI_NOTE_ON 9
@@ -105,6 +108,78 @@ struct Sigs *get_signals(void)
 int get_mode_learn_current_cc(void)
 {
     return mode_learn_current_cc;
+}
+
+void link_ui() {
+    // attach parameters to their respective arrays
+    for (int i = 0; i < NUM_UI_ELS; i++) {
+        DSP_Param_t param = dsp_ui[i];
+
+        struct CC *cc = &CCs[param.cc];
+        cc->p = param.p;
+        cc->min = param.min;
+        cc->max = param.max;
+        cc->init = param.init;
+        cc->step = param.step;
+        float steps = (param.max - param.min) / param.step;
+        float per = steps / 128.0;
+        cc->mul = per;
+
+        switch (param.type) {
+            case PARAM_MOD: {
+                struct Mod *mod = &Mods[param.btn];
+                mod->p = param.p;
+                mod->min = param.min;
+                mod->max = param.max;
+                mod->init = param.init;
+                mod->step = param.step;
+                float steps = (param.max - param.min) / param.step;
+                float per = steps / 128.0;
+                mod->mul = per;
+                break;
+            };
+            case PARAM_ALT: {
+                struct Alt *alt = &Alts[param.btn];
+                alt->p = param.p;
+                alt->min = param.min;
+                alt->max = param.max;
+                alt->init = param.init;
+                alt->step = param.step;
+                float steps = (param.max - param.min) / param.step;
+                float per = steps / 128.0;
+                alt->mul = per;
+                break;
+            };
+            case PARAM_SEL: {
+                struct Sel *sel = &Sels[param.btn];
+                sel->p = param.p;
+                sel->min = param.min;
+                sel->max = param.max;
+                sel->init = param.init;
+                break;
+            };
+            case PARAM_ALT_SEL: {
+                struct AltSel *altsel = &AltSels[param.btn];
+                altsel->p = param.p;
+                altsel->min = param.min;
+                altsel->max = param.max;
+                altsel->init = param.init;
+                break;
+            };
+            case PARAM_MTX: {
+                // assigned as a CC, no other
+                break;
+            };
+        }
+    }
+    // attach special signals
+    Signals.pitch = &all_sigs.pitch;
+    Signals.gate = &all_sigs.gate;
+    Signals.amp = &all_sigs.ind_amp;
+    Signals.le = &all_sigs.ind_env;
+    Signals.sg = &all_sigs.ind_sg;
+    Signals.mo = &all_sigs.ind_os1;
+    Signals.mo_freq = &all_sigs.ind_os1_freq;
 }
 
 void extract(const char *name, float *p, float init, float min, float max, float step)

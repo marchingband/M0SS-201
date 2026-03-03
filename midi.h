@@ -119,4 +119,6 @@ void reset_params(void);
 
 void uart_receive_init(void);
 
+void link_ui();
+
 #endif

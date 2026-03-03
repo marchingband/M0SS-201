@@ -8,6 +8,7 @@
 #include "dsp.h"
 #include "gpio.h"
 #include "rgb_led.h"
+#include "midi.h"
 
 // #include "square-diode-lfo.h"
 // #include "square-diode.h"
@@ -139,7 +140,8 @@ void dsp_init(size_t buf_size)
     // initmydsp(&dsp, 32000);
     // initmydsp(&dsp, 8000);
     printf("buildUserInterfacemydsp\n");
-    buildUserInterfacemydsp(&dsp, &ui_glue);
+    // buildUserInterfacemydsp(&dsp, &ui_glue);
+    link_ui();
     printf("malloc\n");
     buf[0] = (float *)malloc(buf_size * sizeof(float));
     buf_len = buf_size;

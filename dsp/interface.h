@@ -14,13 +14,16 @@ typedef enum {
 
 typedef struct {
     const DSP_Param_Type_t type;
-    float* p;  
+    float* p;
+    const int16_t cc;  
     const int16_t btn;
     const float min;
     const float max;
     const float init;
     const float step;
 } DSP_Param_t;
+
+#define NUM_UI_ELS 76
 
 #define NUM_MOD_SRCS 3
 #define NUM_MOD_DESTS 12
@@ -92,9 +95,6 @@ typedef struct {
     float ind_os1;
     float ind_os1_freq;
     float ind_amp;
-
-    // audio out
-    float audio;
 } DSP_All_Signals;
 
 #endif  // DSP_INTERFACE_H_
