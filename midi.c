@@ -179,7 +179,6 @@ void link_ui() {
     Signals.le = &all_sigs.ind_env;
     Signals.sg = &all_sigs.ind_sg;
     Signals.mo = &all_sigs.ind_os1;
-    Signals.mo_freq = &all_sigs.ind_os1_freq;
 }
 
 void extract(const char *name, float *p, float init, float min, float max, float step)

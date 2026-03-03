@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "rgb_led.h"
 #include "midi.h"
+#include "dsp/synth.h"
 
 // #include "square-diode-lfo.h"
 // #include "square-diode.h"
@@ -166,7 +167,8 @@ void dsp_run(int16_t *dest)
     period = now - last_start;
     last_start = now;
     // poll_uart();
-    computemydsp(&dsp, buf_len, NULL, buf);
+    compute_dsp(buf_len, buf);
+    // computemydsp(&dsp, buf_len, NULL, buf);
     for (int i = 0; i < buf_len; i++)
     {
         float val = buf[0][i];
