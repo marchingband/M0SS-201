@@ -17,46 +17,59 @@ void compute_dsp(size_t len, float* buf) {
         // compute parameter amounts through matrix
         // takes matrix signals from all_sigs as well as previous outputs (stored in peripheral structs)
         // and writes to fb_dests
-        compute_matrix();
+        // compute_matrix();
 
         // compute modulator signals
         // SG, ENV, OS1
-        Gate_Sel_t gate_select = all_sigs.gate_sel;
-        float env_gate_in = (gate_select == GATESEL_SG)? sg_state.high : all_sigs.gate;
-        float sg_gate_in = (gate_select == GATESEL_ENV)? env_state.gate : sg_state.high;
-        compute_env(fb_dests.att, fb_dests.rel, env_gate_in, &env_state);
-        compute_sg(fb_dests.len, fb_dests.rcl, fb_dests.smth, sg_gate_in, &sg_state);
-        compute_os1(fb_dests.os1, all_sigs.os1_hilo, all_sigs.os1_kt, all_sigs.pitch, all_sigs.os1_wave, &os1_state);
 
-        // compute OS2 output
-        CmplxModType_t mod_type = all_sigs.bus_sel;
-        float os2_freq = compute_os2_freq(mod_type); // takes into account mod_type
-        compute_os2(os2_freq, all_sigs.os2_wave, &os2_state);
-        if (mod_type == MOD_TYPE_AM) {
-            // perform AM
-        }
+        compute_sg_rate(all_sigs.sg_rate, &sg_state);
+        // Gate_Sel_t gate_select = all_sigs.gate_sel;
+        // float env_gate_in = (gate_select == GATESEL_SG)? sg_state.high : all_sigs.gate;
+        // float sg_gate_in = (gate_select == GATESEL_ENV)? env_state.gate : sg_state.high;
+        // compute_env(fb_dests.att, fb_dests.rel, env_gate_in, &env_state);
+        // compute_sg(fb_dests.len, fb_dests.rcl, fb_dests.smth, sg_gate_in, &sg_state);
+        // compute_os1(fb_dests.os1, all_sigs.os1_hilo, all_sigs.os1_kt, all_sigs.pitch, all_sigs.os1_wave, &os1_state);
 
-        // process signal path
-        // mixer -> folder -> amp -> delay
-        float mixed_signal = compute_mixer();
-        float timb = fb_dests.timb; 
-        if (mod_type == MOD_TYPE_TM) {
-            // perform TM by modifying timb
-        }
-        float folded_signal = compute_wavefolder(mixed_signal, timb, all_sigs.fold_bias);
-        float amped_signal = compute_amplifier(folded_signal, fb_dests.amp, all_sigs.amp_sel);
-        if (i == len - 1) all_sigs.ind_amp = amped_signal;
-        float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
+        // // compute OS2 output
+        // CmplxModType_t mod_type = all_sigs.bus_sel;
+        // float os2_freq = compute_os2_freq(mod_type); // takes into account mod_type
+        // compute_os2(os2_freq, all_sigs.os2_wave, &os2_state);
+        // if (mod_type == MOD_TYPE_AM) {
+        //     // perform AM
+        // }
 
-        buf[i] = delayed_signal;
+        // // process signal path
+        // // mixer -> folder -> amp -> delay
+        // float mixed_signal = compute_mixer();
+        // float timb = fb_dests.timb; 
+        // if (mod_type == MOD_TYPE_TM) {
+        //     // perform TM by modifying timb
+        // }
+        // float folded_signal = compute_wavefolder(mixed_signal, timb, all_sigs.fold_bias);
+        // float amped_signal = compute_amplifier(folded_signal, fb_dests.amp, all_sigs.amp_sel);
+        // if (i == len - 1) all_sigs.ind_amp = amped_signal;
+        // float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
+
+        // buf[i] = delayed_signal;
     }
     all_sigs.ind_env = all_sigs.gate;
-    all_sigs.ind_sg = sg_state.val;
+    all_sigs.ind_sg = sg_state.high? 1.0f : 0.0f;
     all_sigs.ind_os1 = os1_state.val;
 }
 
 void compute_matrix() {
-
+    fb_dests.len  = all_sigs.sg_len;
+    fb_dests.rate = all_sigs.sg_rate;
+    fb_dests.rcl  = all_sigs.sg_rcl;
+    fb_dests.smth = all_sigs.sg_smth;
+    fb_dests.att  = all_sigs.env_att;
+    fb_dests.rel  = all_sigs.env_rel;
+    fb_dests.os1  = all_sigs.os1_tune;
+    fb_dests.os2  = all_sigs.os2_tune;
+    fb_dests.bus  = 0.0f;
+    fb_dests.idx  = all_sigs.bus_idx;
+    fb_dests.timb = all_sigs.fold_timb;
+    fb_dests.amp  = all_sigs.vol;
 }
 
 float compute_os2_freq(CmplxModType_t mod_type) {
@@ -69,7 +82,7 @@ void compute_sg_rate(float rate, SGState_t* state_p) {
     const float min_freq = 0.1f;  // increments once every ten seconds
     const float max_freq = 4000.0f;  // 4kHz
     const int curvature = 4;
-    float rate_hz = normalized_linear_to_logexp(rate, curvature)*max_freq + min_freq;
+    float rate_hz = 1.0f; // normalized_linear_to_logexp(rate, curvature)*max_freq + min_freq;
     state_p->rate_normalized = rate_hz * SR_INV;
     state_p->phase += state_p->rate_normalized;
     if (state_p->phase >= 1.0f) state_p->phase -= 1.0f;

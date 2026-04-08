@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define SR 48000
+#define SR 48000U
 #define SR_INV 2.08333e-5f
 
 void compute_dsp(size_t len, float* buf);
