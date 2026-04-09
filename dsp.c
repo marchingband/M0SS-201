@@ -167,7 +167,7 @@ void dsp_run(int16_t *dest)
     period = now - last_start;
     last_start = now;
     // poll_uart();
-    compute_dsp(buf_len, buf);
+    compute_dsp(buf_len, buf[0]);
     // computemydsp(&dsp, buf_len, NULL, buf);
     for (int i = 0; i < buf_len; i++)
     {
@@ -181,7 +181,7 @@ void dsp_run(int16_t *dest)
         // the AUDAC expects int16_t but the buffer is typed uint16_t so do this awkward thing.
         // dest[i] = (uint16_t)(int16_t)(val * 32767);
         int32_t raw = (int32_t)(val * 32767);
-        dest[i] = (uint16_t)(raw < -32768 ? -32768 : raw > 32767 ? 32767 : raw);
+        dest[i] = (uint16_t)((raw < -32768)? -32768 : ((raw > 32767)? 32767 : raw));
     }
     consumed = bflb_mtimer_get_time_us() - now;
     poll_gpio();

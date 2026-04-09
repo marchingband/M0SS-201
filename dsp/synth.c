@@ -51,6 +51,7 @@ void compute_dsp(size_t len, float* buf) {
         // float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
 
         // buf[i] = delayed_signal;
+        buf[i] = (sg_state.high)? 0.2f : -0.2f;
     }
     all_sigs.ind_env = all_sigs.gate;
     all_sigs.ind_sg = sg_state.high? 1.0f : 0.0f;
@@ -81,8 +82,8 @@ float compute_os2_freq(CmplxModType_t mod_type) {
 void compute_sg_rate(float rate, SGState_t* state_p) {
     const float min_freq = 0.1f;  // increments once every ten seconds
     const float max_freq = 4000.0f;  // 4kHz
-    const int curvature = 4;
-    float rate_hz = 1.0f; // normalized_linear_to_logexp(rate, curvature)*max_freq + min_freq;
+    const int curvature = 10;
+    float rate_hz = normalized_linear_to_logexp(rate, curvature)*max_freq + min_freq;
     state_p->rate_normalized = rate_hz * SR_INV;
     state_p->phase += state_p->rate_normalized;
     if (state_p->phase >= 1.0f) state_p->phase -= 1.0f;
