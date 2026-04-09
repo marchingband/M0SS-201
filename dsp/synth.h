@@ -9,6 +9,7 @@
 #define SR_INV 2.08333e-5f
 
 void compute_dsp(size_t len, float* buf);
+void init_dsp();
 
 typedef struct {
     float len;
@@ -59,7 +60,6 @@ typedef struct {
     uint16_t idx;
     float val;
     float lpf_state;
-    float rate_normalized;
 } SGState_t;
 
 typedef struct {
@@ -72,13 +72,13 @@ typedef struct {
 } OscState_t;
 
 void compute_matrix();
-float compute_os2_freq(CmplxModType_t mod_type);
+float compute_os2_freq();
 
-void compute_sg_rate(float rate, SGState_t* state_p);
-void compute_sg(float len, float recall, float smooth, bool gate, SGState_t* state_p);
-void compute_env(float att, float rel, bool gate, EnvState_t* state_p);
-void compute_os1(float freq, float hilo, float kt, float midi_pitch, float wav_sel, OscState_t* state_p);
-void compute_os2(float freq, float wav_sel, OscState_t* state_p);
+void compute_sg_rate();
+void compute_sg();
+void compute_env();
+void compute_os1();
+void compute_os2();
 float compute_mixer();
 float compute_wavefolder(float in, float timbre, float bias);
 float compute_amplifier(float in, float gain, float mode_sel);

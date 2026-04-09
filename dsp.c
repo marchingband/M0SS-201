@@ -137,7 +137,8 @@ void dsp_init(size_t buf_size)
 
     // size_t cnt = buf_size / 2;
     printf("initmydsp\n");
-    initmydsp(&dsp, 48000);
+    // initmydsp(&dsp, 48000);
+    init_dsp();
     // initmydsp(&dsp, 32000);
     // initmydsp(&dsp, 8000);
     printf("buildUserInterfacemydsp\n");
