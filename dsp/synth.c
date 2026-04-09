@@ -55,7 +55,7 @@ void compute_dsp(size_t len, float* buf) {
         // float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
 
         // buf[i] = delayed_signal;
-        buf[i] = 0.0f; // (sg_state.high)? 0.2f : -0.2f;
+        buf[i] = sg_state.val;
     }
     all_sigs.ind_env = all_sigs.gate;
     all_sigs.ind_sg = sg_state.val;
@@ -97,25 +97,13 @@ void compute_sg_rate() {
 }
 
 void compute_sg() {
-    // uint16_t len_int = len * (MAX_SG_LENGTH - MIN_SG_LENGTH) + MIN_SG_LENGTH;
-    // // rising edge, increment the SG
-    // if (gate && !state_p->prev_gate) {
-    //     // increment
-    //     state_p->idx = (state_p->idx + 1) % len_int;
-    //     uint16_t write_idx = (state_p->idx + 1) % len_int;
-
-    //     // write new random value
-    //     if (recall >= randf()) {
-    //         state_p->arr[write_idx] = randf();
-    //     }
-    // }
-    // TODO: shouldn't be all_sigs.gate, should be 
+    // TODO: shouldn't be all_sigs.gate, should be start of envelope cycle
     bool gate = (all_sigs.gate_sel == GATESEL_ENV)? all_sigs.gate : sg_state.high;
 
-    uint16_t len_int = 2;
+    uint16_t len_int = all_sigs.sg_smth*(MAX_SG_LENGTH - MIN_SG_LENGTH) + MIN_SG_LENGTH;
+    len_int = CLAMP(len_int, MIN_SG_LENGTH, MAX_SG_LENGTH);
     if (gate && !sg_state.prev_gate) {
         sg_state.idx = (sg_state.idx + 1) % len_int;
-        // uint16_t write_idx = (state_p->idx + 1) % len_int;
         
         if (all_sigs.sg_rcl <= randf()) sg_state.arr[sg_state.idx] = randf();
         sg_state.val = sg_state.arr[sg_state.idx];
