@@ -112,8 +112,11 @@ int get_mode_learn_current_cc(void)
 
 void link_ui() {
     // attach parameters to their respective arrays
+    printf("linking UI...\n");
     for (int i = 0; i < NUM_UI_ELS; i++) {
         DSP_Param_t param = dsp_ui[i];
+
+        printf("idx %d, ptr %p\n", i, (void*)param.p);
 
         struct CC *cc = &CCs[param.cc];
         cc->p = param.p;
@@ -179,6 +182,8 @@ void link_ui() {
     Signals.le = &all_sigs.ind_env;
     Signals.sg = &all_sigs.ind_sg;
     Signals.mo = &all_sigs.ind_os1;
+
+    printf("mods idx 1 has ptr %p\n", (void*)Mods[1].p);
 }
 
 void extract(const char *name, float *p, float init, float min, float max, float step)

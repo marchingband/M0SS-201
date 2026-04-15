@@ -172,6 +172,8 @@ static void on_encoder(bool up){
                 *mod.p = clamped;
                 // printf("set led %f %f %f\n\r", clamped, mod.min, mod.max);
                 set_led_display(mod.p, mod.min, mod.max);
+
+                // printf("assigning: idx %d, ptr %p, value %.2f\n", param.button, (void*)mod.p, clamped);
             }
         }
     }

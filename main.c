@@ -44,7 +44,8 @@ static void uart_init(bool set_console){
     bflb_gpio_uart_init(gpio, GPIO_PIN_22, GPIO_UART_FUNC_UART0_RX);
 
     struct bflb_uart_config_s cfg = {0};
-    cfg.baudrate = 31250;
+    // cfg.baudrate = 31250;
+    cfg.baudrate = 38400;
     cfg.data_bits = UART_DATA_BITS_8;
     cfg.stop_bits = UART_STOP_BITS_1;
     cfg.parity = UART_PARITY_NONE;
@@ -127,7 +128,8 @@ int main(void)
 {
     /* board init */
     // board_init();
-    m0ss_board_init( /*set console*/ false );
+    // m0ss_board_init( /*set console*/ false );
+    m0ss_board_init(true);  // baud rate 31250
 
     /* dsp init */
     printf("dsp_init\r\n");
@@ -166,7 +168,7 @@ int main(void)
     usb_midi_init();
 
     /* start the LEDs */
-    // printf("rgb_led_init\r\n");
+    printf("rgb_led_init\r\n");
     spi_rgb_init();
 
     /* setup encoder */

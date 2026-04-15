@@ -14,7 +14,7 @@ OscState_t os2_state;
 
 void init_dsp() {
     for (uint16_t i = 0; i < MAX_SG_LENGTH; i++) {
-        sg_state.arr[i] = 0.0f;
+        sg_state.arr[i] = randf();
     }
     sg_state.idx = 0;
 }
@@ -90,8 +90,8 @@ void compute_sg_rate() {
     const int curvature = 10;
     float rate_hz = normalized_linear_to_logexp(all_sigs.sg_rate, curvature)*max_freq + min_freq;
 
-    float rate_normalized = rate_hz * SR_INV;
-    sg_state.phase += rate_normalized;
+    sg_state.rate_normalized = rate_hz * SR_INV;
+    sg_state.phase += sg_state.rate_normalized;
     if (sg_state.phase >= 1.0f) sg_state.phase -= 1.0f;
     sg_state.high = sg_state.phase < 0.5f;
 }
@@ -100,23 +100,23 @@ void compute_sg() {
     // TODO: shouldn't be all_sigs.gate, should be start of envelope cycle
     bool gate = (all_sigs.gate_sel == GATESEL_ENV)? all_sigs.gate : sg_state.high;
 
-    uint16_t len_int = all_sigs.sg_smth*(MAX_SG_LENGTH - MIN_SG_LENGTH) + MIN_SG_LENGTH;
+    uint16_t len_int = all_sigs.sg_len;
     len_int = CLAMP(len_int, MIN_SG_LENGTH, MAX_SG_LENGTH);
     if (gate && !sg_state.prev_gate) {
         sg_state.idx = (sg_state.idx + 1) % len_int;
         
         if (all_sigs.sg_rcl <= randf()) sg_state.arr[sg_state.idx] = randf();
-        sg_state.val = sg_state.arr[sg_state.idx];
+        // sg_state.val = sg_state.arr[sg_state.idx];
     }
 
-    // // smooth out value
-    // // calculate coefficient
-    // float smooth_amt = (smooth >= 0.01f)? expf(-4.0f * state_p->rate_normalized / smooth) : 0.0f;
-    // // simple LPF
-    // state_p->lpf_state = (1 - smooth_amt)*state_p->arr[state_p->idx] + smooth_amt*state_p->lpf_state;
+    // smooth out value
+    // calculate coefficient
+    float smooth_amt = (all_sigs.sg_smth >= 0.01f)? expf(-4.0f * sg_state.rate_normalized / all_sigs.sg_smth) : 0.0f;
+    // simple LPF
+    sg_state.lpf_state = (1 - smooth_amt)*sg_state.arr[sg_state.idx] + smooth_amt*sg_state.lpf_state;
 
-    // // output new value
-    // state_p->val = state_p->lpf_state;
+    // output new value
+    sg_state.val = sg_state.lpf_state;
 
     sg_state.prev_gate = gate;
 }

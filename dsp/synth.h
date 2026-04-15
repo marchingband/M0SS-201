@@ -54,7 +54,7 @@ typedef struct {
 typedef struct {
     float phase;
     bool high;
-    
+    float rate_normalized;
     bool prev_gate;
     float arr[MAX_SG_LENGTH];
     uint16_t idx;
