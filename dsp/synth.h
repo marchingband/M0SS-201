@@ -8,6 +8,10 @@
 #define SR 48000U
 #define SR_INV 2.08333e-5f
 
+#define MAX_ENV_STAGE_LEN_SEC 2.0f
+#define MAX_ENV_STAGE_LEN_SAMPLES 98000.0f  // MAX_ENV_STAGE_LEN_SEC * SR
+#define MIN_ENV_STAGE_LEN_SAMPLES 2.0f
+
 void compute_dsp(size_t len, float* buf);
 void init_dsp();
 
@@ -33,6 +37,12 @@ typedef enum {
 } Gate_Sel_t;
 
 typedef enum {
+    ENVMODE_AR,
+    ENVMODE_ASR,
+    ENVMODE_ARL
+} EnvMode_t;
+
+typedef enum {
     MOD_TYPE_AM,
     MOD_TYPE_FM,
     MOD_TYPE_TM
@@ -44,9 +54,17 @@ typedef enum {
     OS1_WAV_BOTH
 } OS1_Wave_Sel_t;
 
+typedef enum {
+    ENV_OFF,
+    ENV_ATT,
+    ENV_SUS,
+    ENV_REL
+} EnvStages_t;
+
 typedef struct {
-    bool gate;
+    bool prev_gate;
     float val;
+    EnvStages_t stage;
 } EnvState_t;
 
 #define MAX_SG_LENGTH 32

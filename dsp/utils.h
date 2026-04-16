@@ -57,7 +57,8 @@ static inline float sin2pif(float x) {
 }
 
 #define CLAMP(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
-
+#define MAX(a, b) (((a) > (b))? (a) : (b))
+#define MIN(a, b) (((a) < (b))? (a) : (b))
 
 // courtesy of Emilie Gillet
 #define MAKE_INTEGRAL_FRACTIONAL(x) \

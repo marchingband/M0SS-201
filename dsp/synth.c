@@ -55,9 +55,9 @@ void compute_dsp(size_t len, float* buf) {
         // float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
 
         // buf[i] = delayed_signal;
-        buf[i] = sg_state.val;
+        buf[i] = env_state.val;
     }
-    all_sigs.ind_env = all_sigs.gate;
+    all_sigs.ind_env = env_state.val;
     all_sigs.ind_sg = sg_state.val;
     all_sigs.ind_os1 = os1_state.val;
 }
@@ -121,8 +121,77 @@ void compute_sg() {
     sg_state.prev_gate = gate;
 }
 
-void compute_env() {
+// bias goes between 0 and 1, (can't be exactly 0)
+// 0.5 is linear, less than 0.5 is exponential-ish, 
+// greather than 0.5 is logarithmic-ish
+inline float bias_curve(float b, float x) {
+    return (x / ((((1.0f/b) - 2.0f)*(1.0f - x))+1.0f));
+}
 
+inline float bias_curve_d_dx(float b, float x) {
+    float val1 = (1.0f-x+b*(-1.0f+2.0f*x));
+    return -(-1+b)*b/(val1 * val1);
+}
+
+inline float bias_curve_inverse(float b, float y) {
+    return (b-1.0f)*y / (2.0f*b*y-b-y);
+}
+
+inline float bias_clip(float b) {
+    return CLAMP(b, 0.03f, 0.97f);
+}
+
+void compute_env() {
+    bool trig = all_sigs.gate && !env_state.prev_gate;
+    env_state.prev_gate = all_sigs.gate;
+
+    if (trig || (env_state.stage == ENV_OFF && all_sigs.env_mode == ENVMODE_ARL)) {
+        env_state.stage = ENV_ATT;
+    }
+
+    float bias = bias_clip(all_sigs.sg_smth);
+
+    switch (env_state.stage) {
+        case ENV_OFF: {
+            env_state.val = 0.0f;
+            break;
+        }
+        case ENV_ATT: {
+            float att_samples = all_sigs.env_att * MAX_ENV_STAGE_LEN_SAMPLES;
+            att_samples = CLAMP(att_samples, MIN_ENV_STAGE_LEN_SAMPLES, MAX_ENV_STAGE_LEN_SAMPLES);
+            float slope = 1.0f / att_samples;
+            
+            float x = bias_curve_inverse(bias, env_state.val);
+            slope *= bias_curve_d_dx(bias, x);
+
+            env_state.val += slope;
+            if (env_state.val >= 1.0f) {
+                env_state.val = 1.0f;
+                env_state.stage = (all_sigs.env_mode == ENVMODE_ASR)? ENV_SUS : ENV_REL;
+            }
+            break;
+        }
+        case ENV_SUS: {
+            env_state.val = 1.0f;
+            if (all_sigs.gate != 1.0f) env_state.stage = ENV_REL;
+            break;
+        }
+        case ENV_REL: {
+            float rel_samples = all_sigs.env_rel * MAX_ENV_STAGE_LEN_SAMPLES;
+            rel_samples = CLAMP(rel_samples, MIN_ENV_STAGE_LEN_SAMPLES, MAX_ENV_STAGE_LEN_SAMPLES);
+            float slope = 1.0f / rel_samples;
+            
+            float x = bias_curve_inverse(1.0f - bias, env_state.val);
+            slope *= bias_curve_d_dx(1.0f - bias, x);
+
+            env_state.val -= slope;
+            if (env_state.val <= 0.0f) {
+                env_state.val = 0.0f;
+                env_state.stage = (all_sigs.env_mode == ENVMODE_ARL)? ENV_ATT : ENV_OFF;
+            }
+            break;
+        }
+    }
 }
 
 void compute_os1() {
