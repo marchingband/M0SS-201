@@ -32,7 +32,7 @@ void compute_dsp(size_t len, float* buf) {
         compute_sg_rate();
         compute_env();
         compute_sg();
-        // compute_os1(fb_dests.os1, all_sigs.os1_hilo, all_sigs.os1_kt, all_sigs.pitch, all_sigs.os1_wave, &os1_state);
+        compute_os1();
 
         // // compute OS2 output
         // CmplxModType_t mod_type = all_sigs.bus_sel;
@@ -55,7 +55,7 @@ void compute_dsp(size_t len, float* buf) {
         // float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
 
         // buf[i] = delayed_signal;
-        buf[i] = env_state.val;
+        buf[i] = os1_state.val;
     }
     all_sigs.ind_env = env_state.val;
     all_sigs.ind_sg = sg_state.val;
@@ -195,7 +195,91 @@ void compute_env() {
 }
 
 void compute_os1() {
+    // parameters that affect os1: 
+    // slow/fast mode, key tracking on/off, 
+    // tune (fine/course), waveform
 
+    // intervals determine number of octaves range
+    const float fast_mode_course_max_interval = 6.0f;
+    const float fast_mode_fine_max_interval = 1.0f;
+    const float fast_mode_base_freq_hz = 20.0f;
+
+    // intervals determine number of octaves range
+    const float slow_mode_course_max_interval = 10.0f;
+    const float slow_mode_fine_max_interval = 1.0f;
+    const float slow_mode_base_freq_hz = 0.1f;
+
+    float freq_hz = 0.0f;
+    if (all_sigs.os1_hilo == OS1_RANGE_LO) {
+        float total_interval = all_sigs.os1_tune * slow_mode_course_max_interval + all_sigs.os1_fine * slow_mode_fine_max_interval;
+        freq_hz = slow_mode_base_freq_hz * pow2f(total_interval);
+    } else {
+        float total_interval = all_sigs.os1_tune * fast_mode_course_max_interval + all_sigs.os1_fine * fast_mode_fine_max_interval;
+        freq_hz = fast_mode_base_freq_hz * pow2f(total_interval);  
+    }
+
+    float freq_normalized = freq_hz * SR_INV;
+
+    float this_tri = os1_state.next_tri;
+    float this_saw = os1_state.next_saw;
+    float this_sqr = os1_state.next_sqr;
+    os1_state.next_tri = 0.0f;
+    os1_state.next_saw = 0.0f;
+    os1_state.next_sqr = 0.0f;
+
+    os1_state.phase += freq_normalized;
+
+    if (os1_state.high && os1_state.phase > 0.5f) {
+        float t = (os1_state.phase - 0.5f) / freq_normalized;
+        float discontinuity = 4.0f * freq_normalized;
+        this_tri -= this_iblep(t) * discontinuity;
+        os1_state.next_tri -= next_iblep(t) * discontinuity;
+
+        this_sqr -= this_blep(t);
+        os1_state.next_sqr -= next_blep(t);
+
+        os1_state.high = false;
+    }
+
+    if (os1_state.phase >= 1.0f) {
+        os1_state.phase -= 1.0f;
+
+        float t = os1_state.phase / freq_normalized;
+        float discontinuity = 4.0f * freq_normalized;
+        this_tri += this_iblep(t) * discontinuity;
+        os1_state.next_tri += next_iblep(t) * discontinuity;
+
+        this_sqr += this_blep(t);
+        os1_state.next_sqr += next_blep(t);
+
+        this_saw -= this_blep(t);
+        os1_state.next_saw -= next_blep(t);
+
+        os1_state.high = true;
+    }
+
+    if (all_sigs.os1_hilo == OS1_RANGE_LO) {
+        this_tri = os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase);
+        this_saw = os1_state.phase;
+        this_sqr = os1_state.high? 1.0f : 0.0f;
+    } else {
+        this_tri += os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase);
+        this_saw += os1_state.phase;
+        this_sqr += os1_state.high? 1.0f : 0.0f;
+    }
+
+    switch ((uint32_t)all_sigs.os1_wave) {
+        case OS1_WAV_TRI:
+            os1_state.val = 2.0f * this_tri - 1.0f;
+            break;
+        case OS1_WAV_SQR:
+            os1_state.val = 2.0f * this_sqr - 1.0f;
+            break;
+        case OS1_WAV_SAW:
+            os1_state.val = 2.0f * this_saw - 1.0f;
+            break;
+    }
+    // if (os1_state.val > 1.0f || os1_state.val < -1.0f) printf("max value exceeded!: %0.4f\n", os1_state.val);
 }
 
 void compute_os2() {
