@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <math.h>
 
 #include "synth.h"
 #include "interface.h"
@@ -19,6 +20,18 @@ void init_dsp() {
     sg_state.idx = 0;
 }
 
+float midi_freq;
+
+void compute_midi_freq() {
+    static float lp_state;
+    float midi_note_freq = 440.0f * pow2f((all_sigs.pitch - 69.0f) * 0.08333f);
+    // TODO: midi pitch bend
+    float glide_s = linear_map(all_sigs.os2_glide, 0.0f, 1.0f, 0.01f, 0.6f);
+    float coeff = pow2f(-1.0f * M_LOG2_E * SR_INV / glide_s);
+    lp_state += (midi_note_freq - lp_state) * coeff;
+    midi_freq = lp_state;
+}
+
 void compute_dsp(size_t len, float* buf) {
     for (size_t i = 0; i < len; i++) {
         // compute parameter amounts through matrix
@@ -32,7 +45,11 @@ void compute_dsp(size_t len, float* buf) {
         compute_sg_rate();
         compute_env();
         compute_sg();
+
+        compute_midi_freq();
+
         compute_os1();
+        compute_os1_rate();
 
         // // compute OS2 output
         // CmplxModType_t mod_type = all_sigs.bus_sel;
@@ -75,12 +92,6 @@ void compute_matrix() {
     fb_dests.idx  = all_sigs.bus_idx;
     fb_dests.timb = all_sigs.fold_timb;
     fb_dests.amp  = all_sigs.vol;
-}
-
-float compute_os2_freq() {
-    // involves all of these
-    // fb_dests.os2, all_sigs.pitch, all_sigs.os2_glide, all_sigs.os2_qu, all_sigs.bus_sel, fb_dests.idx, fb_dests.bus
-    return 440.0f * pow2f((all_sigs.pitch - 69.0) * 0.08333f);
 }
 
 void compute_sg_rate() {
@@ -212,10 +223,12 @@ void compute_os1() {
     float freq_hz = 0.0f;
     if (all_sigs.os1_hilo == OS1_RANGE_LO) {
         float total_interval = all_sigs.os1_tune * slow_mode_course_max_interval + all_sigs.os1_fine * slow_mode_fine_max_interval;
-        freq_hz = slow_mode_base_freq_hz * pow2f(total_interval);
+        float multiplier = pow2f(total_interval);
+        freq_hz = ((all_sigs.os1_kt)? midi_freq * 0.125f : fast_mode_base_freq_hz) * multiplier;
     } else {
         float total_interval = all_sigs.os1_tune * fast_mode_course_max_interval + all_sigs.os1_fine * fast_mode_fine_max_interval;
-        freq_hz = fast_mode_base_freq_hz * pow2f(total_interval);  
+        float multiplier = pow2f(total_interval);
+        freq_hz = ((all_sigs.os1_kt)? midi_freq * 0.001953f : slow_mode_base_freq_hz) * multiplier;
     }
 
     float freq_normalized = freq_hz * SR_INV;
@@ -281,6 +294,14 @@ void compute_os1() {
     }
     // if (os1_state.val > 1.0f || os1_state.val < -1.0f) printf("max value exceeded!: %0.4f\n", os1_state.val);
 }
+
+// float compute_os2_rate() {
+//     // care about midi frequency, tuning, and mod bus
+//     // also about quantization and glide
+//     float freq_hz = midi_freq;
+//     float tuning_range_octaves = 1.0f;  // one octave up and down
+//     freq_hz *= pow2f(tuning_range_octaves * all_sigs.os2_tune);
+// }
 
 void compute_os2() {
     // float freq_normalized = freq * SR_INV;

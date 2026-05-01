@@ -131,4 +131,9 @@ inline float this_iblep(float t) {
     return next_iblep(1.0f - t);
 }
 
+inline float linear_map(float x, float a, float b, float A, float B) {
+	float normalized_x = (x - a) / (b - a);
+	return normalized_x * (B - A) + A;
+}
+
 #endif  // DSP_UTILS_H_

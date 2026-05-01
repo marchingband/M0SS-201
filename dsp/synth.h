@@ -100,8 +100,10 @@ typedef struct {
     float val;
 } OscState_t;
 
+void compute_midi_freq();
+
 void compute_matrix();
-float compute_os2_freq();
+// float compute_os2_rate();
 
 void compute_sg_rate();
 void compute_sg();
