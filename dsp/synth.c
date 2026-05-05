@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <math.h>
 
 #include "synth.h"
 #include "interface.h"
@@ -27,7 +26,7 @@ void compute_midi_freq() {
     float midi_note_freq = 440.0f * pow2f((all_sigs.pitch - 69.0f) * 0.08333f);
     // TODO: midi pitch bend
     float glide_s = linear_map(all_sigs.os2_glide, 0.0f, 1.0f, 0.01f, 0.6f);
-    float coeff = pow2f(-1.0f * M_LOG2_E * SR_INV / glide_s);
+    float coeff = pow2f(-1.0f * LOG2_E * SR_INV / glide_s);
     lp_state += (midi_note_freq - lp_state) * coeff;
     midi_freq = lp_state;
 }
@@ -49,7 +48,6 @@ void compute_dsp(size_t len, float* buf) {
         compute_midi_freq();
 
         compute_os1();
-        compute_os1_rate();
 
         // // compute OS2 output
         // CmplxModType_t mod_type = all_sigs.bus_sel;
