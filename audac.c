@@ -30,8 +30,8 @@ int max(int a, int b)
 static uint16_t tic[BUF_SIZE];
 static uint16_t toc[BUF_SIZE];
 
-struct bflb_device_s *audac_dma_hd;
-struct bflb_device_s *audac_hd;
+static struct bflb_device_s *i2s0;
+static struct bflb_device_s *i2s_dma_hd;
 
 uint32_t dma_lli_cnt_tic;
 static struct bflb_dma_channel_lli_pool_s lli_pool_tic[10];
@@ -52,22 +52,21 @@ static void refresh_dma(int tictoc)
     if (tictoc)
     {
         transfers_toc[0].src_addr = (uint32_t)toc;
-        transfers_toc[0].dst_addr = (uint32_t)DMA_ADDR_AUDAC_TDR;
+        transfers_toc[0].dst_addr = (uint32_t)DMA_ADDR_I2S_TDR;
         transfers_toc[0].nbytes = sizeof(toc);
         bflb_l1c_dcache_clean_range(toc, sizeof(toc));
-        dma_lli_cnt_toc = bflb_dma_channel_lli_reload(audac_dma_hd, lli_pool_toc, 10, transfers_toc, 1);
-        bflb_dma_channel_start(audac_dma_hd);
+        dma_lli_cnt_toc = bflb_dma_channel_lli_reload(i2s_dma_hd, lli_pool_toc, 10, transfers_toc, 1);
+        bflb_dma_channel_start(i2s_dma_hd);
     }
     else
     {
         transfers_tic[0].src_addr = (uint32_t)tic;
-        transfers_tic[0].dst_addr = (uint32_t)DMA_ADDR_AUDAC_TDR;
+        transfers_tic[0].dst_addr = (uint32_t)DMA_ADDR_I2S_TDR;
         transfers_tic[0].nbytes = sizeof(tic);
         bflb_l1c_dcache_clean_range(tic, sizeof(tic));
-        dma_lli_cnt_tic = bflb_dma_channel_lli_reload(audac_dma_hd, lli_pool_tic, 10, transfers_tic, 1);
-        bflb_dma_channel_start(audac_dma_hd);
+        dma_lli_cnt_tic = bflb_dma_channel_lli_reload(i2s_dma_hd, lli_pool_tic, 10, transfers_tic, 1);
+        bflb_dma_channel_start(i2s_dma_hd);
     }
-    // update_leds();
 }
 
 static uint64_t times[100] = {0};
@@ -75,115 +74,81 @@ static size_t time_p = 0;
 
 void audio_dma_callback(void *arg)
 {
-
-    // times[time_p++] = bflb_mtimer_get_time_us();
-
     static int tictoc = 1;
     process_encoder();
     refresh_dma(tictoc);
     compute(tictoc == 0 ? 1 : 0);
     tictoc = tictoc == 0 ? 1 : 0;
     update_leds();
-    // times[time_p++] = bflb_mtimer_get_time_us();
-
-    // if(time_p >= 100){
-    //     time_p = 0;
-    //     for(int i=0; i<100; i+=2){
-    //         uint64_t time = times[i+1] - times[i];
-    //         printf("%20llu -> %20llu = %20llu\n", times[i], times[i+1], time);
-    //     }
-    // }
 }
 
-/* audio gpio init*/
-void audac_gpio_init(void)
+static void i2s_gpio_init(void)
 {
-    struct bflb_device_s *gpio;
+    struct bflb_device_s *gpio = bflb_device_get_by_name("gpio");
 
-    gpio = bflb_device_get_by_name("gpio");
-
-    /* audac gpadc output mode */
-    // bflb_gpio_init(gpio, GPIO_PIN_2, GPIO_ANALOG | GPIO_SMT_EN | GPIO_DRV_0);
-    bflb_gpio_init(gpio, GPIO_PIN_3, GPIO_ANALOG | GPIO_SMT_EN | GPIO_DRV_0);
-
-    
-    /* audac pwm output mode */
-    // bflb_gpio_init(gpio, GPIO_PIN_14, GPIO_FUNC_AUDAC_PWM | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_2);
+    /* I2S_FS / LRCK */
+    bflb_gpio_init(gpio, GPIO_PIN_1, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+    /* I2S_DI (not required for TX-only, but harmless) */
+    bflb_gpio_init(gpio, GPIO_PIN_10, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+    /* I2S_DO / DIN */
+    bflb_gpio_init(gpio, GPIO_PIN_3, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+    /* I2S_BCLK / BCK */
+    bflb_gpio_init(gpio, GPIO_PIN_0, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
 }
 
-void audac_dma_init(void)
-{
-    struct bflb_dma_channel_config_s audac_dma_cfg;
+static void i2s_dma_init(void) {
+    struct bflb_dma_channel_config_s tx_config = {
+        .direction = DMA_MEMORY_TO_PERIPH,
+        .src_req = DMA_REQUEST_NONE,
+        .dst_req = DMA_REQUEST_I2S_TX,
+        .src_addr_inc = DMA_ADDR_INCREMENT_ENABLE,
+        .dst_addr_inc = DMA_ADDR_INCREMENT_DISABLE,
+        .src_burst_count = DMA_BURST_INCR4,
+        .dst_burst_count = DMA_BURST_INCR4,
+        .src_width = DMA_DATA_WIDTH_16BIT,
+        .dst_width = DMA_DATA_WIDTH_16BIT,
+    };
 
-    audac_dma_cfg.direction = DMA_MEMORY_TO_PERIPH;
-    audac_dma_cfg.src_req = DMA_REQUEST_NONE;
-    audac_dma_cfg.dst_req = DMA_REQUEST_AUDAC_TX;
-    audac_dma_cfg.src_addr_inc = DMA_ADDR_INCREMENT_ENABLE;
-    audac_dma_cfg.dst_addr_inc = DMA_ADDR_INCREMENT_DISABLE;
-    audac_dma_cfg.src_burst_count = DMA_BURST_INCR4;
-    audac_dma_cfg.dst_burst_count = DMA_BURST_INCR4;
-    // audac_dma_cfg.src_burst_count = DMA_BURST_INCR8;
-    // audac_dma_cfg.dst_burst_count = DMA_BURST_INCR8;
-    audac_dma_cfg.src_width = DMA_DATA_WIDTH_16BIT;
-    audac_dma_cfg.dst_width = DMA_DATA_WIDTH_16BIT;
-
-    audac_dma_hd = bflb_device_get_by_name("dma0_ch0");
-    bflb_dma_channel_init(audac_dma_hd, &audac_dma_cfg);
-    bflb_dma_channel_irq_attach(audac_dma_hd, audio_dma_callback, NULL);
+    i2s_dma_hd = bflb_device_get_by_name("dma0_ch0");
+    bflb_dma_channel_init(i2s_dma_hd, &tx_config);
+    bflb_dma_channel_irq_attach(i2s_dma_hd, audio_dma_callback, NULL);
 
     transfers_tic[0].src_addr = (uint32_t)tic;
-    transfers_tic[0].dst_addr = (uint32_t)DMA_ADDR_AUDAC_TDR;
+    transfers_tic[0].dst_addr = (uint32_t)DMA_ADDR_I2S_TDR;
     transfers_tic[0].nbytes = sizeof(tic);
 
     bflb_l1c_dcache_clean_range(tic, sizeof(tic));
-    dma_lli_cnt_tic = bflb_dma_channel_lli_reload(audac_dma_hd, lli_pool_tic, 10, transfers_tic, 1);
-    bflb_dma_channel_start(audac_dma_hd);
+    dma_lli_cnt_tic = bflb_dma_channel_lli_reload(i2s_dma_hd, lli_pool_tic, 10, transfers_tic, 1);
 }
 
-/* audio dac init */
-static void audac_init(void)
-{
-    struct bflb_audac_init_config_s audac_init_cfg = {
-        .sampling_rate = AUDAC_SAMPLING_RATE_48K,
-        // .sampling_rate = AUDAC_SAMPLING_RATE_32K,
-        // .output_mode = AUDAC_OUTPUT_MODE_PWM,
-        .output_mode = AUDAC_OUTPUT_MODE_GPDAC_CH_A,
-        // .output_mode = AUDAC_OUTPUT_MODE_GPDAC_CH_A_B,
-        // .source_channels_num = AUDAC_SOURCE_CHANNEL_DUAL,
-        .source_channels_num = AUDAC_SOURCE_CHANNEL_SINGLE,
-        .mixer_mode = AUDAC_MIXER_MODE_ONLY_L,
-        .data_format = AUDAC_DATA_FORMAT_16BIT,
-        .fifo_threshold = 3,
-        // .fifo_threshold = 7,
+static void i2s_init(void) {
+    struct bflb_i2s_config_s i2s_cfg = {
+        .bclk_freq_hz = AUDIO_SAMPLE_RATE_HZ * AUDIO_FRAME_BITS * AUDIO_CHANNELS,
+        .role = I2S_ROLE_MASTER,
+        .format_mode = I2S_MODE_LEFT_JUSTIFIED,
+        .channel_mode = I2S_CHANNEL_MODE_NUM_2,
+        .frame_width = I2S_SLOT_WIDTH_16,
+        .data_width = I2S_SLOT_WIDTH_16,
+        .fs_offset_cycle = 0,
+        .tx_fifo_threshold = 0,
+        .rx_fifo_threshold = 0,
     };
 
-    struct bflb_audac_volume_config_s audac_volume_cfg = {
-        .mute_ramp_en = true,
-        .mute_up_ramp_rate = AUDAC_RAMP_RATE_FS_32,
-        .mute_down_ramp_rate = AUDAC_RAMP_RATE_FS_8,
-        .volume_update_mode = AUDAC_VOLUME_UPDATE_MODE_RAMP,
-        .volume_ramp_rate = AUDAC_RAMP_RATE_FS_128,
-        .volume_zero_cross_timeout = AUDAC_RAMP_RATE_FS_128,
-    };
-
-    /* clock cfg */
-    GLB_Config_AUDIO_PLL_To_491P52M();
-    GLB_PER_Clock_UnGate(GLB_AHB_CLOCK_AUDIO);
-
-    /* audac init */
-    audac_hd = bflb_device_get_by_name("audac");
-    bflb_audac_init(audac_hd, &audac_init_cfg);
-    // bflb_audac_feature_control(audac_hd, AUDAC_CMD_SET_VOLUME_VAL, (size_t)(-15 * 2));
-    bflb_audac_feature_control(audac_hd, AUDAC_CMD_SET_VOLUME_VAL, 0);
-    bflb_audac_volume_init(audac_hd, &audac_volume_cfg);
-    /* audac enable dma */
-    bflb_audac_link_rxdma(audac_hd, true);
+    i2s0 = bflb_device_get_by_name("i2s0");
+    bflb_i2s_init(i2s0, &i2s_cfg);
+    bflb_i2s_link_txdma(i2s0, true);
 }
+
 
 void audio_dac_init(){
-    audac_gpio_init();
-    audac_init();
-    audac_dma_init();
-    bflb_dma_channel_start(audac_dma_hd);
-    bflb_audac_feature_control(audac_hd, AUDAC_CMD_PLAY_START, 0);
+    // set up pins for outputting the signal
+    i2s_gpio_init();
+    // set up the peripheral
+    i2s_init();
+    // set up dma
+    i2s_dma_init();
+    // start dma
+    bflb_dma_channel_start(i2s_dma_hd);
+    // start peripheral
+    bflb_i2s_feature_control(i2s0, I2S_CMD_DATA_ENABLE, I2S_CMD_DATA_ENABLE_TX);
 }

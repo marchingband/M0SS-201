@@ -388,7 +388,7 @@ void render_lights(void){
     }
    
 
-    // tint row
+    // // tint row
     // int start = matrix_row_selected == 0 ? 35 : matrix_row_selected == 1 ? 23 : 11; 
     // if(matrix_row_selected != -1)
     // {
@@ -399,7 +399,7 @@ void render_lights(void){
     //     }
     // }
 
-    // tint column
+    // // tint column
     // if(matrix_column_selected != -1)
     // {
     //     int led_1 = 11 + (11 - matrix_column_selected);
@@ -412,4 +412,5 @@ void render_lights(void){
     //     pixel_buf[led_3].red++;
     //     pixel_buf[led_3].green++;
     // }
+
 }

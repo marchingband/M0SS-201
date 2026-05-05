@@ -10,6 +10,7 @@
 #include "bflb_uart.h"
 #include "bflb_flash.h"
 #include "bflb_clock.h"
+#include "bflb_i2s.h"
 #include "mem.h"
 
 #include "bl616_glb.h"
@@ -123,6 +124,55 @@ static void m0ss_board_init(bool set_console){
 }
 
 bool is_initial_boot = false;
+
+
+#define AUDIO_SAMPLE_RATE_HZ 48000
+#define AUDIO_FRAME_BITS     16
+#define AUDIO_CHANNELS       2
+
+#define TONE_FRAMES_PER_CYCLE 48
+#define TX_BUFFER_FRAMES      (TONE_FRAMES_PER_CYCLE * 64)
+
+static struct bflb_device_s *i2s0;
+static struct bflb_device_s *dma0_ch0;
+
+static ATTR_NOCACHE_NOINIT_RAM_SECTION int16_t tx_buffer[TX_BUFFER_FRAMES * AUDIO_CHANNELS] __ALIGNED(4);
+static struct bflb_dma_channel_lli_pool_s tx_llipool[8];
+
+/* 1 kHz sine at 48 kHz sample rate (48 samples per cycle) */
+static const int16_t sine_lut_48[TONE_FRAMES_PER_CYCLE] = {
+    0, 2138, 4240, 6269, 8192, 9974, 11585, 12998,
+    14189, 15136, 15826, 16248, 16384, 16248, 15826, 15136,
+    14189, 12998, 11585, 9974, 8192, 6269, 4240, 2138,
+    0, -2138, -4240, -6269, -8192, -9974, -11585, -12998,
+    -14189, -15136, -15826, -16248, -16384, -16248, -15826, -15136,
+    -14189, -12998, -11585, -9974, -8192, -6269, -4240, -2138
+};
+
+static void i2s_gpio_init(void)
+{
+    struct bflb_device_s *gpio = bflb_device_get_by_name("gpio");
+
+    /* I2S_FS / LRCK */
+    bflb_gpio_init(gpio, GPIO_PIN_1, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+    /* I2S_DI (not required for TX-only, but harmless) */
+    bflb_gpio_init(gpio, GPIO_PIN_10, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+    /* I2S_DO / DIN */
+    bflb_gpio_init(gpio, GPIO_PIN_3, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+    /* I2S_BCLK / BCK */
+    bflb_gpio_init(gpio, GPIO_PIN_0, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+}
+
+static void fill_tone_buffer(void)
+{
+    uint32_t i;
+
+    for (i = 0; i < TX_BUFFER_FRAMES; i++) {
+        int16_t s = sine_lut_48[i % TONE_FRAMES_PER_CYCLE];
+        tx_buffer[2 * i + 0] = s >> 1; /* Left */
+        tx_buffer[2 * i + 1] = s >> 1; /* Right */
+    }
+}
 
 int main(void)
 {

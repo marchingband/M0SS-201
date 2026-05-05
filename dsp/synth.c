@@ -19,8 +19,17 @@ void init_dsp() {
     sg_state.idx = 0;
 }
 
+float phase = 0.0f;
+const float freq = 260.0f * SR_INV;
+
 void compute_dsp(size_t len, float* buf) {
     for (size_t i = 0; i < len; i++) {
+        phase += freq;
+        if (phase >= 1.0f) phase -= 1.0f;
+        buf[i] = sin2pif(phase) * 0.1f;
+        continue;
+
+
         // compute parameter amounts through matrix
         // takes matrix signals from all_sigs as well as previous outputs (stored in peripheral structs)
         // and writes to fb_dests
