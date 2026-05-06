@@ -102,6 +102,14 @@ typedef struct {
     float val;
 } OscState_t;
 
+#define MAX_SCALE_DEGREES 24
+
+typedef struct {
+    float root_freq_hz;
+    uint32_t num_intervals; 
+    float intervals[MAX_SCALE_DEGREES];
+} Scale;
+
 void compute_midi_freq();
 
 void compute_matrix();

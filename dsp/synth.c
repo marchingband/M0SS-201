@@ -293,13 +293,38 @@ void compute_os1() {
     // if (os1_state.val > 1.0f || os1_state.val < -1.0f) printf("max value exceeded!: %0.4f\n", os1_state.val);
 }
 
-// float compute_os2_rate() {
-//     // care about midi frequency, tuning, and mod bus
-//     // also about quantization and glide
-//     float freq_hz = midi_freq;
-//     float tuning_range_octaves = 1.0f;  // one octave up and down
-//     freq_hz *= pow2f(tuning_range_octaves * all_sigs.os2_tune);
-// }
+float quantize(float freq_hz, const Scale* scale) {
+    // the scale contains a root frequency, need to get the
+    // input frequency to be in the same octave.
+    float rel_octave = pow2f((floorf(log2f(freq_hz / scale->root_freq_hz))));
+    float norm_ratio = freq_hz / (scale->root_freq_hz * rel_octave);
+
+    float quantized_ratio = 1.0f;
+    float min_ratio_diff = 1e8f;
+    for (uint32_t i = 0; i < scale->num_intervals; i++) {
+        float ratio_diff = absf(norm_ratio - scale->intervals[i]);
+        if (ratio_diff < min_ratio_diff) {
+            min_ratio_diff = ratio_diff;
+            quantized_ratio = scale->intervals[i];
+        }
+    }
+
+    return scale->root_freq_hz * rel_octave * quantized_ratio;
+}
+
+float compute_os2_rate() {
+    // care about midi frequency, tuning, and mod bus
+    // also about quantization and glide
+
+    // midi_freq is already computed with glide and pitch bend accounted for
+    // so the tuning slider, modulations, and FM need to be added.
+    // tuning slider and modulations get quantized, then FM is added.
+    float freq_hz = midi_freq;
+    float tuning_range_octaves = 1.0f;  // one octave up and down
+    freq_hz *= pow2f(tuning_range_octaves * all_sigs.os2_tune);
+    // perform matrix modulations
+
+}
 
 void compute_os2() {
     // float freq_normalized = freq * SR_INV;

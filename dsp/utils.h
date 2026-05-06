@@ -56,6 +56,16 @@ static inline float sin2pif(float x) {
 	return y;
 }
 
+
+static inline float log2f(float x) {
+	union { float f; int32_t i; } v;
+	v.f = x;
+	int e = v.i >> 23;
+	v.i = (v.i & 0x007fffff) | 0x3f800000;
+	const float y = (float)e - 129.213475204444817f + v.f * (3.148297929334117f + v.f * (-1.098865286222744f + v.f * 0.1640425613334452f));
+	return y;
+}
+
 #define CLAMP(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 #define MAX(a, b) (((a) > (b))? (a) : (b))
 #define MIN(a, b) (((a) < (b))? (a) : (b))
