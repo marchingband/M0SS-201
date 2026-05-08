@@ -4,7 +4,7 @@
 #include "interface.h"
 #include "utils.h"
 
-extern DSP_All_Signals all_sigs;
+extern DSP_All_Signals all_sigs_raw;
 
 FB_Dests fb_dests;
 EnvState_t env_state;
@@ -12,6 +12,40 @@ SGState_t sg_state;
 OscState_t os1_state;
 OscState_t os2_state;
 Multistage_Wave_Folder_t wf;
+
+DSP_All_Signals all_sigs;
+
+const float param_smooth_coeff = 0.9997917f; //pow2f(-1.0f * LOG2_E * SR_INV / 0.6f);
+
+void smooth_signals() {
+    // all parameters
+    all_sigs.sg_smth += (1.0f - param_smooth_coeff) * (all_sigs_raw.sg_smth - all_sigs.sg_smth);
+    all_sigs.sg_rate += (1.0f - param_smooth_coeff) * (all_sigs_raw.sg_rate - all_sigs.sg_rate);
+    all_sigs.sg_rcl += (1.0f - param_smooth_coeff) * (all_sigs_raw.sg_rcl - all_sigs.sg_rcl);
+    all_sigs.env_att += (1.0f - param_smooth_coeff) * (all_sigs_raw.env_att - all_sigs.env_att);
+    all_sigs.env_rel += (1.0f - param_smooth_coeff) * (all_sigs_raw.env_rel - all_sigs.env_rel);
+    all_sigs.env_crv += (1.0f - param_smooth_coeff) * (all_sigs_raw.env_crv - all_sigs.env_crv);
+    all_sigs.os1_tune += (1.0f - param_smooth_coeff) * (all_sigs_raw.os1_tune - all_sigs.os1_tune);
+    all_sigs.os1_fine += (1.0f - param_smooth_coeff) * (all_sigs_raw.os1_fine - all_sigs.os1_fine);
+    all_sigs.bus_idx += (1.0f - param_smooth_coeff) * (all_sigs_raw.bus_idx - all_sigs.bus_idx); 
+    all_sigs.os2_tune += (1.0f - param_smooth_coeff) * (all_sigs_raw.os2_tune - all_sigs.os2_tune);  
+    all_sigs.os2_glide += (1.0f - param_smooth_coeff) * (all_sigs_raw.os2_glide - all_sigs.os2_glide);
+    all_sigs.mx_os1 += (1.0f - param_smooth_coeff) * (all_sigs_raw.mx_os1 - all_sigs.mx_os1);
+    all_sigs.mx_os2 += (1.0f - param_smooth_coeff) * (all_sigs_raw.mx_os2 - all_sigs.mx_os2);
+    all_sigs.mx_sg += (1.0f - param_smooth_coeff) * (all_sigs_raw.mx_sg - all_sigs.mx_sg); 
+    all_sigs.mx_env += (1.0f - param_smooth_coeff) * (all_sigs_raw.mx_env - all_sigs.mx_env);
+    all_sigs.fold_timb += (1.0f - param_smooth_coeff) * (all_sigs_raw.fold_timb - all_sigs.fold_timb);
+    all_sigs.fold_bias += (1.0f - param_smooth_coeff) * (all_sigs_raw.fold_bias - all_sigs.fold_bias); 
+    all_sigs.vol += (1.0f - param_smooth_coeff) * (all_sigs_raw.vol - all_sigs.vol);      
+    all_sigs.dly_tm += (1.0f - param_smooth_coeff) * (all_sigs_raw.dly_tm - all_sigs.dly_tm);
+    all_sigs.dly_mx += (1.0f - param_smooth_coeff) * (all_sigs_raw.dly_mx - all_sigs.dly_mx);
+    all_sigs.dly_fb += (1.0f - param_smooth_coeff) * (all_sigs_raw.dly_fb - all_sigs.dly_fb);
+    for (uint16_t i = 0; i < NUM_MOD_SRCS; i++) {
+        for (uint16_t j = 0; j < NUM_MOD_DESTS; j++) {
+           all_sigs.mtx[i][j] += (1.0f - param_smooth_coeff) * (all_sigs_raw.mtx[i][j] - all_sigs.mtx[i][j]); 
+        }
+    }
+}
 
 void init_dsp() {
     for (uint16_t i = 0; i < MAX_SG_LENGTH; i++) {
@@ -38,6 +72,8 @@ void compute_dsp(size_t len, float* buf) {
         // compute parameter amounts through matrix
         // takes matrix signals from all_sigs as well as previous outputs (stored in peripheral structs)
         // and writes to fb_dests
+        smooth_signals();
+
         compute_matrix();
 
         // compute modulator signals
