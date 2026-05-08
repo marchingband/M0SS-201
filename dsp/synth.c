@@ -49,6 +49,8 @@ void compute_dsp(size_t len, float* buf) {
         compute_os1();
         compute_os2();
 
+        float mixed_output = compute_mixer();
+
         // // compute OS2 output
         // CmplxModType_t mod_type = all_sigs.bus_sel;
         // float os2_freq = compute_os2_freq(mod_type); // takes into account mod_type
@@ -70,7 +72,7 @@ void compute_dsp(size_t len, float* buf) {
         // float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
 
         // buf[i] = delayed_signal;
-        buf[i] = os2_state.val;
+        buf[i] = mixed_output;
     }
     all_sigs.ind_env = env_state.val;
     all_sigs.ind_sg = sg_state.val;
@@ -396,7 +398,9 @@ void compute_os2() {
 }
 
 float compute_mixer() {
-    return sg_state.val * all_sigs.mx_sg + env_state.val * all_sigs.mx_env \
+    float bipolar_sg = 2.0f*sg_state.val - 1.0f;
+    float bipolar_env = 2.0f*env_state.val - 1.0f;
+    return bipolar_sg * all_sigs.mx_sg + bipolar_env * all_sigs.mx_env \
         + os1_state.val * all_sigs.mx_os1 + os2_state.val * all_sigs.mx_os2;
 }
 
