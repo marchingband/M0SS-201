@@ -146,4 +146,8 @@ inline float linear_map(float x, float a, float b, float A, float B) {
 	return normalized_x * (B - A) + A;
 }
 
+static inline float midi_note_to_freq_hz(float note) {
+	return 440.0f * pow2f((note - 69.0f) * 0.08333f);
+}
+
 #endif  // DSP_UTILS_H_
