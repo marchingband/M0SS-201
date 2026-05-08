@@ -11,12 +11,15 @@ EnvState_t env_state;
 SGState_t sg_state;
 OscState_t os1_state;
 OscState_t os2_state;
+Multistage_Wave_Folder_t wf;
 
 void init_dsp() {
     for (uint16_t i = 0; i < MAX_SG_LENGTH; i++) {
         sg_state.arr[i] = randf();
     }
     sg_state.idx = 0;
+
+    wf.num_stages = 4;
 }
 
 float midi_note;
@@ -50,6 +53,7 @@ void compute_dsp(size_t len, float* buf) {
         compute_os2();
 
         float mixed_output = compute_mixer();
+        float folded_output = compute_wavefolder(mixed_output);
 
         // // compute OS2 output
         // CmplxModType_t mod_type = all_sigs.bus_sel;
@@ -72,7 +76,7 @@ void compute_dsp(size_t len, float* buf) {
         // float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
 
         // buf[i] = delayed_signal;
-        buf[i] = mixed_output;
+        buf[i] = folded_output;
     }
     all_sigs.ind_env = env_state.val;
     all_sigs.ind_sg = sg_state.val;
@@ -404,9 +408,52 @@ float compute_mixer() {
         + os1_state.val * all_sigs.mx_os1 + os2_state.val * all_sigs.mx_os2;
 }
 
-float compute_wavefolder(float in, float timbre, float bias) {
-    // TODO
-    return in;
+float naive_fold(float x, float t) {
+    if (x > t) return 2.0f*t - x;
+    if (x < -t) return -2.0f*t - x;
+    return x;
+}
+
+float integral_naive_fold(float x, float t) {
+    float x2 = x*x;
+    float t2 = t*t;
+    if (x > t) return 2.0f*t*x - 0.5f*x2 - t2;
+    if (x < -t) return -2.0f*t*x - 0.5f*x2 - t2;
+    return 0.5f*x2;
+}
+
+float compute_folder_stage(float in, Folder_Stage_t* f) {
+    float output;
+    if (absf(in - f->prev_input) < 1e-6f) {
+        output = naive_fold(in, f->threshold);
+    } else {
+        float current_integral = integral_naive_fold(in, f->threshold);
+        float previous_integral = integral_naive_fold(f->prev_input, f->threshold);
+        float delta_x = in - f->prev_input;
+        output = (current_integral - previous_integral) / delta_x;
+    }
+    f->prev_input = in;
+    return output;
+}
+
+float compute_wavefolder(float in) {
+    in += all_sigs.fold_bias;
+    float t = 1.0f + all_sigs.fold_timb;
+    if (all_sigs.bus_sel == BUS_SEL_TM) {
+        const float max_timbre_modulation = 1.0f;
+        t += max_timbre_modulation * all_sigs.bus_idx * os1_state.val;
+    }
+    t = MAX(t*4.0f, 1e-4f);
+
+    in *= t;
+
+    float output = in;
+    for (uint16_t i = 0; i < wf.num_stages; i++) {
+        wf.stages[i].threshold = 1.0f;
+        output = compute_folder_stage(output, &wf.stages[i]);
+    }
+
+    return output;
 }
 
 float compute_amplifier(float in, float gain, float mode_sel) {

@@ -25,7 +25,7 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_ALT,     .p=&all_sigs.os2_glide, .cc=19, .btn=23, .min=0,   .max=1,    .init=0,   .step=1e-4},
     {.type=PARAM_ALT_SEL, .p=&all_sigs.os2_qu,    .cc=20, .btn=20, .min=0,   .max=1,    .init=0,   .step=1   },
     {.type=PARAM_MOD,     .p=&all_sigs.mx_os1,    .cc=21, .btn=9,  .min=0,   .max=1,    .init=0,   .step=1e-4},
-    {.type=PARAM_MOD,     .p=&all_sigs.mx_os2,    .cc=22, .btn=18, .min=0,   .max=1,    .init=0,   .step=1e-4},
+    {.type=PARAM_MOD,     .p=&all_sigs.mx_os2,    .cc=22, .btn=18, .min=0,   .max=1,    .init=1.0, .step=1e-4},
     {.type=PARAM_ALT,     .p=&all_sigs.mx_sg,     .cc=23, .btn=9,  .min=0,   .max=1,    .init=0,   .step=1e-4},
     {.type=PARAM_ALT,     .p=&all_sigs.mx_env,    .cc=24, .btn=18, .min=0,   .max=1,    .init=0,   .step=1e-4},
     {.type=PARAM_MOD,     .p=&all_sigs.fold_timb, .cc=25, .btn=23, .min=0,   .max=1,    .init=0,   .step=1e-4},

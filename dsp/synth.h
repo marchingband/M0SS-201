@@ -141,6 +141,17 @@ typedef struct {
 // penta = (1,pow(2,3/12),pow(2,5/12),pow(2,7/12),pow(2,10/12));
 
 
+typedef struct {
+    float threshold;
+    float prev_input;
+} Folder_Stage_t;
+
+typedef struct {
+    Folder_Stage_t stages[16];
+    int num_stages;
+} Multistage_Wave_Folder_t;
+
+
 void compute_midi_note();
 
 void compute_matrix();
@@ -152,7 +163,7 @@ void compute_env();
 void compute_os1();
 void compute_os2();
 float compute_mixer();
-float compute_wavefolder(float in, float timbre, float bias);
+float compute_wavefolder(float in);
 float compute_amplifier(float in, float gain, float mode_sel);
 float compute_delay(float in, float time, float fb, float mix);
 #endif  // DSP_SYNTH_H_
