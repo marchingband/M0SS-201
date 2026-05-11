@@ -16,16 +16,12 @@
 // #include "moog-poly-8.h"
 // #include "moog-poly-8-verb.h"
 // #include "mg1.h"
-#include "M0SS-201.h"
 
 #define NUM_VOICES 1
 
 // from midi.c
 void extract(const char *name, float *p, float init, float min, float max, float step);
 void *declare(UIGlue *uiInterface, float *p, const char* key, const char* val);
-
-// from the dsp .h file
-void buildUserInterfacemydsp(mydsp* dsp, UIGlue* ui_interface);
 
 // from midi.c
 void poll_uart(void);
@@ -102,35 +98,9 @@ float note_to_freq(int note)
     return (a / 32) * pow(2, ((note - 9) / 12.0));
 }
 
-mydsp dsp;
-
 float *buf[1];
 size_t buf_len;
 
-void openVerticalBox(UIGlue *uiInterface, char* key){};
-void openHorizontalBox(UIGlue *uiInterface, char* key){};
-void openTabBox(UIGlue *uiInterface, char* key){};
-void *closeBox(UIGlue *uiInterface){};
-void *addVerticalBargraph(UIGlue *uiInterface, const char *name, float *p, float f1, float f2){};
-void *addButton(UIGlue *uiInterface, const char *name, float *p){extract(name, p, 0, 0, 0, 0);};
-void *addVerticalSlider(UIGlue *uiInterface, const char *name, float *p, float init, float min, float max, float step){extract(name, p, init, min, max, step);};
-void *addHorizontalSlider(UIGlue *uiInterface, const char *name, float *p, float init, float min, float max, float step){extract(name, p, init, min, max, step);};
-void *addNumEntry(UIGlue *uiInterface, const char *name, float *p, float init, float min, float max, float step){extract(name, p, init, min, max, step);};
-void *addCheckButton(UIGlue *uiInterface, const char *name, float *p){extract(name, p, 0, 0, 1, 1);};
-
-UIGlue ui_glue = {
-    .openVerticalBox = openVerticalBox,
-    .openHorizontalBox = openHorizontalBox,
-    .closeBox = closeBox,
-    .declare = declare,
-    .addVerticalSlider = addVerticalSlider,
-    .addHorizontalSlider = addHorizontalSlider,
-    .addNumEntry = addNumEntry,
-    .addVerticalBargraph = addVerticalBargraph,
-    .addButton = addButton,
-    .openTabBox = openTabBox,
-    .addCheckButton = addCheckButton
-};
 
 void dsp_init(size_t buf_size)
 {

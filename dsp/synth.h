@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "biquad.h"
+
 #define SR 48000U
 #define SR_INV 2.08333e-5f
 

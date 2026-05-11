@@ -15,7 +15,9 @@ Multistage_Wave_Folder_t wf;
 
 DSP_All_Signals all_sigs;
 
-const float param_smooth_coeff = 0.9997917f; //pow2f(-1.0f * LOG2_E * SR_INV / 0.6f);
+Biquad_t dec_filt1, dec_filt2;
+
+const float param_smooth_coeff = 0.9997917f; //pow2f(-1.0f * LOG2_E * SR_INV / 0.1f);
 
 void smooth_signals() {
     // all parameters
@@ -47,6 +49,8 @@ void smooth_signals() {
     }
 }
 
+#define OVERSAMPLE_RATIO 4
+
 void init_dsp() {
     for (uint16_t i = 0; i < MAX_SG_LENGTH; i++) {
         sg_state.arr[i] = randf();
@@ -54,6 +58,8 @@ void init_dsp() {
     sg_state.idx = 0;
 
     wf.num_stages = 4;
+
+    dec_filt1 = dec_filt2 = generate_lowpass(SR * OVERSAMPLE_RATIO, SR >> 1, 0.707f);
 }
 
 float midi_note;
@@ -445,8 +451,12 @@ float compute_mixer() {
 }
 
 float naive_fold(float x, float t) {
-    if (x > t) return 2.0f*t - x;
-    if (x < -t) return -2.0f*t - x;
+while (x > t || x < -t) {
+        if (x > t)
+            x = 2.0f * t - x;
+        else
+            x = -2.0f * t - x;
+    }
     return x;
 }
 
@@ -473,6 +483,7 @@ float compute_folder_stage(float in, Folder_Stage_t* f) {
 }
 
 float compute_wavefolder(float in) {
+    static float prev_in = 0.0f;
     in += all_sigs.fold_bias;
     float t = 1.0f + all_sigs.fold_timb;
     if (all_sigs.bus_sel == BUS_SEL_TM) {
@@ -483,13 +494,17 @@ float compute_wavefolder(float in) {
 
     in *= t;
 
-    float output = in;
-    for (uint16_t i = 0; i < wf.num_stages; i++) {
-        wf.stages[i].threshold = 1.0f;
-        output = compute_folder_stage(output, &wf.stages[i]);
-    }
+    float os_outputs[OVERSAMPLE_RATIO];
+    for (uint16_t i = 0; i < OVERSAMPLE_RATIO; i++) {
+        // 0.25f for a 4x oversample ratio
+        float frac = (float)i * 0.25f;
+        float interpolated_sample = prev_in + (in - prev_in) * frac;
 
-    return output;
+        float folded_sample = naive_fold(interpolated_sample, 1.0f);
+        os_outputs[i] = process_biquad(&dec_filt2, process_biquad(&dec_filt1, folded_sample));
+    }
+    prev_in = in;
+    return os_outputs[OVERSAMPLE_RATIO - 1];
 }
 
 float compute_amplifier(float in, float gain, float mode_sel) {
