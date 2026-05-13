@@ -322,6 +322,7 @@ static void process_buttons(){
             button_time[i] = now;
 
             printf("button %d pushed\n", i);
+            printf("value: %.2f\n", *get_ccs()[i].p);
 
             if( i == BUTTON_NUM_ENCODER ){
                 // check for reset command

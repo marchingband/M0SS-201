@@ -150,4 +150,20 @@ static inline float midi_note_to_freq_hz(float note) {
 	return 440.0f * pow2f((note - 69.0f) * 0.08333f);
 }
 
+inline float InterpolateHermite(const float* table, float index, float size) {
+	index *= size;
+	MAKE_INTEGRAL_FRACTIONAL(index)
+	const float xm1 = table[index_integral - 1];
+	const float x0 = table[index_integral + 0];
+	const float x1 = table[index_integral + 1];
+	const float x2 = table[index_integral + 2];
+	const float c = (x1 - xm1) * 0.5f;
+	const float v = x0 - x1;
+	const float w = c + v;
+	const float a = w + v + (x2 - x0) * 0.5f;
+	const float b_neg = w + a;
+	const float f = index_fractional;
+	return (((a * f) - b_neg) * f + c) * f + x0;
+}
+
 #endif  // DSP_UTILS_H_

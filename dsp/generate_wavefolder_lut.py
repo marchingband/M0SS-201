@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 TABLE_SIZE = 512
 
 def main():    
-    x = numpy.arange(0, TABLE_SIZE) / (TABLE_SIZE / 2.0) - 1.0
+    # we add four to have extras for the hermite interpolation
+    x = numpy.arange(0, TABLE_SIZE + 4) / (TABLE_SIZE / 2.0) - 1.0
     x[-1] = x[-2]
     sine = numpy.sin(8 * numpy.pi * x)
     window = numpy.exp(-x * x * 4) ** 2
@@ -15,9 +16,9 @@ def main():
         f.write("#ifndef FOLD_LUT_H_\n")
         f.write("#define FOLD_LUT_H_\n")
 
-        f.write(f"const float fold_lut[{TABLE_SIZE}] = {{\n")
+        f.write(f"const float fold_lut[{len(x)}] = {{\n")
         for i, el in enumerate(bipolar_fold):
-            if (i != TABLE_SIZE-1):
+            if (i != len(bipolar_fold)-1):
                 f.write(f"{el:.6f}, ")
             else: f.write(f"{el:.6f}")
         f.write("\n};\n")

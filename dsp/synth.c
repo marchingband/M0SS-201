@@ -3,6 +3,7 @@
 #include "synth.h"
 #include "interface.h"
 #include "utils.h"
+#include "fold_lut.h"
 
 extern DSP_All_Signals all_sigs_raw;
 
@@ -15,7 +16,7 @@ Multistage_Wave_Folder_t wf;
 
 DSP_All_Signals all_sigs;
 
-Biquad_t dec_filt1, dec_filt2;
+Biquad_t dec_filt1, dec_filt2, dec_filt3;
 
 const float param_smooth_coeff = 0.9997917f; //pow2f(-1.0f * LOG2_E * SR_INV / 0.1f);
 
@@ -59,7 +60,7 @@ void init_dsp() {
 
     wf.num_stages = 4;
 
-    dec_filt1 = dec_filt2 = generate_lowpass(SR * OVERSAMPLE_RATIO, SR >> 1, 0.707f);
+    dec_filt1 = dec_filt2 = dec_filt3 = generate_lowpass(SR * OVERSAMPLE_RATIO, SR >> 1, 0.707f);
 }
 
 float midi_note;
@@ -118,7 +119,7 @@ void compute_dsp(size_t len, float* buf) {
         // float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
 
         // buf[i] = delayed_signal;
-        buf[i] = folded_output;
+        buf[i] = mixed_output;
     }
     all_sigs.ind_env = env_state.val;
     all_sigs.ind_sg = sg_state.val;
@@ -482,26 +483,61 @@ float compute_folder_stage(float in, Folder_Stage_t* f) {
     return output;
 }
 
+float plaits_fold(float in) {
+    if (in > 1.0f) return 1.0f;
+    if (in < -1.0f) return -1.0f;
+    return InterpolateHermite(fold_lut + 1, in*0.5f + 0.5f, 512.0f);
+}
+
 float compute_wavefolder(float in) {
-    static float prev_in = 0.0f;
+    // originally, signal is normalized to be between -1 and 1.
+    // The mixer adds four signals together, so if they all line up
+    // the signal could technically be between +/-4
+    // generally though, there's just going to be one signal (or maybe two).
+    // mixing two together with no folding applied should sound clean,
+    // adding the modulators (ENV and SG) it would be acceptable for them
+    // to hit the wavefolder (that's intended as an automated bias control).
+    // Emilie's LUT has a linear region of around +/-0.02, and the first
+    // fold crests at 0.06
+    // when the signal gets all the way to +/-1, the output reaches 1,
+    // which is our 0dBFS level.
+
+    // gain-staging wise, this is the point in the signal chain where we need
+    // to reduce levels from their full-scale representation to their normal
+    // version. In this case, that means that +/-0.5 is an acceptable level
+    // for normal volume. Increasing to +/-1 would be making it loud, which
+    // the wavefolder LUT does do.
+
+    // add bias before gain-staging
+    // okay for it to be unipolar, it would sound the same on
+    // the negative side anyway
     in += all_sigs.fold_bias;
-    float t = 1.0f + all_sigs.fold_timb;
+
+    // gainstaging
+    in *= 0.02f;
+
+    // minimum timbre is no change in signal level
+    // maximum timbre is all the way to +/-1, so 50x
+    // above that value the folder will simply saturate
+    float t = all_sigs.fold_timb * 25.0f;
     if (all_sigs.bus_sel == BUS_SEL_TM) {
         const float max_timbre_modulation = 1.0f;
-        t += max_timbre_modulation * all_sigs.bus_idx * os1_state.val;
+        t += max_timbre_modulation * all_sigs.bus_idx * os1_state.val * 25.0f;
     }
-    t = MAX(t*4.0f, 1e-4f);
+    t += 1.0f;
 
     in *= t;
+    // return plaits_fold(in);
 
+    static float prev_in = 0.0f;
     float os_outputs[OVERSAMPLE_RATIO];
     for (uint16_t i = 0; i < OVERSAMPLE_RATIO; i++) {
         // 0.25f for a 4x oversample ratio
         float frac = (float)i * 0.25f;
         float interpolated_sample = prev_in + (in - prev_in) * frac;
 
-        float folded_sample = naive_fold(interpolated_sample, 1.0f);
-        os_outputs[i] = process_biquad(&dec_filt2, process_biquad(&dec_filt1, folded_sample));
+        float folded_sample = plaits_fold(in);
+        os_outputs[i] = process_biquad(&dec_filt3, process_biquad(&dec_filt2, process_biquad(&dec_filt1, folded_sample)));
     }
     prev_in = in;
     return os_outputs[OVERSAMPLE_RATIO - 1];
