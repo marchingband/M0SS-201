@@ -120,7 +120,7 @@ void compute_dsp(size_t len, float* buf) {
 
         // buf[i] = delayed_signal;
         float volume = normalized_linear_to_logexp(all_sigs.vol, 4);
-        buf[i] = amped_output * volume;
+        buf[i] = folded_output * volume;
     }
     all_sigs.ind_env = env_state.val;
     all_sigs.ind_sg = sg_state.val;
@@ -451,8 +451,20 @@ float compute_mixer() {
         + os1_state.val * power_law_os1 + os2_state.val * power_law_os2;
 }
 
+float parabolic_fold(float x) {
+    const float a = 0.6f;
+    const float b = 1.0f / (2.0f * a);
+    const float xm2 = (x - 1.0f)*(x - 1.0f);
+    const float xp2 = (x + 1.0f)*(x + 1.0f);
+    if (x < -1.0f-a) return -2.0f - x;
+    if (x < -1.0f+a) return b*xp2 - 1.0f + 0.5f*a;
+    if (x <  1.0f-a) return x;
+    if (x <  1.0f+a) return -b*xm2 + 1.0f - 0.5f*a;
+    return 2.0f - x;
+}
 
 float plaits_fold(float in) {
+    in *= 0.02f;
     if (in > 1.0f) return 1.0f;
     if (in < -1.0f) return -1.0f;
     return InterpolateHermite(fold_lut + 1, in*0.5f + 0.5f, 512.0f);
@@ -482,9 +494,6 @@ float compute_wavefolder(float in) {
     // the negative side anyway
     in += all_sigs.fold_bias;
 
-    // gainstaging
-    in *= 0.02f;
-
     // minimum timbre is no change in signal level
     // maximum timbre is all the way to +/-1, so 50x
     // above that value the folder will simply saturate
@@ -504,7 +513,13 @@ float compute_wavefolder(float in) {
         float frac = (float)i * 0.25f;
         float interpolated_sample = prev_in + (in - prev_in) * frac;
 
-        float folded_sample = plaits_fold(in);
+        //float folded_sample = plaits_fold(interpolated_sample);
+        #define FOLD_STAGES 2
+        for (uint16_t j = 0; j < FOLD_STAGES; j++) {
+            interpolated_sample = plaits_fold(interpolated_sample);
+        }
+        float folded_sample = interpolated_sample;
+
         os_outputs[i] = process_biquad(&dec_filt3, process_biquad(&dec_filt2, process_biquad(&dec_filt1, folded_sample)));
     }
     prev_in = in;
