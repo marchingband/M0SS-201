@@ -548,9 +548,9 @@ void compute_vactrol_params(float level, float short_decay, float decay_tail, fl
 const float PI = 3.1415926f;
 float compute_amplifier(float in) {
     float gain = env_state.val; // .amp;
-    // if (all_sigs_raw.amp_sel == AMP_VCA) return in * gain;
+    if (all_sigs_raw.amp_sel == AMP_VCA) return in * gain;
 
-    compute_vactrol_params(gain, 0.01f, 0.005f, 0.5f);
+    compute_vactrol_params(gain, 0.01f, 0.005f, 0.2f);
     float freq_coeff = 1.0f - expf(-2.0f * PI * vact.normalized_freq);
     in *= vact.gain;
 
