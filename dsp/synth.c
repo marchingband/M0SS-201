@@ -161,9 +161,9 @@ void compute_sg_rate() {
 
 void compute_sg() {
     // TODO: shouldn't be all_sigs.gate, should be start of envelope cycle
-    bool gate = (all_sigs.gate_sel == GATESEL_ENV)? all_sigs.gate : sg_state.high;
+    bool gate = (all_sigs_raw.gate_sel == GATESEL_ENV)? all_sigs_raw.gate : sg_state.high;
 
-    uint16_t len_int = all_sigs.sg_len;
+    uint16_t len_int = all_sigs_raw.sg_len;
     len_int = CLAMP(len_int, MIN_SG_LENGTH, MAX_SG_LENGTH);
     if (gate && !sg_state.prev_gate) {
         sg_state.idx = (sg_state.idx + 1) % len_int;
@@ -205,10 +205,10 @@ inline float bias_clip(float b) {
 }
 
 void compute_env() {
-    bool trig = all_sigs.gate && !env_state.prev_gate;
+    bool trig = all_sigs_raw.gate && !env_state.prev_gate;
     env_state.prev_gate = all_sigs.gate;
 
-    if (trig || (env_state.stage == ENV_OFF && all_sigs.env_mode == ENVMODE_ARL)) {
+    if (trig || (env_state.stage == ENV_OFF && all_sigs_raw.env_mode == ENVMODE_ARL)) {
         env_state.stage = ENV_ATT;
     }
 
@@ -230,13 +230,13 @@ void compute_env() {
             env_state.val += slope;
             if (env_state.val >= 1.0f) {
                 env_state.val = 1.0f;
-                env_state.stage = (all_sigs.env_mode == ENVMODE_ASR)? ENV_SUS : ENV_REL;
+                env_state.stage = (all_sigs_raw.env_mode == ENVMODE_ASR)? ENV_SUS : ENV_REL;
             }
             break;
         }
         case ENV_SUS: {
             env_state.val = 1.0f;
-            if (all_sigs.gate != 1.0f) env_state.stage = ENV_REL;
+            if (all_sigs_raw.gate != 1.0f) env_state.stage = ENV_REL;
             break;
         }
         case ENV_REL: {
@@ -250,7 +250,7 @@ void compute_env() {
             env_state.val -= slope;
             if (env_state.val <= 0.0f) {
                 env_state.val = 0.0f;
-                env_state.stage = (all_sigs.env_mode == ENVMODE_ARL)? ENV_ATT : ENV_OFF;
+                env_state.stage = (all_sigs_raw.env_mode == ENVMODE_ARL)? ENV_ATT : ENV_OFF;
             }
             break;
         }
@@ -274,14 +274,14 @@ void compute_os1() {
 
     float freq_hz = 0.0f;
     float midi_freq = midi_note_to_freq_hz(midi_note);
-    if (all_sigs.os1_hilo == OS1_RANGE_LO) {
+    if (all_sigs_raw.os1_hilo == OS1_RANGE_LO) {
         float total_interval = all_sigs.os1_tune * slow_mode_course_max_interval + all_sigs.os1_fine * slow_mode_fine_max_interval;
         float multiplier = pow2f(total_interval);
-        freq_hz = ((all_sigs.os1_kt)? midi_freq * 0.125f : fast_mode_base_freq_hz) * multiplier;
+        freq_hz = ((all_sigs_raw.os1_kt)? midi_freq * 0.001953f : slow_mode_base_freq_hz) * multiplier;
     } else {
         float total_interval = all_sigs.os1_tune * fast_mode_course_max_interval + all_sigs.os1_fine * fast_mode_fine_max_interval;
         float multiplier = pow2f(total_interval);
-        freq_hz = ((all_sigs.os1_kt)? midi_freq * 0.001953f : slow_mode_base_freq_hz) * multiplier;
+        freq_hz = ((all_sigs_raw.os1_kt)? midi_freq * 0.125f : fast_mode_base_freq_hz) * multiplier;
     }
 
     float freq_normalized = freq_hz * SR_INV;
@@ -295,7 +295,7 @@ void compute_os1() {
 
     os1_state.phase += freq_normalized;
 
-    if (os1_state.high && os1_state.phase > 0.5f) {
+    if (os1_state.high && os1_state.phase >= 0.5f) {
         float t = (os1_state.phase - 0.5f) / freq_normalized;
         float discontinuity = 4.0f * freq_normalized;
         this_tri -= this_iblep(t) * discontinuity;
@@ -324,17 +324,11 @@ void compute_os1() {
         os1_state.high = true;
     }
 
-    if (all_sigs.os1_hilo == OS1_RANGE_LO) {
-        this_tri = os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase);
-        this_saw = os1_state.phase;
-        this_sqr = os1_state.high? 1.0f : 0.0f;
-    } else {
-        this_tri += os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase);
-        this_saw += os1_state.phase;
-        this_sqr += os1_state.high? 1.0f : 0.0f;
-    }
+    this_tri += os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase);
+    this_saw += os1_state.phase;
+    this_sqr += os1_state.high? 1.0f : 0.0f;
 
-    switch ((uint32_t)all_sigs.os1_wave) {
+    switch ((uint32_t)all_sigs_raw.os1_wave) {
         case OS1_WAV_TRI:
             os1_state.val = 2.0f * this_tri - 1.0f;
             break;
@@ -344,7 +338,7 @@ void compute_os1() {
         case OS1_WAV_SAW:
             os1_state.val = 2.0f * this_saw - 1.0f;
             break;
-    }
+    }                        
     // if (os1_state.val > 1.0f || os1_state.val < -1.0f) printf("max value exceeded!: %0.4f\n", os1_state.val);
 }
 
@@ -382,11 +376,11 @@ float compute_os2_rate() {
     float tuning_range_octaves = 1.0f;  // one octave up and down
     float freq_multiplier = pow2f(fb_dests.os2 * 2.0f + tuning_range_octaves * all_sigs.os2_tune); // maximum two octave range for normalized value
 
-    pentatonic.root_freq_hz = midi_note_to_freq_hz(all_sigs.pitch);
-    if (all_sigs.os2_qu != 0) freq_multiplier = quantize(freq_multiplier, &pentatonic);
+    pentatonic.root_freq_hz = midi_note_to_freq_hz(all_sigs_raw.pitch);
+    if (all_sigs_raw.os2_qu != 0) freq_multiplier = quantize(freq_multiplier, &pentatonic);
 
     float freq_hz = freq_multiplier * midi_note_to_freq_hz(midi_note);
-    if (all_sigs.bus_sel == BUS_SEL_FM) {
+    if (all_sigs_raw.bus_sel == BUS_SEL_FM) {
         float max_fm_index = 0.25f;
         freq_hz *= 1.0f + max_fm_index*all_sigs.bus_idx*os1_state.val;
     }
@@ -426,7 +420,7 @@ void compute_os2() {
 
     float selected_signal;
 
-    switch ((uint32_t)all_sigs.os2_wave) {
+    switch ((uint32_t)all_sigs_raw.os2_wave) {
         case OS2_WAV_SINE:
             selected_signal = this_sine;
             break;
@@ -438,17 +432,22 @@ void compute_os2() {
             break;
     }
 
-    if (all_sigs.bus_sel == BUS_SEL_AM) {
+    if (all_sigs_raw.bus_sel == BUS_SEL_AM) {
         selected_signal *= 1.0f - all_sigs.bus_idx*(1.0f - os1_state.val);
     }
     os2_state.val = selected_signal;
 }
 
 float compute_mixer() {
+    const int16_t power_law_coeff = 4;
     float bipolar_sg = 2.0f*sg_state.val - 1.0f;
     float bipolar_env = 2.0f*env_state.val - 1.0f;
-    return bipolar_sg * all_sigs.mx_sg + bipolar_env * all_sigs.mx_env \
-        + os1_state.val * all_sigs.mx_os1 + os2_state.val * all_sigs.mx_os2;
+    float power_law_sg = normalized_linear_to_logexp(all_sigs.mx_sg,   power_law_coeff);
+    float power_law_env = normalized_linear_to_logexp(all_sigs.mx_env, power_law_coeff);
+    float power_law_os1 = normalized_linear_to_logexp(all_sigs.mx_os1, power_law_coeff);
+    float power_law_os2 = normalized_linear_to_logexp(all_sigs.mx_os2, power_law_coeff);
+    return bipolar_sg * power_law_sg + bipolar_env * power_law_env \
+        + os1_state.val * power_law_os1 + os2_state.val * power_law_os2;
 }
 
 float naive_fold(float x, float t) {
@@ -520,7 +519,7 @@ float compute_wavefolder(float in) {
     // maximum timbre is all the way to +/-1, so 50x
     // above that value the folder will simply saturate
     float t = all_sigs.fold_timb * 25.0f;
-    if (all_sigs.bus_sel == BUS_SEL_TM) {
+    if (all_sigs_raw.bus_sel == BUS_SEL_TM) {
         const float max_timbre_modulation = 1.0f;
         t += max_timbre_modulation * all_sigs.bus_idx * os1_state.val * 25.0f;
     }

@@ -71,8 +71,8 @@ typedef enum {
 } OS2_Wave_Sel_t;
 
 typedef enum {
-    OS1_RANGE_LO,
-    OS1_RANGE_HI
+    OS1_RANGE_HI,
+    OS1_RANGE_LO
 } OS1_Range_Sel_t;
 
 typedef enum {
