@@ -114,6 +114,7 @@ void dsp_init(size_t buf_size)
     printf("buildUserInterfacemydsp\n");
     // buildUserInterfacemydsp(&dsp, &ui_glue);
     link_ui();
+    reset_params();
     printf("malloc\n");
     buf[0] = (float *)malloc(buf_size * sizeof(float));
     buf_len = buf_size;

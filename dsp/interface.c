@@ -12,7 +12,7 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_SEL,     .p=&all_sigs_raw.env_mode,  .cc=6,  .btn=12, .min=0,   .max=2,    .init=0,   .step=1   },
     {.type=PARAM_MOD,     .p=&all_sigs_raw.env_att,   .cc=7,  .btn=10, .min=0,   .max=1,    .init=0,   .step=1e-4},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.env_rel,   .cc=8,  .btn=14, .min=0,   .max=1,    .init=0,   .step=1e-4},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.env_crv,   .cc=9,  .btn=10, .min=0,   .max=1,    .init=0,   .step=1e-4},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.env_crv,   .cc=9,  .btn=10, .min=0,   .max=1,    .init=0.5, .step=1e-4},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.os1_tune,  .cc=10, .btn=2,  .min=0,   .max=1,    .init=0.5, .step=1e-4},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.os1_fine,  .cc=11, .btn=2,  .min=0,   .max=1,    .init=0,   .step=1e-4},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.os1_hilo,  .cc=12, .btn=4,  .min=0,   .max=1,    .init=0,   .step=1   },

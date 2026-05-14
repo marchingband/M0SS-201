@@ -213,7 +213,7 @@ void compute_env() {
         env_state.stage = ENV_ATT;
     }
 
-    float bias = bias_clip(all_sigs.sg_smth);
+    float bias = bias_clip(1.0f - all_sigs.env_crv);
 
     switch (env_state.stage) {
         case ENV_OFF: {

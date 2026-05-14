@@ -154,7 +154,6 @@ void link_ui() {
                 break;
             };
             case PARAM_SEL: {
-                printf("setting up selector...\n");
                 struct Sel *sel = &Sels[param.btn];
                 sel->p = param.p;
                 sel->min = param.min;
