@@ -70,7 +70,7 @@ void compute_midi_note() {
     // TODO: midi pitch bend
     float glide_s = linear_map(all_sigs.os2_glide, 0.0f, 1.0f, 0.01f, 0.6f);
     float coeff = pow2f(-1.0f * LOG2_E * SR_INV / glide_s);
-    lp_state += (all_sigs.pitch - lp_state) * coeff;
+    lp_state += (all_sigs_raw.pitch - lp_state) * coeff;
     midi_note = lp_state;
 }
 
@@ -120,11 +120,12 @@ void compute_dsp(size_t len, float* buf) {
 
         // buf[i] = delayed_signal;
         float volume = normalized_linear_to_logexp(all_sigs.vol, 4);
-        buf[i] = folded_output * volume;
+        buf[i] = amped_output * volume;
     }
-    all_sigs.ind_env = env_state.val;
-    all_sigs.ind_sg = sg_state.val;
-    all_sigs.ind_os1 = os1_state.val;
+    all_sigs_raw.ind_env = env_state.val; //  env_state.val;
+    all_sigs_raw.ind_sg = sg_state.val;
+    all_sigs_raw.ind_os1 = os1_state.val;
+    all_sigs_raw.ind_amp = buf[0]; //0.5f*buf[len-1] + 0.5f;
 }
 
 

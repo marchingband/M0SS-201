@@ -12,7 +12,7 @@
 #include "flash.h"
 #include "dsp/interface.h"
 extern DSP_Param_t dsp_ui[];
-extern DSP_All_Signals all_sigs;
+extern DSP_All_Signals all_sigs_raw;
 
 #define MIDI_NOTE_OFF 8
 #define MIDI_NOTE_ON 9
@@ -176,13 +176,13 @@ void link_ui() {
         }
     }
     // attach special signals
-    Signals.pitch = &all_sigs.pitch;
+    Signals.pitch = &all_sigs_raw.pitch;
     *Signals.pitch = 60.0f; // initial value
-    Signals.gate = &all_sigs.gate;
-    Signals.amp = &all_sigs.ind_amp;
-    Signals.le = &all_sigs.ind_env;
-    Signals.sg = &all_sigs.ind_sg;
-    Signals.mo = &all_sigs.ind_os1;
+    Signals.gate = &all_sigs_raw.gate;
+    Signals.amp = &all_sigs_raw.ind_amp;
+    Signals.le = &all_sigs_raw.ind_env;
+    Signals.sg = &all_sigs_raw.ind_sg;
+    Signals.mo = &all_sigs_raw.ind_os1;
 
     printf("mods idx 1 has ptr %p\n", (void*)Mods[1].p);
 }
