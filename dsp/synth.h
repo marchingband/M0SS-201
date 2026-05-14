@@ -82,6 +82,11 @@ typedef enum {
     ENV_REL
 } EnvStages_t;
 
+typedef enum {
+    AMP_LPG,
+    AMP_VCA
+} AmpMode_t;
+
 typedef struct {
     bool prev_gate;
     float val;
@@ -153,6 +158,14 @@ typedef struct {
     int num_stages;
 } Multistage_Wave_Folder_t;
 
+typedef struct {
+    float state;
+    float normalized_freq;
+    float gain;
+    float hf_bleed;
+    float lpf_state;
+} Vactrol_t;
+
 
 void compute_midi_note();
 
@@ -166,6 +179,6 @@ void compute_os1();
 void compute_os2();
 float compute_mixer();
 float compute_wavefolder(float in);
-float compute_amplifier(float in, float gain, float mode_sel);
+float compute_amplifier(float in);
 float compute_delay(float in, float time, float fb, float mix);
 #endif  // DSP_SYNTH_H_

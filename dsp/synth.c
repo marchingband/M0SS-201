@@ -97,7 +97,7 @@ void compute_dsp(size_t len, float* buf) {
 
         float mixed_output = compute_mixer();
         float folded_output = compute_wavefolder(mixed_output);
-
+        float amped_output = compute_amplifier(folded_output);
         // // compute OS2 output
         // CmplxModType_t mod_type = all_sigs.bus_sel;
         // float os2_freq = compute_os2_freq(mod_type); // takes into account mod_type
@@ -120,7 +120,7 @@ void compute_dsp(size_t len, float* buf) {
 
         // buf[i] = delayed_signal;
         float volume = normalized_linear_to_logexp(all_sigs.vol, 4);
-        buf[i] = folded_output * volume;
+        buf[i] = amped_output * volume;
     }
     all_sigs.ind_env = env_state.val;
     all_sigs.ind_sg = sg_state.val;
@@ -207,7 +207,7 @@ inline float bias_clip(float b) {
 
 void compute_env() {
     bool trig = all_sigs_raw.gate && !env_state.prev_gate;
-    env_state.prev_gate = all_sigs.gate;
+    env_state.prev_gate = all_sigs_raw.gate;
 
     if (trig || (env_state.stage == ENV_OFF && all_sigs_raw.env_mode == ENVMODE_ARL)) {
         env_state.stage = ENV_ATT;
@@ -451,37 +451,6 @@ float compute_mixer() {
         + os1_state.val * power_law_os1 + os2_state.val * power_law_os2;
 }
 
-float naive_fold(float x, float t) {
-while (x > t || x < -t) {
-        if (x > t)
-            x = 2.0f * t - x;
-        else
-            x = -2.0f * t - x;
-    }
-    return x;
-}
-
-float integral_naive_fold(float x, float t) {
-    float x2 = x*x;
-    float t2 = t*t;
-    if (x > t) return 2.0f*t*x - 0.5f*x2 - t2;
-    if (x < -t) return -2.0f*t*x - 0.5f*x2 - t2;
-    return 0.5f*x2;
-}
-
-float compute_folder_stage(float in, Folder_Stage_t* f) {
-    float output;
-    if (absf(in - f->prev_input) < 1e-6f) {
-        output = naive_fold(in, f->threshold);
-    } else {
-        float current_integral = integral_naive_fold(in, f->threshold);
-        float previous_integral = integral_naive_fold(f->prev_input, f->threshold);
-        float delta_x = in - f->prev_input;
-        output = (current_integral - previous_integral) / delta_x;
-    }
-    f->prev_input = in;
-    return output;
-}
 
 float plaits_fold(float in) {
     if (in > 1.0f) return 1.0f;
@@ -542,9 +511,36 @@ float compute_wavefolder(float in) {
     return os_outputs[OVERSAMPLE_RATIO - 1];
 }
 
-float compute_amplifier(float in, float gain, float mode_sel) {
-    // TODO
-    return in * all_sigs.gate;
+Vactrol_t vact;
+
+void compute_vactrol_params(float level, float short_decay, float decay_tail, float hf) {
+        float vactrol_input = level;
+        float vactrol_error = (vactrol_input - vact.state);
+        float vactrol_state_2 = vact.state * vact.state;
+        float vactrol_state_4 = vactrol_state_2 * vactrol_state_2;
+        float tail = 1.0f - vact.state;
+        float tail_2 = tail * tail;
+        float vactrol_coefficient = (vactrol_error > 0.0f)? 0.6f \
+            : short_decay + (1.0f - vactrol_state_4) * decay_tail;
+
+        vact.state += vactrol_coefficient * vactrol_error;
+        vact.gain = vact.state;
+        vact.normalized_freq = 0.003f + 0.3f * vactrol_state_4 + hf * 0.04f;
+        vact.hf_bleed = (tail_2 + (1.0f - tail_2) * hf) * hf * hf;
+    }
+
+const float PI = 3.1415926f;
+float compute_amplifier(float in) {
+    float gain = env_state.val; // .amp;
+    // if (all_sigs_raw.amp_sel == AMP_VCA) return in * gain;
+
+    compute_vactrol_params(gain, 0.01f, 0.005f, 0.5f);
+    float freq_coeff = 1.0f - expf(-2.0f * PI * vact.normalized_freq);
+    in *= vact.gain;
+
+    vact.lpf_state += freq_coeff*(in - vact.lpf_state);
+
+    return vact.lpf_state + (in - vact.lpf_state) * vact.hf_bleed;
 }
 
 float compute_delay(float in, float time, float fb, float mix) {
