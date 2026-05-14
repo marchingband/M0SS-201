@@ -242,57 +242,42 @@ void render_lights(void){
             }
 
             // matrix
-            pixel_buf[11] = pixel_fade((*(sigs->le)) * (*(ccs[41].p))); // env-amp
-            pixel_buf[12] = pixel_fade((*(sigs->le)) * (*(ccs[40].p))); // env-timb
-            pixel_buf[13] = pixel_fade((*(sigs->le)) * (*(ccs[39].p))); // env-idx
-            pixel_buf[14] = pixel_fade((*(sigs->le)) * (*(ccs[38].p))); // env-bus
-            pixel_buf[15] = pixel_fade((*(sigs->le)) * (*(ccs[37].p))); // env-os2
-            pixel_buf[16] = pixel_fade((*(sigs->le)) * (*(ccs[36].p))); // env-os1
-            pixel_buf[17] = pixel_fade((*(sigs->le)) * (*(ccs[35].p))); // env-rel
-            pixel_buf[18] = pixel_fade((*(sigs->le)) * (*(ccs[34].p))); // env-att
-            pixel_buf[19] = pixel_fade((*(sigs->le)) * (*(ccs[33].p))); // env-smth
-            pixel_buf[20] = pixel_fade((*(sigs->le)) * (*(ccs[32].p))); // env-rcl
-            pixel_buf[21] = pixel_fade((*(sigs->le)) * (*(ccs[31].p))); // env-rate
-            pixel_buf[22] = pixel_fade((*(sigs->le)) * (*(ccs[30].p))); // env-len
-            pixel_buf[23] = pixel_fade(sg * (*(ccs[42].p))); // sg-len
-            pixel_buf[24] = pixel_fade(sg * (*(ccs[43].p))); // sg-rate
-            pixel_buf[25] = pixel_fade(sg * (*(ccs[44].p))); // sg-rcl
-            pixel_buf[26] = pixel_fade(sg * (*(ccs[45].p))); // sg-smth
-            pixel_buf[27] = pixel_fade(sg * (*(ccs[46].p))); // sg-att
-            pixel_buf[28] = pixel_fade(sg * (*(ccs[47].p))); // sg-rel
-            pixel_buf[29] = pixel_fade(sg * (*(ccs[48].p))); // sg-os1
-            pixel_buf[30] = pixel_fade(sg * (*(ccs[49].p))); // sg-os2
-            pixel_buf[31] = pixel_fade(sg * (*(ccs[50].p))); // sg-bus
-            pixel_buf[32] = pixel_fade(sg * (*(ccs[51].p))); // sg-idx
-            pixel_buf[33] = pixel_fade(sg * (*(ccs[52].p))); // sg-timb
-            pixel_buf[34] = pixel_fade(sg * (*(ccs[53].p))); // sg-amp
-            if(os1_hi){
-                pixel_buf[35] = pixel_fade_lfo(mo_freq, (*(ccs[65].p))); // os1-amp
-                pixel_buf[36] = pixel_fade_lfo(mo_freq, (*(ccs[64].p))); // os1-timb
-                pixel_buf[37] = pixel_fade_lfo(mo_freq, (*(ccs[63].p))); // os1-idx
-                pixel_buf[38] = pixel_fade_lfo(mo_freq, (*(ccs[62].p))); // os1-bus
-                pixel_buf[39] = pixel_fade_lfo(mo_freq, (*(ccs[61].p))); // os1-os2
-                pixel_buf[40] = pixel_fade_lfo(mo_freq, (*(ccs[60].p))); // os1-os1
-                pixel_buf[41] = pixel_fade_lfo(mo_freq, (*(ccs[59].p))); // os1-rel
-                pixel_buf[42] = pixel_fade_lfo(mo_freq, (*(ccs[58].p))); // os1-att
-                pixel_buf[43] = pixel_fade_lfo(mo_freq, (*(ccs[57].p))); // os1-smth
-                pixel_buf[44] = pixel_fade_lfo(mo_freq, (*(ccs[56].p))); // os1-rcl
-                pixel_buf[45] = pixel_fade_lfo(mo_freq, (*(ccs[55].p))); // os1-rate
-                pixel_buf[46] = pixel_fade_lfo(mo_freq, (*(ccs[54].p))); // os1-len
-            } else {
-                pixel_buf[35] = pixel_fade(mo * (*(ccs[65].p))); // os1-amp
-                pixel_buf[36] = pixel_fade(mo * (*(ccs[64].p))); // os1-timb
-                pixel_buf[37] = pixel_fade(mo * (*(ccs[63].p))); // os1-idx
-                pixel_buf[38] = pixel_fade(mo * (*(ccs[62].p))); // os1-bus
-                pixel_buf[39] = pixel_fade(mo * (*(ccs[61].p))); // os1-os2
-                pixel_buf[40] = pixel_fade(mo * (*(ccs[60].p))); // os1-os1
-                pixel_buf[41] = pixel_fade(mo * (*(ccs[59].p))); // os1-rel
-                pixel_buf[42] = pixel_fade(mo * (*(ccs[58].p))); // os1-att
-                pixel_buf[43] = pixel_fade(mo * (*(ccs[57].p))); // os1-smth
-                pixel_buf[44] = pixel_fade(mo * (*(ccs[56].p))); // os1-rcl
-                pixel_buf[45] = pixel_fade(mo * (*(ccs[55].p))); // os1-rate
-                pixel_buf[46] = pixel_fade(mo * (*(ccs[54].p))); // os1-len
-            }
+            pixel_buf[11] = pixel_fade((*(ccs[67].p))); // env-amp
+            pixel_buf[12] = pixel_fade((*(ccs[66].p))); // env-timb
+            pixel_buf[13] = pixel_fade((*(ccs[65].p))); // env-idx
+            pixel_buf[14] = pixel_fade((*(ccs[64].p))); // env-bus
+            pixel_buf[15] = pixel_fade((*(ccs[63].p))); // env-os2
+            pixel_buf[16] = pixel_fade((*(ccs[62].p))); // env-os1
+            pixel_buf[17] = pixel_fade((*(ccs[61].p))); // env-rel
+            pixel_buf[18] = pixel_fade((*(ccs[60].p))); // env-att
+            pixel_buf[19] = pixel_fade((*(ccs[59].p))); // env-smth
+            pixel_buf[20] = pixel_fade((*(ccs[58].p))); // env-rcl
+            pixel_buf[21] = pixel_fade((*(ccs[57].p))); // env-rate
+            pixel_buf[22] = pixel_fade((*(ccs[56].p))); // env-len
+            pixel_buf[23] = pixel_fade((*(ccs[44].p))); // sg-len
+            pixel_buf[24] = pixel_fade((*(ccs[45].p))); // sg-rate
+            pixel_buf[25] = pixel_fade((*(ccs[46].p))); // sg-rcl
+            pixel_buf[26] = pixel_fade((*(ccs[47].p))); // sg-smth
+            pixel_buf[27] = pixel_fade((*(ccs[48].p))); // sg-att
+            pixel_buf[28] = pixel_fade((*(ccs[49].p))); // sg-rel
+            pixel_buf[29] = pixel_fade((*(ccs[50].p))); // sg-os1
+            pixel_buf[30] = pixel_fade((*(ccs[51].p))); // sg-os2
+            pixel_buf[31] = pixel_fade((*(ccs[52].p))); // sg-bus
+            pixel_buf[32] = pixel_fade((*(ccs[53].p))); // sg-idx
+            pixel_buf[33] = pixel_fade((*(ccs[54].p))); // sg-timb
+            pixel_buf[34] = pixel_fade((*(ccs[55].p))); // sg-amp
+            pixel_buf[35] = pixel_fade((*(ccs[43].p))); // os1-amp
+            pixel_buf[36] = pixel_fade((*(ccs[42].p))); // os1-timb
+            pixel_buf[37] = pixel_fade((*(ccs[41].p))); // os1-idx
+            pixel_buf[38] = pixel_fade((*(ccs[40].p))); // os1-bus
+            pixel_buf[39] = pixel_fade((*(ccs[39].p))); // os1-os2
+            pixel_buf[40] = pixel_fade((*(ccs[38].p))); // os1-os1
+            pixel_buf[41] = pixel_fade((*(ccs[37].p))); // os1-rel
+            pixel_buf[42] = pixel_fade((*(ccs[36].p))); // os1-att
+            pixel_buf[43] = pixel_fade((*(ccs[35].p))); // os1-smth
+            pixel_buf[44] = pixel_fade((*(ccs[34].p))); // os1-rcl
+            pixel_buf[45] = pixel_fade((*(ccs[33].p))); // os1-rate
+            pixel_buf[46] = pixel_fade((*(ccs[32].p))); // os1-len
 
             pixel_buf[47] = *(sels[19].p) == 1 ? pixel_on : pixel_off; // amp-vca
             pixel_buf[48] = *(sels[19].p) == 0 ? pixel_on : pixel_off; // amp-lpg

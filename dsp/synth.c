@@ -133,19 +133,23 @@ void compute_dsp(size_t len, float* buf) {
 // therefore just by adding the signals the range is [-1, 3]
 // os1 should have the same total effect as the other two however,
 // so the operation to normalize should be ((os1 + 1)/2 + sg + env) / 3
+
+#define E_MAT env_state.val * all_sigs.mtx[ENV_I_S]
+#define S_MAT sg_state.val * all_sigs.mtx[SG_I_S]
+#define O_MAT os1_state.val * all_sigs.mtx[OS1_I_S]
+
+#define MAT(x, y) CLAMP((E_MAT[x]) + (S_MAT[x]) + (O_MAT[x]) + (y), 0.0f, 1.0f)
+
 void compute_matrix() {
-    fb_dests.len  = all_sigs.sg_len;
-    fb_dests.rate = all_sigs.sg_rate;
-    fb_dests.rcl  = all_sigs.sg_rcl;
-    fb_dests.smth = all_sigs.sg_smth;
-    fb_dests.att  = all_sigs.env_att;
-    fb_dests.rel  = all_sigs.env_rel;
-    fb_dests.os1  = all_sigs.os1_tune;
-    fb_dests.os2  = all_sigs.os2_tune;
-    fb_dests.bus  = 0.0f;
-    fb_dests.idx  = all_sigs.bus_idx;
-    fb_dests.timb = all_sigs.fold_timb;
-    fb_dests.amp  = all_sigs.vol;
+    fb_dests.rate = MAT(RATE_I, all_sigs.sg_rate);
+    fb_dests.smth = MAT(SMTH_I, all_sigs.sg_smth);
+    fb_dests.att  = MAT(ATT_I,  all_sigs.env_att);
+    fb_dests.rel  = MAT(REL_I,  all_sigs.env_rel);
+    fb_dests.os1  = MAT(OS1_I,  all_sigs.os1_tune);
+    fb_dests.os2  = MAT(OS2_I,  all_sigs.os2_tune);
+    fb_dests.idx  = MAT(IDX_I,  all_sigs.bus_idx);
+    fb_dests.timb = MAT(TIMB_I, all_sigs.fold_timb);
+    fb_dests.amp  = MAT(AMP_I,  0.0f);
 }
 
 void compute_sg_rate() {
@@ -153,7 +157,7 @@ void compute_sg_rate() {
     const float max_freq = 4000.0f;  // 4kHz
 
     const int curvature = 10;
-    float rate_hz = normalized_linear_to_logexp(all_sigs.sg_rate, curvature)*max_freq + min_freq;
+    float rate_hz = normalized_linear_to_logexp(fb_dests.rate, curvature)*max_freq + min_freq;
 
     sg_state.rate_normalized = rate_hz * SR_INV;
     sg_state.phase += sg_state.rate_normalized;
@@ -176,7 +180,7 @@ void compute_sg() {
 
     // smooth out value
     // calculate coefficient
-    float smooth_amt = (all_sigs.sg_smth >= 0.01f)? expf(-4.0f * sg_state.rate_normalized / all_sigs.sg_smth) : 0.0f;
+    float smooth_amt = (fb_dests.smth >= 0.01f)? expf(-4.0f * sg_state.rate_normalized / fb_dests.smth) : 0.0f;
     // simple LPF
     sg_state.lpf_state = (1 - smooth_amt)*sg_state.arr[sg_state.idx] + smooth_amt*sg_state.lpf_state;
 
@@ -222,7 +226,7 @@ void compute_env() {
             break;
         }
         case ENV_ATT: {
-            float att_samples = all_sigs.env_att * MAX_ENV_STAGE_LEN_SAMPLES;
+            float att_samples = fb_dests.att * MAX_ENV_STAGE_LEN_SAMPLES;
             att_samples = CLAMP(att_samples, MIN_ENV_STAGE_LEN_SAMPLES, MAX_ENV_STAGE_LEN_SAMPLES);
             float slope = 1.0f / att_samples;
             
@@ -242,7 +246,7 @@ void compute_env() {
             break;
         }
         case ENV_REL: {
-            float rel_samples = all_sigs.env_rel * MAX_ENV_STAGE_LEN_SAMPLES;
+            float rel_samples = fb_dests.rel * MAX_ENV_STAGE_LEN_SAMPLES;
             rel_samples = CLAMP(rel_samples, MIN_ENV_STAGE_LEN_SAMPLES, MAX_ENV_STAGE_LEN_SAMPLES);
             float slope = 1.0f / rel_samples;
             
@@ -277,11 +281,11 @@ void compute_os1() {
     float freq_hz = 0.0f;
     float midi_freq = midi_note_to_freq_hz(midi_note);
     if (all_sigs_raw.os1_hilo == OS1_RANGE_LO) {
-        float total_interval = all_sigs.os1_tune * slow_mode_course_max_interval + all_sigs.os1_fine * slow_mode_fine_max_interval;
+        float total_interval = fb_dests.os1 * slow_mode_course_max_interval + all_sigs.os1_fine * slow_mode_fine_max_interval;
         float multiplier = pow2f(total_interval);
         freq_hz = ((all_sigs_raw.os1_kt)? midi_freq * 0.001953f : slow_mode_base_freq_hz) * multiplier;
     } else {
-        float total_interval = all_sigs.os1_tune * fast_mode_course_max_interval + all_sigs.os1_fine * fast_mode_fine_max_interval;
+        float total_interval = fb_dests.os1 * fast_mode_course_max_interval + all_sigs.os1_fine * fast_mode_fine_max_interval;
         float multiplier = pow2f(total_interval);
         freq_hz = ((all_sigs_raw.os1_kt)? midi_freq * 0.125f : fast_mode_base_freq_hz) * multiplier;
     }
@@ -376,7 +380,7 @@ float compute_os2_rate() {
     // tuning slider and modulations get quantized, then FM is added.
 
     float tuning_range_octaves = 1.0f;  // one octave up and down
-    float freq_multiplier = pow2f(fb_dests.os2 * 2.0f + tuning_range_octaves * all_sigs.os2_tune); // maximum two octave range for normalized value
+    float freq_multiplier = pow2f(fb_dests.os2 * 2.0f + tuning_range_octaves * fb_dests.os2); // maximum two octave range for normalized value
 
     pentatonic.root_freq_hz = midi_note_to_freq_hz(all_sigs_raw.pitch);
     if (all_sigs_raw.os2_qu != 0) freq_multiplier = quantize(freq_multiplier, &pentatonic);
@@ -384,7 +388,7 @@ float compute_os2_rate() {
     float freq_hz = freq_multiplier * midi_note_to_freq_hz(midi_note);
     if (all_sigs_raw.bus_sel == BUS_SEL_FM) {
         float max_fm_index = 0.25f;
-        freq_hz *= 1.0f + max_fm_index*all_sigs.bus_idx*os1_state.val;
+        freq_hz *= 1.0f + max_fm_index*fb_dests.idx*os1_state.val;
     }
     return freq_hz;
 }
@@ -435,7 +439,7 @@ void compute_os2() {
     }
 
     if (all_sigs_raw.bus_sel == BUS_SEL_AM) {
-        selected_signal *= 1.0f - all_sigs.bus_idx*(1.0f - os1_state.val);
+        selected_signal *= 1.0f - fb_dests.idx*(1.0f - os1_state.val);
     }
     os2_state.val = selected_signal;
 }
@@ -498,10 +502,10 @@ float compute_wavefolder(float in) {
     // minimum timbre is no change in signal level
     // maximum timbre is all the way to +/-1, so 50x
     // above that value the folder will simply saturate
-    float t = all_sigs.fold_timb * 25.0f;
+    float t = fb_dests.timb * 25.0f;
     if (all_sigs_raw.bus_sel == BUS_SEL_TM) {
         const float max_timbre_modulation = 1.0f;
-        t += max_timbre_modulation * all_sigs.bus_idx * os1_state.val * 25.0f;
+        t += max_timbre_modulation * fb_dests.idx * os1_state.val * 25.0f;
     }
     t += 1.0f;
 
@@ -547,7 +551,7 @@ void compute_vactrol_params(float level, float short_decay, float decay_tail, fl
 
 const float PI = 3.1415926f;
 float compute_amplifier(float in) {
-    float gain = env_state.val; // .amp;
+    float gain = fb_dests.amp; // .amp;
     if (all_sigs_raw.amp_sel == AMP_VCA) return in * gain;
 
     compute_vactrol_params(gain, 0.01f, 0.005f, 0.2f);

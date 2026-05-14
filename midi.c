@@ -286,19 +286,8 @@ void extract(const char *name, float *p, float init, float min, float max, float
 
 void reset_params(void){
     int i;
-    for(i=0; i<NUM_BUTTONS; i++){
-        if(Mods[i].p != NULL){
-            *(Mods[i].p) = Mods[i].init;
-        }
-        if(Alts[i].p != NULL){
-            *(Alts[i].p) = Alts[i].init;
-        }
-        if(Sels[i].p != NULL){
-            *(Sels[i].p) = Sels[i].init;
-        }
-        if(AltSels[i].p != NULL){
-            *(AltSels[i].p) = AltSels[i].init;
-        }
+    for(i=0; i<NUM_CC; i++){
+        *(CCs[i].p) = CCs[i].init;
     }
 }
 
