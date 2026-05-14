@@ -119,7 +119,8 @@ void compute_dsp(size_t len, float* buf) {
         // float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
 
         // buf[i] = delayed_signal;
-        buf[i] = mixed_output;
+        float volume = normalized_linear_to_logexp(all_sigs.vol, 4);
+        buf[i] = folded_output * volume;
     }
     all_sigs.ind_env = env_state.val;
     all_sigs.ind_sg = sg_state.val;
@@ -415,7 +416,7 @@ void compute_os2() {
         os2_state.high = true;
     }
 
-    this_tri = 2.0f * (os2_state.high? 2.0f * os2_state.phase : 2.0f * (1.0f - os2_state.phase)) - 1.0f;
+    this_tri += 2.0f * (os2_state.high? 2.0f * os2_state.phase : 2.0f * (1.0f - os2_state.phase)) - 1.0f;
     float this_sine = sin2pif(os2_state.phase);
 
     float selected_signal;
@@ -526,7 +527,6 @@ float compute_wavefolder(float in) {
     t += 1.0f;
 
     in *= t;
-    // return plaits_fold(in);
 
     static float prev_in = 0.0f;
     float os_outputs[OVERSAMPLE_RATIO];
