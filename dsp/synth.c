@@ -12,7 +12,7 @@ EnvState_t env_state;
 SGState_t sg_state;
 OscState_t os1_state;
 OscState_t os2_state;
-Multistage_Wave_Folder_t wf;
+InterpolatingDelay_t dly;
 
 DSP_All_Signals all_sigs;
 
@@ -58,9 +58,10 @@ void init_dsp() {
     }
     sg_state.idx = 0;
 
-    wf.num_stages = 4;
-
     dec_filt1 = dec_filt2 = dec_filt3 = generate_lowpass(SR * OVERSAMPLE_RATIO, SR >> 1, 0.707f);
+
+    dly.buffer_size = DELAY_LINE_LEN;
+    dly.ptr = 0;
 }
 
 float midi_note;
@@ -98,6 +99,7 @@ void compute_dsp(size_t len, float* buf) {
         float mixed_output = compute_mixer();
         float folded_output = compute_wavefolder(mixed_output);
         float amped_output = compute_amplifier(folded_output);
+        float delayed_output = compute_delay(amped_output);
         // // compute OS2 output
         // CmplxModType_t mod_type = all_sigs.bus_sel;
         // float os2_freq = compute_os2_freq(mod_type); // takes into account mod_type
@@ -120,7 +122,7 @@ void compute_dsp(size_t len, float* buf) {
 
         // buf[i] = delayed_signal;
         float volume = normalized_linear_to_logexp(all_sigs.vol, 4);
-        buf[i] = amped_output * volume;
+        buf[i] = delayed_output * volume;
     }
     all_sigs_raw.ind_env = env_state.val; //  env_state.val;
     all_sigs_raw.ind_sg = sg_state.val;
@@ -563,7 +565,30 @@ float compute_amplifier(float in) {
     return vact.lpf_state + (in - vact.lpf_state) * vact.hf_bleed;
 }
 
-float compute_delay(float in, float time, float fb, float mix) {
-    // TODO
-    return in;
+float compute_delay(float in) {
+    // compute parameters
+    float delay_time = all_sigs.dly_tm * (float)(dly.buffer_size - 1);
+    float feedback = normalized_linear_to_logexp(all_sigs.dly_fb, 4);
+    float mix = all_sigs.dly_mx;
+
+    // get read pointer
+    float read_ptr = (float)dly.ptr - delay_time;
+    while (read_ptr < 0) read_ptr += dly.buffer_size;
+    while (read_ptr >= dly.buffer_size) read_ptr -= dly.buffer_size;
+
+    // find new sample (interpolating)
+    MAKE_INTEGRAL_FRACTIONAL(read_ptr);
+    float sample1 = dly.buffer[read_ptr_integral];
+    float sample2 = dly.buffer[(read_ptr_integral + 1) % dly.buffer_size];
+    float delayed_sample = sample1 + read_ptr_fractional*(sample2 - sample1);
+    if (absf(delayed_sample) < 1e-15f) delayed_sample = 0.0f;
+
+    // handle feedback
+    dly.buffer[dly.ptr] = in + feedback*delayed_sample;
+
+    // update pointer
+    dly.ptr = (dly.ptr + 1) % dly.buffer_size;
+
+    // output value
+    return in*(1.0f - mix) + delayed_sample*mix;
 }

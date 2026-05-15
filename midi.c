@@ -177,7 +177,7 @@ void link_ui() {
     }
     // attach special signals
     Signals.pitch = &all_sigs_raw.pitch;
-    *Signals.pitch = 60.0f; // initial value
+    *Signals.pitch = 48.0f; // initial value
     Signals.gate = &all_sigs_raw.gate;
     Signals.amp = &all_sigs_raw.ind_amp;
     Signals.le = &all_sigs_raw.ind_env;

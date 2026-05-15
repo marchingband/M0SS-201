@@ -33,8 +33,8 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_SEL,     .p=&all_sigs_raw.amp_sel,   .cc=27, .btn=19, .min=0,   .max=1,    .init=0,   .step=1   },
     {.type=PARAM_ALT,     .p=&all_sigs_raw.vol,       .cc=28, .btn=19, .min=0,   .max=1,    .init=0.5,   .step=1e-4},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_tm,    .cc=29, .btn=16, .min=0,   .max=1,    .init=0,   .step=1e-4},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_mx,    .cc=30, .btn=25, .min=0,   .max=1,    .init=0,   .step=1e-4},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_fb,    .cc=31, .btn=24, .min=0,   .max=1,    .init=0,   .step=1e-4},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_mx,    .cc=30, .btn=24, .min=0,   .max=1,    .init=0,   .step=1e-4},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_fb,    .cc=31, .btn=25, .min=0,   .max=1,    .init=0,   .step=1e-4},
 
     {.type=PARAM_MTX,     .p=&all_sigs_raw.mtx[OS1_I_S][LEN_I ], .cc=32, .btn=-1, .min=0, .max=1, .init=0, .step=1e-4},
     {.type=PARAM_MTX,     .p=&all_sigs_raw.mtx[OS1_I_S][RATE_I], .cc=33, .btn=-1, .min=0, .max=1, .init=0, .step=1e-4},

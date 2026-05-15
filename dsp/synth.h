@@ -167,6 +167,16 @@ typedef struct {
 } Vactrol_t;
 
 
+// delay line length in seconds: 1.5
+#define DELAY_LINE_LEN 72000  // SR * delay_line_s
+
+typedef struct {
+    float buffer[DELAY_LINE_LEN];
+    int buffer_size;
+    int ptr;
+    float delay_time_samples;
+} InterpolatingDelay_t;
+
 void compute_midi_note();
 
 void compute_matrix();
@@ -180,5 +190,5 @@ void compute_os2();
 float compute_mixer();
 float compute_wavefolder(float in);
 float compute_amplifier(float in);
-float compute_delay(float in, float time, float fb, float mix);
+float compute_delay(float in);
 #endif  // DSP_SYNTH_H_
