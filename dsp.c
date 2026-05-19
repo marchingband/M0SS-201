@@ -20,7 +20,6 @@
 #define NUM_VOICES 1
 
 // from midi.c
-void extract(const char *name, float *p, float init, float min, float max, float step);
 void *declare(UIGlue *uiInterface, float *p, const char* key, const char* val);
 
 // from midi.c

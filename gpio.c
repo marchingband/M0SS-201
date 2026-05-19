@@ -70,7 +70,7 @@ void set_param_selected(int num, bool alt, bool cc)
             return;
         }
         // printf("set led %f %f %f\n\r", val, alt.min, alt.max);
-        set_led_display(alt.p, alt.min, alt.max);
+        set_led_display(alt.p, alt.min, alt.max, alt.numeric);
     }
     else if(cc)
     {
@@ -79,7 +79,7 @@ void set_param_selected(int num, bool alt, bool cc)
         if(cc.p == 0){
             return;
         }
-        set_led_display(cc.p, cc.min, cc.max);
+        set_led_display(cc.p, cc.min, cc.max, cc.numeric);
     }
     else
     {
@@ -89,7 +89,7 @@ void set_param_selected(int num, bool alt, bool cc)
             return;
         }
         // printf("set led %f %f %f\n\r", val, mod.min, mod.max);
-        set_led_display(mod.p, mod.min, mod.max);
+        set_led_display(mod.p, mod.min, mod.max, mod.numeric);
     }
     // if we get here it is a valid Alt, Mod or CC
     param_selected.button = num;
