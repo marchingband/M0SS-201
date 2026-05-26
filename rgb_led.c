@@ -250,46 +250,27 @@ void render_lights(void){
     // float mo_freq = *sigs->mo_freq / 3000; // the mosc range is about 3000
     float mo_freq = (*mods[17].p + 2) * 0.25;// posc range is [-2..2]
 
+    struct pixel_t  display_toggle_on[11] = {pixel_off, pixel_off, pixel_off, pixel_off, pixel_off, pixel_on, pixel_on, pixel_on, pixel_on, pixel_on, pixel_on};
+    struct pixel_t display_toggle_off[11] = {pixel_on, pixel_on, pixel_on, pixel_on, pixel_on, pixel_on, pixel_off, pixel_off, pixel_off, pixel_off, pixel_off};
+
     switch (ui_mode) {
         case UI_MODE_PLAY: {
              // number led bar
             if(alt_switch_state == ALT_SWITCH_STATE_NONE){
                 update_led_display();
-                pixel_buf[0]  =  led_display[0]  == 1 ? pixel_on : led_display[0]  == 0 ? pixel_off : pixel_fade(led_display[0]);  // 0
-                pixel_buf[1]  =  led_display[1]  == 1 ? pixel_on : led_display[1]  == 0 ? pixel_off : pixel_fade(led_display[1]);  // 1
-                pixel_buf[2]  =  led_display[2]  == 1 ? pixel_on : led_display[2]  == 0 ? pixel_off : pixel_fade(led_display[2]);  // 2
-                pixel_buf[3]  =  led_display[3]  == 1 ? pixel_on : led_display[3]  == 0 ? pixel_off : pixel_fade(led_display[3]);  // 3
-                pixel_buf[4]  =  led_display[4]  == 1 ? pixel_on : led_display[4]  == 0 ? pixel_off : pixel_fade(led_display[4]);  // 4
-                pixel_buf[5]  =  led_display[5]  == 1 ? pixel_on : led_display[5]  == 0 ? pixel_off : pixel_fade(led_display[5]);  // 5
-                pixel_buf[6]  =  led_display[6]  == 1 ? pixel_on : led_display[6]  == 0 ? pixel_off : pixel_fade(led_display[6]);  // 6
-                pixel_buf[7]  =  led_display[7]  == 1 ? pixel_on : led_display[7]  == 0 ? pixel_off : pixel_fade(led_display[7]);  // 7
-                pixel_buf[8]  =  led_display[8]  == 1 ? pixel_on : led_display[8]  == 0 ? pixel_off : pixel_fade(led_display[8]);  // 8
-                pixel_buf[9]  =  led_display[9]  == 1 ? pixel_on : led_display[9]  == 0 ? pixel_off : pixel_fade(led_display[9]);  // 9
-                pixel_buf[10] = led_display[10] == 1 ? pixel_on : led_display[10] == 0 ? pixel_off : pixel_fade(led_display[10]); // 10
+                for (uint i = 0; i < 11; i++) {
+                    struct pixel_t colour;
+
+                    if (led_display[i] == 0) colour = pixel_off;
+                    else if (led_display[i] == 1) colour = pixel_on;
+                    else colour = pixel_fade(led_display[i]);
+
+                    pixel_buf[0] = colour;
+                }
             } else if(alt_switch_state == ALT_SWITCH_STATE_ON) {
-                pixel_buf[0]  = pixel_off;// 0
-                pixel_buf[1]  = pixel_off;// 1
-                pixel_buf[2]  = pixel_off;// 2
-                pixel_buf[3]  = pixel_off;// 3
-                pixel_buf[4]  = pixel_off;// 4
-                pixel_buf[5]  = pixel_on;// 5
-                pixel_buf[6]  = pixel_on;// 6
-                pixel_buf[7]  = pixel_on;// 7
-                pixel_buf[8]  = pixel_on;// 8
-                pixel_buf[9]  = pixel_on;// 9
-                pixel_buf[10] = pixel_on;// 10
+                for (uint i = 0; i < 11; i++) pixel_buf[i] = display_toggle_on[i];
             } else {
-                pixel_buf[0]  = pixel_on;// 0
-                pixel_buf[1]  = pixel_on;// 1
-                pixel_buf[2]  = pixel_on;// 2
-                pixel_buf[3]  = pixel_on;// 3
-                pixel_buf[4]  = pixel_on;// 4
-                pixel_buf[5]  = pixel_on;// 5
-                pixel_buf[6]  = pixel_off;// 6
-                pixel_buf[7]  = pixel_off;// 7
-                pixel_buf[8]  = pixel_off;// 8
-                pixel_buf[9]  = pixel_off;// 9
-                pixel_buf[10] = pixel_off;// 10
+                for (uint i = 0; i < 11; i++) pixel_buf[i] = display_toggle_off[i];
             }
 
             // matrix
