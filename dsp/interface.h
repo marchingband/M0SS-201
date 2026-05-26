@@ -1,7 +1,8 @@
 #ifndef DSP_INTERFACE_H_
 #define DSP_INTERFACE_H_
 
-#include "stdint.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 typedef enum {
     PARAM_MOD,      // main parameter
@@ -21,6 +22,7 @@ typedef struct {
     const float max;
     const float init;
     const float step;
+    const bool numeric;
 } DSP_Param_t;
 
 #define NUM_UI_ELS 76

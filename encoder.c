@@ -132,7 +132,7 @@ static void on_encoder(bool up){
                 float clamped = next > alt.max ? alt.max : next < alt.min ? alt.min : next;
                 *alt.p = clamped;
                 // printf("set led %f %f %f\n\r", clamped, alt.min, alt.max);
-                set_led_display(alt.p, alt.min, alt.max);
+                set_led_display(alt.p, alt.min, alt.max, alt.numeric);
             }
 
         }
@@ -152,7 +152,7 @@ static void on_encoder(bool up){
                 float clamped = next > cc.max ? cc.max : next < cc.min ? cc.min : next;
                 *cc.p = clamped;
                 // printf("set led %f %f %f\n\r", clamped, mod.min, mod.max);
-                set_led_display(cc.p, cc.min, cc.max);
+                set_led_display(cc.p, cc.min, cc.max, cc.numeric);
             }
         }
         else
@@ -171,7 +171,7 @@ static void on_encoder(bool up){
                 float clamped = next > mod.max ? mod.max : next < mod.min ? mod.min : next;
                 *mod.p = clamped;
                 // printf("set led %f %f %f\n\r", clamped, mod.min, mod.max);
-                set_led_display(mod.p, mod.min, mod.max);
+                set_led_display(mod.p, mod.min, mod.max, mod.numeric);
 
                 // printf("assigning: idx %d, ptr %p, value %.2f\n", param.button, (void*)mod.p, clamped);
             }

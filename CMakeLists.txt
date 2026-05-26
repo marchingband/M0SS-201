@@ -20,6 +20,7 @@ target_sources(app PRIVATE
     spi_rgb.c
     dsp/interface.c
     dsp/synth.c
+    dsp/biquad.c
 )
 
 sdk_set_main_file(main.c)

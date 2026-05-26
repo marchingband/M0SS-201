@@ -56,6 +56,16 @@ static inline float sin2pif(float x) {
 	return y;
 }
 
+
+static inline float log2f(float x) {
+	union { float f; int32_t i; } v;
+	v.f = x;
+	int e = v.i >> 23;
+	v.i = (v.i & 0x007fffff) | 0x3f800000;
+	const float y = (float)e - 129.213475204444817f + v.f * (3.148297929334117f + v.f * (-1.098865286222744f + v.f * 0.1640425613334452f));
+	return y;
+}
+
 #define CLAMP(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 #define MAX(a, b) (((a) > (b))? (a) : (b))
 #define MIN(a, b) (((a) < (b))? (a) : (b))
@@ -129,6 +139,31 @@ inline float next_iblep(float t) {
 
 inline float this_iblep(float t) {
     return next_iblep(1.0f - t);
+}
+
+inline float linear_map(float x, float a, float b, float A, float B) {
+	float normalized_x = (x - a) / (b - a);
+	return normalized_x * (B - A) + A;
+}
+
+static inline float midi_note_to_freq_hz(float note) {
+	return 440.0f * pow2f((note - 69.0f) * 0.08333f);
+}
+
+inline float InterpolateHermite(const float* table, float index, float size) {
+	index *= size;
+	MAKE_INTEGRAL_FRACTIONAL(index)
+	const float xm1 = table[index_integral - 1];
+	const float x0 = table[index_integral + 0];
+	const float x1 = table[index_integral + 1];
+	const float x2 = table[index_integral + 2];
+	const float c = (x1 - xm1) * 0.5f;
+	const float v = x0 - x1;
+	const float w = c + v;
+	const float a = w + v + (x2 - x0) * 0.5f;
+	const float b_neg = w + a;
+	const float f = index_fractional;
+	return (((a * f) - b_neg) * f + c) * f + x0;
 }
 
 #endif  // DSP_UTILS_H_

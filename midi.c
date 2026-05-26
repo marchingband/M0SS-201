@@ -12,7 +12,7 @@
 #include "flash.h"
 #include "dsp/interface.h"
 extern DSP_Param_t dsp_ui[];
-extern DSP_All_Signals all_sigs;
+extern DSP_All_Signals all_sigs_raw;
 
 #define MIDI_NOTE_OFF 8
 #define MIDI_NOTE_ON 9
@@ -127,6 +127,7 @@ void link_ui() {
         float steps = (param.max - param.min) / param.step;
         float per = steps / 128.0;
         cc->mul = per;
+        cc->numeric = param.numeric;
 
         switch (param.type) {
             case PARAM_MOD: {
@@ -139,6 +140,7 @@ void link_ui() {
                 float steps = (param.max - param.min) / param.step;
                 float per = steps / 128.0;
                 mod->mul = per;
+                mod->numeric = param.numeric;
                 break;
             };
             case PARAM_ALT: {
@@ -151,6 +153,7 @@ void link_ui() {
                 float steps = (param.max - param.min) / param.step;
                 float per = steps / 128.0;
                 alt->mul = per;
+                alt->numeric = param.numeric;
                 break;
             };
             case PARAM_SEL: {
@@ -159,6 +162,7 @@ void link_ui() {
                 sel->min = param.min;
                 sel->max = param.max;
                 sel->init = param.init;
+                sel->numeric = param.numeric;
                 break;
             };
             case PARAM_ALT_SEL: {
@@ -167,6 +171,7 @@ void link_ui() {
                 altsel->min = param.min;
                 altsel->max = param.max;
                 altsel->init = param.init;
+                altsel->numeric = param.numeric;
                 break;
             };
             case PARAM_MTX: {
@@ -176,128 +181,21 @@ void link_ui() {
         }
     }
     // attach special signals
-    Signals.pitch = &all_sigs.pitch;
-    Signals.gate = &all_sigs.gate;
-    Signals.amp = &all_sigs.ind_amp;
-    Signals.le = &all_sigs.ind_env;
-    Signals.sg = &all_sigs.ind_sg;
-    Signals.mo = &all_sigs.ind_os1;
+    Signals.pitch = &all_sigs_raw.pitch;
+    *Signals.pitch = 48.0f; // initial value
+    Signals.gate = &all_sigs_raw.gate;
+    Signals.amp = &all_sigs_raw.ind_amp;
+    Signals.le = &all_sigs_raw.ind_env;
+    Signals.sg = &all_sigs_raw.ind_sg;
+    Signals.mo = &all_sigs_raw.ind_os1;
 
     printf("mods idx 1 has ptr %p\n", (void*)Mods[1].p);
 }
 
-void extract(const char *name, float *p, float init, float min, float max, float step)
-{
-    // we can ignore the pitch and gate, and just calibrate for CC's
-    bool found = false;
-    for(int i=0; i<NUM_CC; i++)
-    {
-        struct CC *cc = &CCs[i];
-        if(cc->p == p){
-            cc->min = min;
-            cc->max = max;
-            cc->init = init;
-            cc->step = step;
-            float steps = (max - min) / step;
-            float per = steps / 128.0;
-            cc->mul = per;
-            strcpy(cc->name, name);
-            found = true;
-        }
-    }
-
-    for(int i=0; i<NUM_BUTTONS; i++)
-    {
-        struct Mod *mod = &Mods[i];
-        if(mod->p == p){
-            mod->min = min;
-            mod->max = max;
-            mod->init = init;
-            mod->step = step;
-            float steps = (max - min) / step;
-            float per = steps / 128.0;
-            mod->mul = per;
-            strcpy(mod->name, name);
-            found = true;
-        }
-    }
-
-    for(int i=0; i<NUM_BUTTONS; i++)
-    {
-        struct Alt *alt = &Alts[i];
-        if(alt->p == p){
-            alt->min = min;
-            alt->max = max;
-            alt->init = init;
-            alt->step = step;
-            float steps = (max - min) / step;
-            float per = steps / 128.0;
-            alt->mul = per;
-            strcpy(alt->name, name);
-            found = true;
-        }
-    }
-
-    for(int i=0; i<NUM_BUTTONS; i++)
-    {
-        struct Sel *sel = &Sels[i];
-        if(sel->p == p){
-            sel->min = min;
-            sel->max = max;
-            sel->init = init;
-            strcpy(sel->name, name);
-            found = true;
-        }
-    }
-
-    for(int i=0; i<NUM_BUTTONS; i++)
-    {
-        struct AltSel *alt_sel = &AltSels[i];
-        if(alt_sel->p == p){
-            alt_sel->min = min;
-            alt_sel->max = max;
-            alt_sel->init = init;
-            strcpy(alt_sel->name, name);
-            found = true;
-        }
-    }
-
-    for(int i=0; i<NUM_BUTTONS; i++)
-    {
-        struct Asb *asb = &Asbs[i];
-        if(asb->p == p){
-            asb->min = min;
-            asb->max = max;
-            asb->init = init;
-            asb->step = step;
-            float steps = (max - min) / step;
-            float per = steps / 128.0;
-            asb->mul = per;
-            strcpy(asb->name, name);
-            found = true;
-        }
-    }
-    
-    if(!found){
-        printf("failed to find pointer for %s\n", name);
-    }
-}
-
 void reset_params(void){
     int i;
-    for(i=0; i<NUM_BUTTONS; i++){
-        if(Mods[i].p != NULL){
-            *(Mods[i].p) = Mods[i].init;
-        }
-        if(Alts[i].p != NULL){
-            *(Alts[i].p) = Alts[i].init;
-        }
-        if(Sels[i].p != NULL){
-            *(Sels[i].p) = Sels[i].init;
-        }
-        if(AltSels[i].p != NULL){
-            *(AltSels[i].p) = AltSels[i].init;
-        }
+    for(i=0; i<NUM_CC; i++){
+        *(CCs[i].p) = CCs[i].init;
     }
 }
 
@@ -431,13 +329,10 @@ int get_cc(int num, bool alt){
         struct AltSel alt_sel = AltSels[num];
         struct Asb asb = Asbs[num];
         if(alt.p != 0){
-            printf("found alt %s\n", alt.name);
             p = alt.p;
         } else if (alt_sel.p != 0){
-            printf("found alt_sel %s\n", alt_sel.name);
             p = alt_sel.p;
         } else if (asb.p != 0){
-            printf("found asb %s\n", asb.name);
             p = asb.p;
         }
     } else {
@@ -446,10 +341,8 @@ int get_cc(int num, bool alt){
         struct Mod mod = Mods[num];
         struct Sel sel = Sels[num];
         if(mod.p != 0){
-            printf("found mod %s\n", mod.name);
             p = mod.p;
         } else if(sel.p != 0){
-            printf("found sel %s\n", sel.name);
             p = sel.p;
         }
     }
@@ -461,7 +354,6 @@ int get_cc(int num, bool alt){
     // search all the CCs to find the matching pointer
     for(int i=0; i<NUM_CC; i++){
         if(CCs[i].p == p){
-            printf("matched cc:%d %s\n", i, CCs[i].name);
             return i;
         }
     }
@@ -627,7 +519,7 @@ void handle_midi(uint8_t *msg, uint8_t len)
                             float val = (alt.step * whole_steps) + alt.min;
                             *alt.p = val;
                             // printf("set led %f %f %f\n\r", val, alt.min, alt.max);
-                            set_led_display(alt.p, alt.min, alt.max);
+                            set_led_display(alt.p, alt.min, alt.max, alt.numeric);
                         }
                     }
                     else
@@ -645,7 +537,7 @@ void handle_midi(uint8_t *msg, uint8_t len)
                             float val = (mod.step * whole_steps) + mod.min;
                             *mod.p = val;
                             // printf("set led %f %f %f\n\r", val, mod.min, mod.max);
-                            set_led_display(mod.p, mod.min, mod.max);
+                            set_led_display(mod.p, mod.min, mod.max, mod.numeric);
                         }
                     }
                 }
@@ -665,7 +557,6 @@ void handle_midi(uint8_t *msg, uint8_t len)
         int whole_steps = round(steps);
         float val = (cc.step * whole_steps) + cc.min;
         *cc.p = val;
-        // printf("cc%-2d::%12f -> %s\n\r\r", cc_num, val, cc.name );
         break;
     }
     case MIDI_PITCH_BEND:

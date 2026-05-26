@@ -42,7 +42,7 @@ struct CC {
     float init;
     float step;
     float mul;
-    char name[20];
+    bool numeric;
 };
 
 struct Mod {
@@ -52,7 +52,7 @@ struct Mod {
     float init;
     float step;
     float mul;
-    char name[20];
+    bool numeric;
 };
 
 struct Alt {
@@ -62,7 +62,7 @@ struct Alt {
     float init;
     float step;
     float mul;
-    char name[20];
+    bool numeric;
 };
 
 struct Sel {
@@ -70,7 +70,7 @@ struct Sel {
     float min;
     float max;
     float init;
-    char name[20];
+    bool numeric;
 };
 
 struct AltSel {
@@ -78,7 +78,7 @@ struct AltSel {
     float min;
     float max;
     float init;
-    char name[20];
+    bool numeric;
 };
 struct Asb {
     float *p;
@@ -87,7 +87,7 @@ struct Asb {
     float init;
     float step;
     float mul;
-    char name[20];
+    bool numeric;
 };
 
 struct Sigs {
