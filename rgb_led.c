@@ -5,6 +5,7 @@
 #include "bflb_l1c.h"
 #include "bl616_irq.h"
 #include "bflb_irq.h"
+#include "bflb_mtimer.h"
 #include "board.h"
 #include "rgb_led.h"
 #include "midi.h"
@@ -13,7 +14,7 @@
 #include "gpio.h"
 
 #define PIXEL_SIZE 3 // each colour takes 4 bytes
-#define NUM_LED 67
+#define NUM_LED 64
 #define FLASH_INTERVAL (ONE_SECOND / 6)
 
 void test_lights(void);
@@ -183,7 +184,6 @@ void update_led_display(void){
 }
 
 void render_lights(void){
-
     int current_slot = get_current_slot();
     struct CC *ccs = get_ccs();
     struct Sel *sels = get_sels();
