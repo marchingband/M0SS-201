@@ -235,6 +235,31 @@ void update_led_display(void){
 }
 
 void render_lights(void){
+    for (uint i = 0; i < NUM_LED; i++) {
+        bool offset_led = i <= 20 && i >= 11;
+        offset_led = offset_led || (i <= 40 && i >= 31);
+        offset_led = offset_led || (i == 55);
+        bool extra_dim = (i <= 40 && i >= 38) || (i <= 20 && i >= 11);
+        bool matrix_led = i <= 40;
+
+        float brightness = 0;
+        if (matrix_led) {
+            if (offset_led) {
+                if (extra_dim) {
+                    brightness = 0.4;
+                } else {
+                    brightness = 0.2;
+                }
+            } else {
+                brightness = 0.1;
+            }
+        } else {
+            brightness = 0.08;
+        }
+        pixel_buf[i] = pixel_fade(brightness);
+    }
+    bflb_mtimer_delay_ms(100);
+
     int current_slot = get_current_slot();
     struct CC *ccs = get_ccs();
     struct Sel *sels = get_sels();
