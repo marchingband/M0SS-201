@@ -481,6 +481,7 @@ void handle_midi(uint8_t *msg, uint8_t len)
         {
             if(mode_learn_current_cc > 0)
             {
+                if (cc_num_in <= 0) break;
                 cc_map[cc_num_in - 1] = mode_learn_current_cc; // -1 because ccs are indexed at 1
                 learn_mode_state = LEARN_MODE_LEARNED;
             }
@@ -620,7 +621,6 @@ void poll_uart(void)
         if (ret)
         {
             handle_midi(getMidiMsg(), getMidiMsgLen());
-            printf("TRS: %02X\n", ch);
         }
     }
 }
@@ -632,7 +632,7 @@ void usb_midi_in(char ch)
     if (ret == 1)
     {
         handle_midi(getMidiMsg(), getMidiMsgLen());
-        printf("USB: %02X\n", ch);
+        // printf("USB: %02X\n", ch);
     }
 }
 
@@ -642,7 +642,7 @@ void uart_task(void *args){
         if(xQueueReceive(uart_queue, &ch, portMAX_DELAY)){
             bflb_uart_putchar(uart0, ch); // send to midi out
             bool ret = parse(ch);
-            printf("%c", ch);
+            // printf("TRS: %02X\n", ch);
             if (ret)
             {
                 handle_midi(getMidiMsg(), getMidiMsgLen());

@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#include "bflb_gpio.h"
+
 #include "synth.h"
 #include "interface.h"
 #include "utils.h"
@@ -60,6 +62,9 @@ void init_dsp() {
 
     dly.buffer_size = DELAY_LINE_LEN;
     dly.ptr = 0;
+
+    struct bflb_device_s *gpio = bflb_device_get_by_name("gpio");
+    bflb_gpio_init(gpio, GPIO_PIN_15, GPIO_OUTPUT | GPIO_SMT_EN | GPIO_DRV_0);
 }
 
 float midi_note;
@@ -77,6 +82,9 @@ float phase = 0.0f;
 const float freq = 260.0f * SR_INV;
 
 void compute_dsp(size_t len, float* buf) {
+    struct bflb_device_s *gpio = bflb_device_get_by_name("gpio");
+    bflb_gpio_set(gpio, GPIO_PIN_15);
+
     for (size_t i = 0; i < len; i++) {
         // phase += freq;
         // if (phase >= 1.0f) phase -= 1.0f;
@@ -135,6 +143,8 @@ void compute_dsp(size_t len, float* buf) {
     all_sigs_raw.ind_sg = sg_state.val;
     all_sigs_raw.ind_os1 = os1_state.val;
     all_sigs_raw.ind_amp = buf[0]; //0.5f*buf[len-1] + 0.5f;
+
+    bflb_gpio_reset(gpio, GPIO_PIN_15);
 }
 
 
