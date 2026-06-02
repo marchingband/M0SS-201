@@ -19,9 +19,9 @@ struct bflb_dma_channel_lli_transfer_s tx_transfers[1];
 void spi_rgb_init(){
     struct bflb_device_s *gpio;
     gpio = bflb_device_get_by_name("gpio");
-    bflb_gpio_init(gpio, GPIO_PIN_16, GPIO_FUNC_SPI0 | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);/* spi mosi */
-    bflb_gpio_init(gpio, GPIO_PIN_17, GPIO_FUNC_SPI0 | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);/* spi miso */
-    bflb_gpio_init(gpio, GPIO_PIN_10, GPIO_FUNC_SPI0 | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);/* spi cs */
+    // bflb_gpio_init(gpio, GPIO_PIN_16, GPIO_FUNC_SPI0 | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);/* spi mosi */
+    // bflb_gpio_init(gpio, GPIO_PIN_17, GPIO_FUNC_SPI0 | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);/* spi miso */
+    // bflb_gpio_init(gpio, GPIO_PIN_10, GPIO_FUNC_SPI0 | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);/* spi cs */
     bflb_gpio_init(gpio, GPIO_PIN_11, GPIO_FUNC_SPI0 | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1); /* spi clk */
 
 

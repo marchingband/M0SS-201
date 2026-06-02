@@ -28,11 +28,9 @@ void smooth_signals() {
     all_sigs.env_att += (1.0f - param_smooth_coeff) * (all_sigs_raw.env_att - all_sigs.env_att);
     all_sigs.env_rel += (1.0f - param_smooth_coeff) * (all_sigs_raw.env_rel - all_sigs.env_rel);
     all_sigs.env_crv += (1.0f - param_smooth_coeff) * (all_sigs_raw.env_crv - all_sigs.env_crv);
-    all_sigs.os1_tune += (1.0f - param_smooth_coeff) * (all_sigs_raw.os1_tune - all_sigs.os1_tune);
-    all_sigs.os1_fine += (1.0f - param_smooth_coeff) * (all_sigs_raw.os1_fine - all_sigs.os1_fine);
+    all_sigs.os2_tune += (1.0f - param_smooth_coeff) * (all_sigs_raw.os2_tune - all_sigs.os2_tune);
     all_sigs.bus_idx += (1.0f - param_smooth_coeff) * (all_sigs_raw.bus_idx - all_sigs.bus_idx); 
-    all_sigs.os2_tune += (1.0f - param_smooth_coeff) * (all_sigs_raw.os2_tune - all_sigs.os2_tune);  
-    all_sigs.os2_glide += (1.0f - param_smooth_coeff) * (all_sigs_raw.os2_glide - all_sigs.os2_glide);
+    all_sigs.os1_gld += (1.0f - param_smooth_coeff) * (all_sigs_raw.os1_gld - all_sigs.os1_gld);
     all_sigs.mx_os1 += (1.0f - param_smooth_coeff) * (all_sigs_raw.mx_os1 - all_sigs.mx_os1);
     all_sigs.mx_os2 += (1.0f - param_smooth_coeff) * (all_sigs_raw.mx_os2 - all_sigs.mx_os2);
     all_sigs.mx_sg += (1.0f - param_smooth_coeff) * (all_sigs_raw.mx_sg - all_sigs.mx_sg); 
@@ -69,7 +67,7 @@ float midi_note;
 void compute_midi_note() {
     static float lp_state;
     // TODO: midi pitch bend
-    float glide_s = linear_map(all_sigs.os2_glide, 0.0f, 1.0f, 0.01f, 0.6f);
+    float glide_s = linear_map(all_sigs.os1_gld, 0.0f, 1.0f, 0.01f, 0.6f);
     float coeff = pow2f(-1.0f * LOG2_E * SR_INV / glide_s);
     lp_state += (all_sigs_raw.pitch - lp_state) * coeff;
     midi_note = lp_state;
@@ -80,10 +78,10 @@ const float freq = 260.0f * SR_INV;
 
 void compute_dsp(size_t len, float* buf) {
     for (size_t i = 0; i < len; i++) {
-        phase += freq;
-        if (phase >= 1.0f) phase -= 1.0f;
-        buf[i] = sin2pif(phase) * 0.1f;
-        continue;
+        // phase += freq;
+        // if (phase >= 1.0f) phase -= 1.0f;
+        // buf[i] = sin2pif(phase) * 0.1f;
+        // continue;
 
 
         // compute parameter amounts through matrix
@@ -102,8 +100,8 @@ void compute_dsp(size_t len, float* buf) {
 
         compute_midi_note();
 
-        compute_os1();
         compute_os2();
+        compute_os1();
 
         float mixed_output = compute_mixer();
         float folded_output = compute_wavefolder(mixed_output);
@@ -147,16 +145,19 @@ void compute_dsp(size_t len, float* buf) {
 
 #define E_MAT env_state.val * all_sigs.mtx[ENV_I_S]
 #define S_MAT sg_state.val * all_sigs.mtx[SG_I_S]
-#define O_MAT os1_state.val * all_sigs.mtx[OS1_I_S]
+#define O_MAT os1_state.val * all_sigs.mtx[OS2_I_S]
 
 #define MAT(x, y) CLAMP((E_MAT[x]) + (S_MAT[x]) + (O_MAT[x]) + (y), 0.0f, 1.0f)
+
+float os1_mod_freq;
 
 void compute_matrix() {
     fb_dests.rate = MAT(RATE_I, all_sigs.sg_rate);
     fb_dests.smth = MAT(SMTH_I, all_sigs.sg_smth);
+    fb_dests.rcl  = MAT(RCL_I,  all_sigs.sg_rcl);
     fb_dests.att  = MAT(ATT_I,  all_sigs.env_att);
     fb_dests.rel  = MAT(REL_I,  all_sigs.env_rel);
-    fb_dests.os1  = MAT(OS1_I,  all_sigs.os1_tune);
+    fb_dests.os1  = MAT(OS1_I,  os1_mod_freq);
     fb_dests.os2  = MAT(OS2_I,  all_sigs.os2_tune);
     fb_dests.idx  = MAT(IDX_I,  all_sigs.bus_idx);
     fb_dests.timb = MAT(TIMB_I, all_sigs.fold_timb);
@@ -185,7 +186,7 @@ void compute_sg() {
     if (gate && !sg_state.prev_gate) {
         sg_state.idx = (sg_state.idx + 1) % len_int;
         
-        if (all_sigs.sg_rcl <= randf()) sg_state.arr[sg_state.idx] = randf();
+        if (fb_dests.rcl <= randf()) sg_state.arr[sg_state.idx] = randf();
         // sg_state.val = sg_state.arr[sg_state.idx];
     }
 
@@ -274,7 +275,7 @@ void compute_env() {
     }
 }
 
-void compute_os1() {
+void compute_os2() {
     // parameters that affect os1: 
     // slow/fast mode, key tracking on/off, 
     // tune (fine/course), waveform
@@ -291,69 +292,69 @@ void compute_os1() {
 
     float freq_hz = 0.0f;
     float midi_freq = midi_note_to_freq_hz(midi_note);
-    if (all_sigs_raw.os1_hilo == OS1_RANGE_LO) {
-        float total_interval = fb_dests.os1 * slow_mode_course_max_interval + all_sigs.os1_fine * slow_mode_fine_max_interval;
+    if (all_sigs_raw.os2_hilo == OS2_RANGE_LO) {
+        float total_interval = fb_dests.os2 * slow_mode_course_max_interval;
         float multiplier = pow2f(total_interval);
-        freq_hz = ((all_sigs_raw.os1_kt)? midi_freq * 0.001953f : slow_mode_base_freq_hz) * multiplier;
+        freq_hz = ((all_sigs_raw.os2_kt)? midi_freq * 0.001953f : slow_mode_base_freq_hz) * multiplier;
     } else {
-        float total_interval = fb_dests.os1 * fast_mode_course_max_interval + all_sigs.os1_fine * fast_mode_fine_max_interval;
+        float total_interval = fb_dests.os2 * fast_mode_course_max_interval;
         float multiplier = pow2f(total_interval);
-        freq_hz = ((all_sigs_raw.os1_kt)? midi_freq * 0.125f : fast_mode_base_freq_hz) * multiplier;
+        freq_hz = ((all_sigs_raw.os2_kt)? midi_freq * 0.125f : fast_mode_base_freq_hz) * multiplier;
     }
 
     float freq_normalized = freq_hz * SR_INV;
 
-    float this_tri = os1_state.next_tri;
-    float this_saw = os1_state.next_saw;
-    float this_sqr = os1_state.next_sqr;
-    os1_state.next_tri = 0.0f;
-    os1_state.next_saw = 0.0f;
-    os1_state.next_sqr = 0.0f;
+    float this_tri = os2_state.next_tri;
+    float this_saw = os2_state.next_saw;
+    float this_sqr = os2_state.next_sqr;
+    os2_state.next_tri = 0.0f;
+    os2_state.next_saw = 0.0f;
+    os2_state.next_sqr = 0.0f;
 
-    os1_state.phase += freq_normalized;
+    os2_state.phase += freq_normalized;
 
-    if (os1_state.high && os1_state.phase >= 0.5f) {
-        float t = (os1_state.phase - 0.5f) / freq_normalized;
+    if (os2_state.high && os2_state.phase >= 0.5f) {
+        float t = (os2_state.phase - 0.5f) / freq_normalized;
         float discontinuity = 4.0f * freq_normalized;
         this_tri -= this_iblep(t) * discontinuity;
-        os1_state.next_tri -= next_iblep(t) * discontinuity;
+        os2_state.next_tri -= next_iblep(t) * discontinuity;
 
         this_sqr -= this_blep(t);
-        os1_state.next_sqr -= next_blep(t);
+        os2_state.next_sqr -= next_blep(t);
 
-        os1_state.high = false;
+        os2_state.high = false;
     }
 
-    if (os1_state.phase >= 1.0f) {
-        os1_state.phase -= 1.0f;
+    if (os2_state.phase >= 1.0f) {
+        os2_state.phase -= 1.0f;
 
-        float t = os1_state.phase / freq_normalized;
+        float t = os2_state.phase / freq_normalized;
         float discontinuity = 4.0f * freq_normalized;
         this_tri += this_iblep(t) * discontinuity;
-        os1_state.next_tri += next_iblep(t) * discontinuity;
+        os2_state.next_tri += next_iblep(t) * discontinuity;
 
         this_sqr += this_blep(t);
-        os1_state.next_sqr += next_blep(t);
+        os2_state.next_sqr += next_blep(t);
 
         this_saw -= this_blep(t);
-        os1_state.next_saw -= next_blep(t);
+        os2_state.next_saw -= next_blep(t);
 
-        os1_state.high = true;
+        os2_state.high = true;
     }
 
-    this_tri += os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase);
-    this_saw += os1_state.phase;
-    this_sqr += os1_state.high? 1.0f : 0.0f;
+    this_tri += os2_state.high? 2.0f * os2_state.phase : 2.0f * (1.0f - os2_state.phase);
+    this_saw += os2_state.phase;
+    this_sqr += os2_state.high? 1.0f : 0.0f;
 
-    switch ((uint32_t)all_sigs_raw.os1_wave) {
-        case OS1_WAV_TRI:
-            os1_state.val = 2.0f * this_tri - 1.0f;
+    switch ((uint32_t)all_sigs_raw.os2_wave) {
+        case OS2_WAV_TRI:
+            os2_state.val = 2.0f * this_tri - 1.0f;
             break;
-        case OS1_WAV_SQR:
-            os1_state.val = 2.0f * this_sqr - 1.0f;
+        case OS2_WAV_SQR:
+            os2_state.val = 2.0f * this_sqr - 1.0f;
             break;
-        case OS1_WAV_SAW:
-            os1_state.val = 2.0f * this_saw - 1.0f;
+        case OS2_WAV_SAW:
+            os2_state.val = 2.0f * this_saw - 1.0f;
             break;
     }                        
     // if (os1_state.val > 1.0f || os1_state.val < -1.0f) printf("max value exceeded!: %0.4f\n", os1_state.val);
@@ -382,7 +383,7 @@ Scale pentatonic = {.root_freq_hz = 0.0f, .num_intervals = 5, .intervals = {
     1.0f, 1.189207f, 1.3348398f, 1.49830708f, 1.781797f}
 };
 
-float compute_os2_rate() {
+float compute_os1_rate() {
     // care about midi frequency, tuning, and mod bus
     // also about quantization and glide
 
@@ -391,66 +392,66 @@ float compute_os2_rate() {
     // tuning slider and modulations get quantized, then FM is added.
 
     float tuning_range_octaves = 1.0f;  // one octave up and down
-    float freq_multiplier = pow2f(fb_dests.os2 * 2.0f + tuning_range_octaves * fb_dests.os2); // maximum two octave range for normalized value
+    float freq_multiplier = pow2f(fb_dests.os1 * 2.0f + tuning_range_octaves * fb_dests.os1); // maximum two octave range for normalized value
 
     pentatonic.root_freq_hz = midi_note_to_freq_hz(all_sigs_raw.pitch);
-    if (all_sigs_raw.os2_qu != 0) freq_multiplier = quantize(freq_multiplier, &pentatonic);
+    if (all_sigs_raw.os1_qtz != 0) freq_multiplier = quantize(freq_multiplier, &pentatonic);
 
     float freq_hz = freq_multiplier * midi_note_to_freq_hz(midi_note);
     if (all_sigs_raw.bus_sel == BUS_SEL_FM) {
-        float max_fm_index = 0.25f;
-        freq_hz *= 1.0f + max_fm_index*fb_dests.idx*os1_state.val;
+        float max_fm_index = 0.5f;
+        freq_hz *= 1.0f + max_fm_index*fb_dests.idx*os2_state.val;
     }
     return freq_hz;
 }
 
-void compute_os2() {
-    float freq_normalized = compute_os2_rate() * SR_INV;
+void compute_os1() {
+    float freq_normalized = compute_os1_rate() * SR_INV;
 
-    float this_tri = os2_state.next_tri;
-    os2_state.next_tri = 0.0f;
+    float this_tri = os1_state.next_tri;
+    os1_state.next_tri = 0.0f;
 
-    os2_state.phase += freq_normalized;
+    os1_state.phase += freq_normalized;
 
-    if (os2_state.high && os2_state.phase > 0.5f) {
-        float t = (os2_state.phase - 0.5f) / freq_normalized;
+    if (os1_state.high && os1_state.phase > 0.5f) {
+        float t = (os1_state.phase - 0.5f) / freq_normalized;
         float discontinuity = 4.0f * freq_normalized;
         this_tri -= this_iblep(t) * discontinuity;
-        os2_state.next_tri -= next_iblep(t) * discontinuity;
+        os1_state.next_tri -= next_iblep(t) * discontinuity;
 
-        os2_state.high = false;
+        os1_state.high = false;
     }
 
-    if (os2_state.phase >= 1.0f) {
-        os2_state.phase -= 1.0f;
+    if (os1_state.phase >= 1.0f) {
+        os1_state.phase -= 1.0f;
 
-        float t = os2_state.phase / freq_normalized;
+        float t = os1_state.phase / freq_normalized;
         float discontinuity = 4.0f * freq_normalized;
         this_tri += this_iblep(t) * discontinuity;
-        os2_state.next_tri += next_iblep(t) * discontinuity;
+        os1_state.next_tri += next_iblep(t) * discontinuity;
 
-        os2_state.high = true;
+        os1_state.high = true;
     }
 
-    this_tri += 2.0f * (os2_state.high? 2.0f * os2_state.phase : 2.0f * (1.0f - os2_state.phase)) - 1.0f;
-    float this_sine = sin2pif(os2_state.phase);
+    this_tri += 2.0f * (os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase)) - 1.0f;
+    float this_sine = sin2pif(os1_state.phase);
 
     float selected_signal;
 
-    switch ((uint32_t)all_sigs_raw.os2_wave) {
-        case OS2_WAV_SINE:
+    switch ((uint32_t)all_sigs_raw.os1_wave) {
+        case OS1_WAV_SINE:
             selected_signal = this_sine;
             break;
-        case OS2_WAV_TRI:
+        case OS1_WAV_TRI:
             selected_signal = this_tri;
             break;
-        case OS2_WAV_BOTH:
+        case OS1_WAV_BOTH:
             selected_signal = (this_tri + this_sine) * 0.5f;
             break;
     }
 
     if (all_sigs_raw.bus_sel == BUS_SEL_AM) {
-        selected_signal *= 1.0f - fb_dests.idx*(1.0f - os1_state.val);
+        selected_signal *= 1.0f - fb_dests.idx*(1.0f - os2_state.val);
     }
     os2_state.val = selected_signal;
 }

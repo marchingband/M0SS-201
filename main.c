@@ -45,8 +45,8 @@ static void uart_init(bool set_console){
     bflb_gpio_uart_init(gpio, GPIO_PIN_22, GPIO_UART_FUNC_UART0_RX);
 
     struct bflb_uart_config_s cfg = {0};
-    // cfg.baudrate = 31250;
-    cfg.baudrate = 38400;
+    cfg.baudrate = 31250;
+    // cfg.baudrate = 38400;
     cfg.data_bits = UART_DATA_BITS_8;
     cfg.stop_bits = UART_STOP_BITS_1;
     cfg.parity = UART_PARITY_NONE;

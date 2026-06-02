@@ -59,21 +59,21 @@ typedef enum {
 } CmplxModType_t;
 
 typedef enum {
-    OS1_WAV_TRI,
-    OS1_WAV_SQR,
-    OS1_WAV_SAW
-} OS1_Wave_Sel_t;
-
-typedef enum {
-    OS2_WAV_SINE,
     OS2_WAV_TRI,
-    OS2_WAV_BOTH
+    OS2_WAV_SQR,
+    OS2_WAV_SAW
 } OS2_Wave_Sel_t;
 
 typedef enum {
-    OS1_RANGE_HI,
-    OS1_RANGE_LO
-} OS1_Range_Sel_t;
+    OS1_WAV_SINE,
+    OS1_WAV_TRI,
+    OS1_WAV_BOTH
+} OS1_Wave_Sel_t;
+
+typedef enum {
+    OS2_RANGE_HI,
+    OS2_RANGE_LO
+} OS2_Range_Sel_t;
 
 typedef enum {
     ENV_OFF,

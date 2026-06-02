@@ -30,8 +30,8 @@ const uint8_t mux_code[8][3] = {
 #define MUX_A2_PIN 29
 
 #define MUX_0_DRAIN_PIN 30
-#define MUX_1_DRAIN_PIN 0
-#define MUX_2_DRAIN_PIN 1
+#define MUX_1_DRAIN_PIN 10
+#define MUX_2_DRAIN_PIN 14
 
 #define ENCODER_BUTTON_PIN 20
 #define BUTTON_25_PIN 12
@@ -135,8 +135,8 @@ static void mux_gpio_init(void){
 }
 
 static void connected_buttons_init(){
-    bflb_gpio_init(b_gpio, BUTTON_25_PIN, GPIO_INPUT | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_0);
-    bflb_gpio_init(b_gpio, BUTTON_26_PIN, GPIO_INPUT | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_0);
+    // bflb_gpio_init(b_gpio, BUTTON_25_PIN, GPIO_INPUT | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_0);
+    // bflb_gpio_init(b_gpio, BUTTON_26_PIN, GPIO_INPUT | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_0);
     bflb_gpio_init(b_gpio, ENCODER_BUTTON_PIN, GPIO_INPUT | GPIO_FLOAT | GPIO_SMT_EN | GPIO_DRV_0);
 }
 
@@ -162,30 +162,30 @@ void read_buttons(){
         for(int k=0; k<3; k++)
         {
             uint8_t idx = i + (k * 8);
-            if(idx == 15 || idx == 21){
-                // these are bad buttons
-                button_state[idx] = 1;
-                continue;
-            }
+            // if(idx == 15 || idx == 21){
+            //     // these are bad buttons
+            //     button_state[idx] = 1;
+            //     continue;
+            // }
             button_state[idx] = bflb_gpio_read(b_gpio, mux_drain_pins[k]);
         }
     }
-    button_state[24] = bflb_gpio_read(b_gpio, BUTTON_25_PIN);
-    button_state[25] = bflb_gpio_read(b_gpio, BUTTON_26_PIN);
+    // button_state[24] = bflb_gpio_read(b_gpio, BUTTON_25_PIN);
+    // button_state[25] = bflb_gpio_read(b_gpio, BUTTON_26_PIN);
     button_state[26] = bflb_gpio_read(b_gpio, ENCODER_BUTTON_PIN);
 }
 
 bool alt_consumed = false;
 
 bool alt_held(void){return button_state[BUTTON_NUM_ALT] == 0;}
-bool OS1_held(void){return button_state[BUTTON_NUM_OS1] == 0;}
+bool OS2_held(void){return button_state[BUTTON_NUM_OS2] == 0;}
 bool SG_held(void){return button_state[BUTTON_NUM_SG] == 0;}
 bool ENV_held(void){return button_state[BUTTON_NUM_ENV] == 0;}
 
-const int param_matrix[3][12] = {
-    {32,33,34,35,36,37,38,39,40,41,42,43},
-    {44,45,46,47,48,49,50,51,52,53,54,55},
-    {56,57,58,59,60,61,62,63,64,65,66,67},
+const int param_matrix[3][10] = {
+    {33,34,35,36,37,38,39,40,41,42},
+    {43,44,45,46,47,48,49,50,51,52},
+    {53,54,55,56,57,58,59,60,61,62},
 };
 
 void matrix_pick(int num){
@@ -197,48 +197,42 @@ void matrix_pick(int num){
 
 bool check_martix_press(int num){
     int matrix_column_selected = -1;
-    int matrix_row_selected = ENV_held() ? 2 : SG_held() ? 1 : OS1_held() ? 0 : -1;
+    int matrix_row_selected = ENV_held() ? 2 : SG_held() ? 1 : OS2_held() ? 0 : -1;
     if(matrix_row_selected == -1){
         return false;
     }
     // printf("%s held", matrix_row_selected == 2 ? "ENV" : matrix_row_selected == 1 ? "SG" : matrix_row_selected == 0 ? "OS1" : "NONE");
     switch (num){
-        case BUTTON_NUM_MATRIX_COLUMN_LEN:
+        case BUTTON_NUM_MATRIX_COLUMN_OS1:
             matrix_column_selected = 0;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_RATE:
+        case BUTTON_NUM_MATRIX_COLUMN_IDX:
             matrix_column_selected = 1;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_RCL:
+        case BUTTON_NUM_MATRIX_COLUMN_OS2:
             matrix_column_selected = 2;
             break;
         case BUTTON_NUM_MATRIX_COLUMN_SMTH:
             matrix_column_selected = 3;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_ATT:
+        case BUTTON_NUM_MATRIX_COLUMN_RATE:
             matrix_column_selected = 4;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_REL:
+        case BUTTON_NUM_MATRIX_COLUMN_RCL:
             matrix_column_selected = 5;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_OS1:
+        case BUTTON_NUM_MATRIX_COLUMN_ATT:
             matrix_column_selected = 6;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_OS2:
+        case BUTTON_NUM_MATRIX_COLUMN_REL:
             matrix_column_selected = 7;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_BUS :
+        case BUTTON_NUM_MATRIX_COLUMN_TIMB :
             matrix_column_selected = 8;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_IDX:
-            matrix_column_selected = 9;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_TIMB:
-            matrix_column_selected = 10;
-            break;
         case BUTTON_NUM_MATRIX_COLUMN_AMP:
-            matrix_column_selected = 11;
-            break;          
+            matrix_column_selected = 9;
+            break;      
         default:
             break;
     }

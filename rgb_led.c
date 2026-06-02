@@ -13,13 +13,15 @@
 #include "spi_rgb.h"
 #include "gpio.h"
 
+extern const int param_matrix[3][10];
+
 const uint8_t display_bar_leds[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 #define MAT_NUM_ROWS 3
-#define MAT_NUM_COLS 12
+#define MAT_NUM_COLS 10
 const uint8_t matrix_leds[MAT_NUM_ROWS][MAT_NUM_COLS] = {
-    {46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35},
-    {23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
-    {22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11}
+    {40, 39, 38, 37, 36, 35, 34, 33, 32, 31},
+    {21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+    {20, 19, 18, 17, 16, 15, 14, 13, 12, 11}
 };
 
 // numbers displayed on matrix take up a 3x3 grid
@@ -235,30 +237,31 @@ void update_led_display(void){
 }
 
 void render_lights(void){
-    for (uint i = 0; i < NUM_LED; i++) {
-        bool offset_led = i <= 20 && i >= 11;
-        offset_led = offset_led || (i <= 40 && i >= 31);
-        offset_led = offset_led || (i == 55);
-        bool extra_dim = (i <= 40 && i >= 38) || (i <= 20 && i >= 11);
-        bool matrix_led = i <= 40;
+    // for (uint i = 0; i < NUM_LED; i++) {
+    //     bool offset_led = i <= 20 && i >= 11;
+    //     offset_led = offset_led || (i <= 40 && i >= 31);
+    //     offset_led = offset_led || (i == 55);
+    //     bool extra_dim = (i <= 40 && i >= 38) || (i <= 20 && i >= 11);
+    //     bool matrix_led = i <= 40;
 
-        float brightness = 0;
-        if (matrix_led) {
-            if (offset_led) {
-                if (extra_dim) {
-                    brightness = 0.4;
-                } else {
-                    brightness = 0.2;
-                }
-            } else {
-                brightness = 0.1;
-            }
-        } else {
-            brightness = 0.08;
-        }
-        pixel_buf[i] = pixel_fade(brightness);
-    }
-    bflb_mtimer_delay_ms(100);
+    //     float brightness = 0;
+    //     if (matrix_led) {
+    //         if (offset_led) {
+    //             if (extra_dim) {
+    //                 brightness = 0.4;
+    //             } else {
+    //                 brightness = 0.2;
+    //             }
+    //         } else {
+    //             brightness = 0.1;
+    //         }
+    //     } else {
+    //         brightness = 0.08;
+    //     }
+    //     pixel_buf[i] = pixel_fade(brightness);
+    // }
+    // bflb_mtimer_delay_ms(100);
+    // return;
 
     int current_slot = get_current_slot();
     struct CC *ccs = get_ccs();
@@ -300,65 +303,39 @@ void render_lights(void){
 
             // matrix
             if (!led_selection_is_numeric) {
-                pixel_buf[11] = pixel_fade((*(ccs[67].p))); // env-amp
-                pixel_buf[12] = pixel_fade((*(ccs[66].p))); // env-timb
-                pixel_buf[13] = pixel_fade((*(ccs[65].p))); // env-idx
-                pixel_buf[14] = pixel_fade((*(ccs[64].p))); // env-bus
-                pixel_buf[15] = pixel_fade((*(ccs[63].p))); // env-os2
-                pixel_buf[16] = pixel_fade((*(ccs[62].p))); // env-os1
-                pixel_buf[17] = pixel_fade((*(ccs[61].p))); // env-rel
-                pixel_buf[18] = pixel_fade((*(ccs[60].p))); // env-att
-                pixel_buf[19] = pixel_fade((*(ccs[59].p))); // env-smth
-                pixel_buf[20] = pixel_fade((*(ccs[58].p))); // env-rcl
-                pixel_buf[21] = pixel_fade((*(ccs[57].p))); // env-rate
-                pixel_buf[22] = pixel_fade((*(ccs[56].p))); // env-len
-                pixel_buf[23] = pixel_fade((*(ccs[44].p))); // sg-len
-                pixel_buf[24] = pixel_fade((*(ccs[45].p))); // sg-rate
-                pixel_buf[25] = pixel_fade((*(ccs[46].p))); // sg-rcl
-                pixel_buf[26] = pixel_fade((*(ccs[47].p))); // sg-smth
-                pixel_buf[27] = pixel_fade((*(ccs[48].p))); // sg-att
-                pixel_buf[28] = pixel_fade((*(ccs[49].p))); // sg-rel
-                pixel_buf[29] = pixel_fade((*(ccs[50].p))); // sg-os1
-                pixel_buf[30] = pixel_fade((*(ccs[51].p))); // sg-os2
-                pixel_buf[31] = pixel_fade((*(ccs[52].p))); // sg-bus
-                pixel_buf[32] = pixel_fade((*(ccs[53].p))); // sg-idx
-                pixel_buf[33] = pixel_fade((*(ccs[54].p))); // sg-timb
-                pixel_buf[34] = pixel_fade((*(ccs[55].p))); // sg-amp
-                pixel_buf[35] = pixel_fade((*(ccs[43].p))); // os1-amp
-                pixel_buf[36] = pixel_fade((*(ccs[42].p))); // os1-timb
-                pixel_buf[37] = pixel_fade((*(ccs[41].p))); // os1-idx
-                pixel_buf[38] = pixel_fade((*(ccs[40].p))); // os1-bus
-                pixel_buf[39] = pixel_fade((*(ccs[39].p))); // os1-os2
-                pixel_buf[40] = pixel_fade((*(ccs[38].p))); // os1-os1
-                pixel_buf[41] = pixel_fade((*(ccs[37].p))); // os1-rel
-                pixel_buf[42] = pixel_fade((*(ccs[36].p))); // os1-att
-                pixel_buf[43] = pixel_fade((*(ccs[35].p))); // os1-smth
-                pixel_buf[44] = pixel_fade((*(ccs[34].p))); // os1-rcl
-                pixel_buf[45] = pixel_fade((*(ccs[33].p))); // os1-rate
-                pixel_buf[46] = pixel_fade((*(ccs[32].p))); // os1-len
+                for (uint i = 0; i < MAT_NUM_ROWS; i++) {
+                    for (uint j = 0; j < MAT_NUM_COLS; j++) {
+                        size_t pixel_idx = matrix_leds[i][j];
+                        size_t cc_num = param_matrix[i][j];
+                        pixel_buf[pixel_idx] = pixel_fade(*(ccs[cc_num].p));
+                    }
+                }
             }
         
 
-            pixel_buf[47] = *(sels[19].p) == 1 ? pixel_on : pixel_off; // amp-vca
-            pixel_buf[48] = *(sels[19].p) == 0 ? pixel_on : pixel_off; // amp-lpg
-            pixel_buf[49] = pixel_fade(*sigs->amp); // AMP
-            pixel_buf[50] = *(sels[17].p) == 1 || *(sels[17].p) == 2 ? pixel_on : pixel_off; // os2-tri
-            pixel_buf[51] = *(sels[17].p) == 0 || *(sels[17].p) == 2 ? pixel_on : pixel_off; // os2-sin
-            pixel_buf[52] = *(altSels[8].p) == 0 ? pixel_on : pixel_off; // bus-am
-            pixel_buf[53] = *(altSels[8].p) == 1 ? pixel_on : pixel_off; // bus-fm
-            pixel_buf[54] = *(altSels[8].p) == 2 ? pixel_on : pixel_off; // bus-tm
-            pixel_buf[55] = *(sels[6].p) == 0 ? pixel_on : pixel_off; // os1-tri
-            pixel_buf[56] = *(sels[6].p) == 1 ? pixel_on : pixel_off; // os1-sqr
-            pixel_buf[57] = *(sels[6].p) == 2 ? pixel_on : pixel_off; // os1-saw
-            pixel_buf[58] = os1_hi ? pixel_fade_lfo(mo_freq, 1) : pixel_fade(mo); // OS1
-            pixel_buf[59] = pixel_fade(sg); // SG
-            pixel_buf[60] = pixel_fade(*(sigs->le)); // ENV
-            pixel_buf[61] = *(sels[12].p) == 2 ? pixel_on : pixel_off; // env-arl
-            pixel_buf[62] = *(sels[12].p) == 1 ? pixel_on : pixel_off; // env-asr
-            pixel_buf[63] = *(sels[12].p) == 0 ? pixel_on : pixel_off; // env-ar
-            pixel_buf[64] = *(sels[11].p) == 0 ? pixel_on : pixel_off; // gate-int/midi
-            pixel_buf[65] = *(sels[11].p) == 1 ? pixel_on : pixel_off; // gate-int/sg
-            pixel_buf[66] = *(sels[11].p) == 2 ? pixel_on : pixel_off; // gate-env-midi
+            pixel_buf[62] = *(sels[2].p) == 0 ? pixel_on : pixel_off; // amp-lpg
+            pixel_buf[63] = *(sels[2].p) == 1 ? pixel_on : pixel_off; // amp-vca
+            pixel_buf[61] = pixel_fade(*sigs->amp); // AMP
+            pixel_buf[42] = *(sels[14].p) == 1 || *(sels[14].p) == 2 ? pixel_on : pixel_off; // os1-tri
+            pixel_buf[41] = *(sels[14].p) == 0 || *(sels[14].p) == 2 ? pixel_on : pixel_off; // os1-sin
+            pixel_buf[46] = *(sels[23].p) == 0 ? pixel_on : pixel_off; // bus-am
+            pixel_buf[47] = *(sels[23].p) == 1 ? pixel_on : pixel_off; // bus-fm
+            pixel_buf[48] = *(sels[23].p) == 2 ? pixel_on : pixel_off; // bus-tm
+            pixel_buf[49] = *(sels[7].p) == 0 ? pixel_on : pixel_off; // os2-tri
+            pixel_buf[50] = *(sels[7].p) == 1 ? pixel_on : pixel_off; // os2-sqr
+            pixel_buf[51] = *(sels[7].p) == 2 ? pixel_on : pixel_off; // os2-saw
+            pixel_buf[54] = os1_hi ? pixel_fade_lfo(mo_freq, 1) : pixel_fade(mo); // OS1
+            pixel_buf[53] = pixel_fade(sg); // SG
+            pixel_buf[52] = pixel_fade(*(sigs->le)); // ENV
+            pixel_buf[55] = *(sels[1].p) == 0 ? pixel_on : pixel_off; // env-ar
+            pixel_buf[56] = *(sels[1].p) == 1 ? pixel_on : pixel_off; // env-asr
+            pixel_buf[57] = *(sels[1].p) == 2 ? pixel_on : pixel_off; // env-arl
+            pixel_buf[58] = *(sels[0].p) == 0 ? pixel_on : pixel_off; // gate-int/midi
+            pixel_buf[59] = *(sels[0].p) == 1 ? pixel_on : pixel_off; // gate-int/sg
+            pixel_buf[60] = *(sels[0].p) == 2 ? pixel_on : pixel_off; // gate-env-midi
+            pixel_buf[43] = *(sels[16].p) == 0 ? pixel_on : pixel_off; // os1-oct 0
+            pixel_buf[44] = *(sels[16].p) == 1 ? pixel_on : pixel_off; // os1-oct -1
+            pixel_buf[45] = *(sels[16].p) == 2 ? pixel_on : pixel_off; // os2-oct -2
             break;
         }
         case UI_MODE_LEARN: {

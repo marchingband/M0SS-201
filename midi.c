@@ -188,8 +188,6 @@ void link_ui() {
     Signals.le = &all_sigs_raw.ind_env;
     Signals.sg = &all_sigs_raw.ind_sg;
     Signals.mo = &all_sigs_raw.ind_os1;
-
-    printf("mods idx 1 has ptr %p\n", (void*)Mods[1].p);
 }
 
 void reset_params(void){
@@ -622,6 +620,7 @@ void poll_uart(void)
         if (ret)
         {
             handle_midi(getMidiMsg(), getMidiMsgLen());
+            printf("TRS: %02X\n", ch);
         }
     }
 }
@@ -633,6 +632,7 @@ void usb_midi_in(char ch)
     if (ret == 1)
     {
         handle_midi(getMidiMsg(), getMidiMsgLen());
+        printf("USB: %02X\n", ch);
     }
 }
 
