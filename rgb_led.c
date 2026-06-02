@@ -143,8 +143,8 @@ void matrix_display_number(uint8_t number) {
             pixel_buf[matrix_leds[i][j]] = pixel_off;
             
             // tens place digit
-            if (j >= 2 && j <= 4) {
-                uint8_t shift = (j - 2) + i*3;
+            if (j >= 1 && j <= 3) {
+                uint8_t shift = (j - 1) + i*3;
                 uint16_t mask = 0x8000 >> shift;
                 if (matrix_number_bit_patterns[tens_place] & mask) {
                     pixel_buf[matrix_leds[i][j]] = pixel_on;
@@ -152,8 +152,8 @@ void matrix_display_number(uint8_t number) {
             }
 
             // ones place digit
-            if (j >= 7 && j <= 9) {
-                uint8_t shift = (j - 7) + i*3;
+            if (j >= 6 && j <= 8) {
+                uint8_t shift = (j - 6) + i*3;
                 uint16_t mask = 0x8000 >> shift;
                 if (matrix_number_bit_patterns[ones_place] & mask) {
                     pixel_buf[matrix_leds[i][j]] = pixel_on;
@@ -293,7 +293,7 @@ void render_lights(void){
                     else if (led_display[i] == 1) colour = pixel_on;
                     else colour = pixel_fade(led_display[i]);
 
-                    pixel_buf[0] = colour;
+                    pixel_buf[i] = colour;
                 }
             } else if(alt_switch_state == ALT_SWITCH_STATE_ON) {
                 for (uint i = 0; i < 11; i++) pixel_buf[i] = display_toggle_on[i];
