@@ -24,28 +24,29 @@ const float param_smooth_coeff = 0.9997917f; //pow2f(-1.0f * LOG2_E * SR_INV / 0
 
 void smooth_signals() {
     // all parameters
-    all_sigs.sg_smth += (1.0f - param_smooth_coeff) * (all_sigs_raw.sg_smth - all_sigs.sg_smth);
-    all_sigs.sg_rate += (1.0f - param_smooth_coeff) * (all_sigs_raw.sg_rate - all_sigs.sg_rate);
-    all_sigs.sg_rcl += (1.0f - param_smooth_coeff) * (all_sigs_raw.sg_rcl - all_sigs.sg_rcl);
-    all_sigs.env_att += (1.0f - param_smooth_coeff) * (all_sigs_raw.env_att - all_sigs.env_att);
-    all_sigs.env_rel += (1.0f - param_smooth_coeff) * (all_sigs_raw.env_rel - all_sigs.env_rel);
-    all_sigs.env_crv += (1.0f - param_smooth_coeff) * (all_sigs_raw.env_crv - all_sigs.env_crv);
-    all_sigs.os2_tune += (1.0f - param_smooth_coeff) * (all_sigs_raw.os2_tune - all_sigs.os2_tune);
-    all_sigs.bus_idx += (1.0f - param_smooth_coeff) * (all_sigs_raw.bus_idx - all_sigs.bus_idx); 
-    all_sigs.os1_gld += (1.0f - param_smooth_coeff) * (all_sigs_raw.os1_gld - all_sigs.os1_gld);
-    all_sigs.mx_os1 += (1.0f - param_smooth_coeff) * (all_sigs_raw.mx_os1 - all_sigs.mx_os1);
-    all_sigs.mx_os2 += (1.0f - param_smooth_coeff) * (all_sigs_raw.mx_os2 - all_sigs.mx_os2);
-    all_sigs.mx_sg += (1.0f - param_smooth_coeff) * (all_sigs_raw.mx_sg - all_sigs.mx_sg); 
-    all_sigs.mx_env += (1.0f - param_smooth_coeff) * (all_sigs_raw.mx_env - all_sigs.mx_env);
-    all_sigs.fold_timb += (1.0f - param_smooth_coeff) * (all_sigs_raw.fold_timb - all_sigs.fold_timb);
-    all_sigs.fold_bias += (1.0f - param_smooth_coeff) * (all_sigs_raw.fold_bias - all_sigs.fold_bias); 
-    all_sigs.vol += (1.0f - param_smooth_coeff) * (all_sigs_raw.vol - all_sigs.vol);      
-    all_sigs.dly_tm += (1.0f - param_smooth_coeff) * (all_sigs_raw.dly_tm - all_sigs.dly_tm);
-    all_sigs.dly_mx += (1.0f - param_smooth_coeff) * (all_sigs_raw.dly_mx - all_sigs.dly_mx);
-    all_sigs.dly_fb += (1.0f - param_smooth_coeff) * (all_sigs_raw.dly_fb - all_sigs.dly_fb);
+    float c = 1.0f - param_smooth_coeff;
+    all_sigs.sg_smth += c * (all_sigs_raw.sg_smth - all_sigs.sg_smth);
+    all_sigs.sg_rate += c * (all_sigs_raw.sg_rate - all_sigs.sg_rate);
+    all_sigs.sg_rcl += c * (all_sigs_raw.sg_rcl - all_sigs.sg_rcl);
+    all_sigs.env_att += c * (all_sigs_raw.env_att - all_sigs.env_att);
+    all_sigs.env_rel += c * (all_sigs_raw.env_rel - all_sigs.env_rel);
+    all_sigs.env_crv += c * (all_sigs_raw.env_crv - all_sigs.env_crv);
+    all_sigs.os2_tune += c * (all_sigs_raw.os2_tune - all_sigs.os2_tune);
+    all_sigs.bus_idx += c * (all_sigs_raw.bus_idx - all_sigs.bus_idx); 
+    all_sigs.os1_gld += c * (all_sigs_raw.os1_gld - all_sigs.os1_gld);
+    all_sigs.mx_os1 += c * (all_sigs_raw.mx_os1 - all_sigs.mx_os1);
+    all_sigs.mx_os2 += c * (all_sigs_raw.mx_os2 - all_sigs.mx_os2);
+    all_sigs.mx_sg += c * (all_sigs_raw.mx_sg - all_sigs.mx_sg); 
+    all_sigs.mx_env += c * (all_sigs_raw.mx_env - all_sigs.mx_env);
+    all_sigs.fold_timb += c * (all_sigs_raw.fold_timb - all_sigs.fold_timb);
+    all_sigs.fold_bias += c * (all_sigs_raw.fold_bias - all_sigs.fold_bias); 
+    all_sigs.vol += c * (all_sigs_raw.vol - all_sigs.vol);      
+    all_sigs.dly_tm += c * (all_sigs_raw.dly_tm - all_sigs.dly_tm);
+    all_sigs.dly_mx += c * (all_sigs_raw.dly_mx - all_sigs.dly_mx);
+    all_sigs.dly_fb += c * (all_sigs_raw.dly_fb - all_sigs.dly_fb);
     for (uint16_t i = 0; i < NUM_MOD_SRCS; i++) {
         for (uint16_t j = 0; j < NUM_MOD_DESTS; j++) {
-           all_sigs.mtx[i][j] += (1.0f - param_smooth_coeff) * (all_sigs_raw.mtx[i][j] - all_sigs.mtx[i][j]); 
+           all_sigs.mtx[i][j] += c * (all_sigs_raw.mtx[i][j] - all_sigs.mtx[i][j]); 
         }
     }
 }
@@ -62,9 +63,6 @@ void init_dsp() {
 
     dly.buffer_size = DELAY_LINE_LEN;
     dly.ptr = 0;
-
-    struct bflb_device_s *gpio = bflb_device_get_by_name("gpio");
-    bflb_gpio_init(gpio, GPIO_PIN_15, GPIO_OUTPUT | GPIO_SMT_EN | GPIO_DRV_0);
 }
 
 float midi_note;
@@ -81,9 +79,10 @@ void compute_midi_note() {
 float phase = 0.0f;
 const float freq = 260.0f * SR_INV;
 
+const int smoothing_ratio = 16;
+int smoothing_rate_ctr = 0;
+
 void compute_dsp(size_t len, float* buf) {
-    struct bflb_device_s *gpio = bflb_device_get_by_name("gpio");
-    bflb_gpio_set(gpio, GPIO_PIN_15);
 
     for (size_t i = 0; i < len; i++) {
         // phase += freq;
@@ -95,7 +94,10 @@ void compute_dsp(size_t len, float* buf) {
         // compute parameter amounts through matrix
         // takes matrix signals from all_sigs as well as previous outputs (stored in peripheral structs)
         // and writes to fb_dests
-        smooth_signals();
+        if (smoothing_rate_ctr++ >= smoothing_ratio) {
+            smooth_signals();
+            smoothing_rate_ctr = 0;
+        }
 
         compute_matrix();
 
@@ -110,41 +112,19 @@ void compute_dsp(size_t len, float* buf) {
 
         compute_os2();
         compute_os1();
+        float signal = 0.0f;
+        signal = compute_mixer();
+        signal = compute_wavefolder(signal);
+        signal = compute_amplifier(signal);
+        signal = compute_delay(signal);
 
-        float mixed_output = compute_mixer();
-        float folded_output = compute_wavefolder(mixed_output);
-        float amped_output = compute_amplifier(folded_output);
-        float delayed_output = compute_delay(amped_output);
-        // // compute OS2 output
-        // CmplxModType_t mod_type = all_sigs.bus_sel;
-        // float os2_freq = compute_os2_freq(mod_type); // takes into account mod_type
-        // compute_os2(os2_freq, all_sigs.os2_wave, &os2_state);
-        // if (mod_type == MOD_TYPE_AM) {
-        //     // perform AM
-        // }
-
-        // // process signal path
-        // // mixer -> folder -> amp -> delay
-        // float mixed_signal = compute_mixer();
-        // float timb = fb_dests.timb; 
-        // if (mod_type == MOD_TYPE_TM) {
-        //     // perform TM by modifying timb
-        // }
-        // float folded_signal = compute_wavefolder(mixed_signal, timb, all_sigs.fold_bias);
-        // float amped_signal = compute_amplifier(folded_signal, fb_dests.amp, all_sigs.amp_sel);
-        // if (i == len - 1) all_sigs.ind_amp = amped_signal;
-        // float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
-
-        // buf[i] = delayed_signal;
         float volume = normalized_linear_to_logexp(all_sigs.vol, 4);
-        buf[i] = delayed_output * volume;
+        buf[i] = signal * volume;
     }
     all_sigs_raw.ind_env = env_state.val; //  env_state.val;
     all_sigs_raw.ind_sg = sg_state.val;
     all_sigs_raw.ind_os1 = os1_state.val;
     all_sigs_raw.ind_amp = buf[0]; //0.5f*buf[len-1] + 0.5f;
-
-    bflb_gpio_reset(gpio, GPIO_PIN_15);
 }
 
 
@@ -593,8 +573,8 @@ float compute_delay(float in) {
 
     // get read pointer
     float read_ptr = (float)dly.ptr - delay_time;
-    while (read_ptr < 0) read_ptr += dly.buffer_size;
-    while (read_ptr >= dly.buffer_size) read_ptr -= dly.buffer_size;
+    read_ptr = fmodf(read_ptr, dly.buffer_size);
+    if (read_ptr < 0) read_ptr += dly.buffer_size;
 
     // find new sample (interpolating)
     MAKE_INTEGRAL_FRACTIONAL(read_ptr);
