@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#include "bflb_gpio.h"
+
 #include "synth.h"
 #include "interface.h"
 #include "utils.h"
@@ -52,6 +54,12 @@ void smooth_signals() {
 
 #define OVERSAMPLE_RATIO 4
 
+#define DBG_TIMING
+
+#ifdef DBG_TIMING
+#define DBG_TIMING_PIN 15
+#endif
+
 void init_dsp() {
     for (uint16_t i = 0; i < MAX_SG_LENGTH; i++) {
         sg_state.arr[i] = randf();
@@ -62,6 +70,11 @@ void init_dsp() {
 
     dly.buffer_size = DELAY_LINE_LEN;
     dly.ptr = 0;
+
+    #ifdef DBG_TIMING
+    struct bflb_device_s *gpio = bflb_device_get_by_name("gpio");
+    bflb_gpio_init(gpio, DBG_TIMING_PIN, GPIO_OUTPUT | GPIO_SMT_EN | GPIO_DRV_0);
+    #endif
 }
 
 float midi_note;
@@ -76,6 +89,10 @@ void compute_midi_note() {
 }
 
 void compute_dsp(size_t len, float* buf) {
+    #ifdef DBG_TIMING
+    struct bflb_device_s *gpio = bflb_device_get_by_name("gpio");
+    bflb_gpio_set(gpio, DBG_TIMING_PIN);
+    #endif
     for (size_t i = 0; i < len; i++) {
         // compute parameter amounts through matrix
         // takes matrix signals from all_sigs as well as previous outputs (stored in peripheral structs)
@@ -96,38 +113,23 @@ void compute_dsp(size_t len, float* buf) {
         compute_os1();
         compute_os2();
 
-        float mixed_output = compute_mixer();
-        float folded_output = compute_wavefolder(mixed_output);
-        float amped_output = compute_amplifier(folded_output);
-        float delayed_output = compute_delay(amped_output);
-        // // compute OS2 output
-        // CmplxModType_t mod_type = all_sigs.bus_sel;
-        // float os2_freq = compute_os2_freq(mod_type); // takes into account mod_type
-        // compute_os2(os2_freq, all_sigs.os2_wave, &os2_state);
-        // if (mod_type == MOD_TYPE_AM) {
-        //     // perform AM
-        // }
+        float signal = 0.0f;
+        signal = compute_mixer();
+        signal = compute_wavefolder(signal);
+        signal = compute_amplifier(signal);
+        signal = compute_delay(signal);
 
-        // // process signal path
-        // // mixer -> folder -> amp -> delay
-        // float mixed_signal = compute_mixer();
-        // float timb = fb_dests.timb; 
-        // if (mod_type == MOD_TYPE_TM) {
-        //     // perform TM by modifying timb
-        // }
-        // float folded_signal = compute_wavefolder(mixed_signal, timb, all_sigs.fold_bias);
-        // float amped_signal = compute_amplifier(folded_signal, fb_dests.amp, all_sigs.amp_sel);
-        // if (i == len - 1) all_sigs.ind_amp = amped_signal;
-        // float delayed_signal = compute_delay(amped_signal, all_sigs.dly_tm, all_sigs.dly_fb, all_sigs.dly_mx);
-
-        // buf[i] = delayed_signal;
         float volume = normalized_linear_to_logexp(all_sigs.vol, 4);
-        buf[i] = delayed_output * volume;
+        buf[i] = signal * volume;
     }
     all_sigs_raw.ind_env = env_state.val; //  env_state.val;
     all_sigs_raw.ind_sg = sg_state.val;
     all_sigs_raw.ind_os1 = os1_state.val;
     all_sigs_raw.ind_amp = buf[0]; //0.5f*buf[len-1] + 0.5f;
+
+    #ifdef DBG_TIMING
+    bflb_gpio_reset(gpio, DBG_TIMING_PIN);
+    #endif
 }
 
 
