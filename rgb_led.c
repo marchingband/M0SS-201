@@ -316,8 +316,8 @@ void render_lights(void){
             pixel_buf[62] = *(sels[2].p) == 0 ? pixel_on : pixel_off; // amp-lpg
             pixel_buf[63] = *(sels[2].p) == 1 ? pixel_on : pixel_off; // amp-vca
             pixel_buf[61] = pixel_fade(*sigs->amp); // AMP
-            pixel_buf[42] = *(sels[14].p) == 1 || *(sels[14].p) == 2 ? pixel_on : pixel_off; // os1-tri
-            pixel_buf[41] = *(sels[14].p) == 0 || *(sels[14].p) == 2 ? pixel_on : pixel_off; // os1-sin
+            pixel_buf[42] = *(sels[22].p) == 1 || *(sels[22].p) == 2 ? pixel_on : pixel_off; // os1-tri
+            pixel_buf[41] = *(sels[22].p) == 0 || *(sels[22].p) == 2 ? pixel_on : pixel_off; // os1-sin
             pixel_buf[46] = *(sels[23].p) == 0 ? pixel_on : pixel_off; // bus-am
             pixel_buf[47] = *(sels[23].p) == 1 ? pixel_on : pixel_off; // bus-fm
             pixel_buf[48] = *(sels[23].p) == 2 ? pixel_on : pixel_off; // bus-tm
