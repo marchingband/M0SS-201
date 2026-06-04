@@ -115,6 +115,12 @@ typedef struct {
     float val;
 } OscState_t;
 
+typedef enum {
+    OS1_OCT_0,
+    OS1_OCT_n1,
+    OS1_OCT_n2
+} OsOct_t;
+
 #define MAX_SCALE_DEGREES 24
 
 typedef struct {

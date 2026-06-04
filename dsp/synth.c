@@ -148,15 +148,13 @@ void compute_dsp(size_t len, float* buf) {
 
 #define MAT(x, y) CLAMP((E_MAT[x]) + (S_MAT[x]) + (O_MAT[x]) + (y), 0.0f, 1.0f)
 
-float os1_mod_freq;
-
 void compute_matrix() {
     fb_dests.rate = MAT(RATE_I, all_sigs.sg_rate);
     fb_dests.smth = MAT(SMTH_I, all_sigs.sg_smth);
     fb_dests.rcl  = MAT(RCL_I,  all_sigs.sg_rcl);
     fb_dests.att  = MAT(ATT_I,  all_sigs.env_att);
     fb_dests.rel  = MAT(REL_I,  all_sigs.env_rel);
-    fb_dests.os1  = MAT(OS1_I,  os1_mod_freq);
+    fb_dests.os1  = MAT(OS1_I,  0.0f);
     fb_dests.os2  = MAT(OS2_I,  all_sigs.os2_tune);
     fb_dests.idx  = MAT(IDX_I,  all_sigs.bus_idx);
     fb_dests.timb = MAT(TIMB_I, all_sigs.fold_timb);
@@ -186,6 +184,9 @@ void compute_sg() {
     len_int = CLAMP(len_int, MIN_SG_LENGTH, MAX_SG_LENGTH);
     if (gate && !sg_state.prev_gate) {
         sg_state.idx = (sg_state.idx + 1) % len_int;
+
+        // to make sure it can reliably hit 100%
+        float recall = CLAMP(fb_dests.rcl * 1.01f, 0.0f, 1.0f);
         
         if (fb_dests.rcl <= randf()) sg_state.arr[sg_state.idx] = randf();
         // sg_state.val = sg_state.arr[sg_state.idx];
@@ -382,9 +383,32 @@ float quantize(float freq_hz, const Scale* scale) {
     return scale->root_freq_hz * rel_octave * quantized_ratio;
 }
 
-Scale pentatonic = {.root_freq_hz = 0.0f, .num_intervals = 5, .intervals = {
-    1.0f, 1.189207f, 1.3348398f, 1.49830708f, 1.781797f}
-};
+const Scale pentatonic = {.root_freq_hz = 0.0f, .num_intervals = 5, .intervals = {
+    1.0f, 1.189207f, 1.3348398f, 1.49830708f, 1.781797f
+}};
+
+const Scale chromatic = {.root_freq_hz = 0.0f, .num_intervals = 12, .intervals = {
+    1.0f, 1.05946f, 1.122462f, 1.189207f, 1.259921f, 1.334839f,
+    1.414214f, 1.498307f, 1.587401f, 1.681793f, 1.781797f, 1.887749f
+}};
+
+const Scale major = {.root_freq_hz = 0.0f, .num_intervals = 7, .intervals = {
+    1.0f, 1.122462f, 1.259921f, 1.334839f,
+    1.498307f, 1.681793f, 1.887749f 
+}};
+
+const Scale minor = {.root_freq_hz = 0.0f, .num_intervals = 7, .intervals = {
+    1.0f, 1.122462f, 1.189207f, 1.334839f,
+    1.498307f, 1.587401f, 1.781797f
+}};
+
+const Scale root_fifth = {.root_freq_hz = 0.0f, .num_intervals = 2, .intervals = {
+    1.0f, 1.498307f
+}};
+
+const Scale octaves = {.root_freq_hz = 0.0f, .num_intervals = 1, .intervals = {1.0f}};
+
+Scale quantizer_scales[] = {chromatic, major, minor, pentatonic, root_fifth, octaves};
 
 float compute_os1_rate() {
     // care about midi frequency, tuning, and mod bus
@@ -394,11 +418,16 @@ float compute_os1_rate() {
     // so the tuning slider, modulations, and FM need to be added.
     // tuning slider and modulations get quantized, then FM is added.
 
-    float tuning_range_octaves = 1.0f;  // one octave up and down
-    float freq_multiplier = pow2f(fb_dests.os1 * 2.0f + tuning_range_octaves * fb_dests.os1); // maximum two octave range for normalized value
+    float freq_multiplier = pow2f(fb_dests.os1 * 2.0f); // maximum two octave range for normalized value
+    if (all_sigs_raw.os1_oct == OS1_OCT_n1) freq_multiplier *= 0.5f;
+    else if (all_sigs_raw.os1_oct == OS1_OCT_n2) freq_multiplier *= 0.25f;
 
-    pentatonic.root_freq_hz = midi_note_to_freq_hz(all_sigs_raw.pitch);
-    if (all_sigs_raw.os1_qtz != 0) freq_multiplier = quantize(freq_multiplier, &pentatonic);
+
+    if (all_sigs_raw.os1_qtz != 0) {
+        Scale scale = quantizer_scales[(size_t)all_sigs_raw.os1_qtz - 1];
+        scale.root_freq_hz = midi_note_to_freq_hz(all_sigs_raw.pitch);
+        freq_multiplier = quantize(freq_multiplier, &scale);
+    }
 
     float freq_hz = freq_multiplier * midi_note_to_freq_hz(midi_note);
     if (all_sigs_raw.bus_sel == BUS_SEL_FM) {
@@ -586,8 +615,8 @@ float compute_delay(float in) {
 
     // get read pointer
     float read_ptr = (float)dly.ptr - delay_time;
-    read_ptr = fmodf(read_ptr, dly.buffer_size);
-    if (read_ptr < 0) read_ptr += dly.buffer_size;
+    while (read_ptr < 0) read_ptr += dly.buffer_size;
+    while (read_ptr >= dly.buffer_size) read_ptr -= dly.buffer_size;
 
     // find new sample (interpolating)
     MAKE_INTEGRAL_FRACTIONAL(read_ptr);
