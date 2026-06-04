@@ -450,7 +450,7 @@ void compute_os1() {
     }
 
     if (all_sigs_raw.bus_sel == BUS_SEL_AM) {
-        selected_signal *= 1.0f - fb_dests.idx*(1.0f - os1_state.val);
+        selected_signal *= 1.0f - fb_dests.idx*(1.0f - os2_state.val);
     }
     os1_state.val = selected_signal;
 }
@@ -513,10 +513,10 @@ float compute_wavefolder(float in) {
     // minimum timbre is no change in signal level
     // maximum timbre is all the way to +/-1, so 50x
     // above that value the folder will simply saturate
-    float t = fb_dests.timb * 25.0f;
+    float t = fb_dests.timb * 40.0f;
     if (all_sigs_raw.bus_sel == BUS_SEL_TM) {
         const float max_timbre_modulation = 1.0f;
-        t += max_timbre_modulation * fb_dests.idx * os2_state.val * 25.0f;
+        t += max_timbre_modulation * fb_dests.idx * os2_state.val * 40.0f;
     }
     t += 1.0f;
 
@@ -565,7 +565,7 @@ float compute_amplifier(float in) {
     float gain = fb_dests.amp; // .amp;
     if (all_sigs_raw.amp_sel == AMP_VCA) return in * gain;
 
-    compute_vactrol_params(gain, 0.01f, 0.005f, 0.2f);
+    compute_vactrol_params(gain, 0.01f, 0.005f, 0.15f);
     float freq_coeff = 1.0f - expf(-2.0f * PI * vact.normalized_freq);
     in *= vact.gain;
 
