@@ -187,7 +187,7 @@ void link_ui() {
     Signals.amp = &all_sigs_raw.ind_amp;
     Signals.le = &all_sigs_raw.ind_env;
     Signals.sg = &all_sigs_raw.ind_sg;
-    Signals.mo = &all_sigs_raw.ind_os1;
+    Signals.mo = &all_sigs_raw.ind_os2;
 }
 
 void reset_params(void){

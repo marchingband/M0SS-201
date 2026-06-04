@@ -129,7 +129,7 @@ void compute_dsp(size_t len, float* buf) {
     }
     all_sigs_raw.ind_env = env_state.val; //  env_state.val;
     all_sigs_raw.ind_sg = sg_state.val;
-    all_sigs_raw.ind_os1 = os1_state.val;
+    all_sigs_raw.ind_os2 = os2_state.val;
     all_sigs_raw.ind_amp = buf[0]; //0.5f*buf[len-1] + 0.5f;
 
     #ifdef DBG_TIMING
@@ -450,9 +450,9 @@ void compute_os1() {
     }
 
     if (all_sigs_raw.bus_sel == BUS_SEL_AM) {
-        selected_signal *= 1.0f - fb_dests.idx*(1.0f - os2_state.val);
+        selected_signal *= 1.0f - fb_dests.idx*(1.0f - os1_state.val);
     }
-    os2_state.val = selected_signal;
+    os1_state.val = selected_signal;
 }
 
 float compute_mixer() {
@@ -516,7 +516,7 @@ float compute_wavefolder(float in) {
     float t = fb_dests.timb * 25.0f;
     if (all_sigs_raw.bus_sel == BUS_SEL_TM) {
         const float max_timbre_modulation = 1.0f;
-        t += max_timbre_modulation * fb_dests.idx * os1_state.val * 25.0f;
+        t += max_timbre_modulation * fb_dests.idx * os2_state.val * 25.0f;
     }
     t += 1.0f;
 

@@ -88,7 +88,7 @@ typedef struct {
     // all indicators
     float ind_sg;
     float ind_env;
-    float ind_os1;
+    float ind_os2;
     float ind_amp;
 } DSP_All_Signals;
 

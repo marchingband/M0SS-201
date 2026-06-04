@@ -271,12 +271,12 @@ void render_lights(void){
     struct AltSel *altSels = get_alt_sels();
     struct Config *config = get_config();
 
-    bool os1_hi = *sels[4].p == 0;
+    bool os2_hi = *sels[5].p == 0;
 
     float sg = *sigs->sg;
     float mo = (*sigs->mo + 1) * 0.5;
     // float mo_freq = *sigs->mo_freq / 3000; // the mosc range is about 3000
-    float mo_freq = (*mods[17].p + 2) * 0.25;// posc range is [-2..2]
+    float mo_freq = *(get_alts()[7].p);
 
     struct pixel_t  display_toggle_on[11] = {pixel_off, pixel_off, pixel_off, pixel_off, pixel_off, pixel_on, pixel_on, pixel_on, pixel_on, pixel_on, pixel_on};
     struct pixel_t display_toggle_off[11] = {pixel_on, pixel_on, pixel_on, pixel_on, pixel_on, pixel_on, pixel_off, pixel_off, pixel_off, pixel_off, pixel_off};
@@ -324,7 +324,7 @@ void render_lights(void){
             pixel_buf[49] = *(sels[7].p) == 0 ? pixel_on : pixel_off; // os2-tri
             pixel_buf[50] = *(sels[7].p) == 1 ? pixel_on : pixel_off; // os2-sqr
             pixel_buf[51] = *(sels[7].p) == 2 ? pixel_on : pixel_off; // os2-saw
-            pixel_buf[54] = os1_hi ? pixel_fade_lfo(mo_freq, 1) : pixel_fade(mo); // OS1
+            pixel_buf[54] = os2_hi ? pixel_fade_lfo(mo_freq, 1) : pixel_fade(mo); // OS1
             pixel_buf[53] = pixel_fade(sg); // SG
             pixel_buf[52] = pixel_fade(*(sigs->le)); // ENV
             pixel_buf[55] = *(sels[1].p) == 0 ? pixel_on : pixel_off; // env-ar

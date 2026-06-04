@@ -14,7 +14,7 @@
 
 #define MAX_ENV_STAGE_LEN_SEC 2.0f
 #define MAX_ENV_STAGE_LEN_SAMPLES 98000.0f  // MAX_ENV_STAGE_LEN_SEC * SR
-#define MIN_ENV_STAGE_LEN_SAMPLES 2.0f
+#define MIN_ENV_STAGE_LEN_SAMPLES 6.0f
 
 void compute_dsp(size_t len, float* buf);
 void init_dsp();
