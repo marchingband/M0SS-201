@@ -87,9 +87,6 @@ void compute_midi_note() {
 float phase = 0.0f;
 const float freq = 260.0f * SR_INV;
 
-const int smoothing_ratio = 16;
-int smoothing_rate_ctr = 0;
-
 void compute_dsp(size_t len, float* buf) {
     #ifdef DBG_TIMING
     struct bflb_device_s* gpio = bflb_device_get_by_name("gpio");
@@ -106,10 +103,7 @@ void compute_dsp(size_t len, float* buf) {
         // compute parameter amounts through matrix
         // takes matrix signals from all_sigs as well as previous outputs (stored in peripheral structs)
         // and writes to fb_dests
-        if (smoothing_rate_ctr++ >= smoothing_ratio) {
-            smooth_signals();
-            smoothing_rate_ctr = 0;
-        }
+        smooth_signals();
 
         compute_matrix();
 

@@ -456,7 +456,7 @@ void handle_normal_mode_button_press(int btn_idx) {
             }
 
             // toggle switch state
-            if(btn_idx == 4 || btn_idx == 20){ // k-t and quantize
+            if(btn_idx == 5 || btn_idx == 16){ // k-t and quantize
                 alt_switch_state = *alt_sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
             }
         }
@@ -474,7 +474,7 @@ void handle_normal_mode_button_press(int btn_idx) {
                 *sel->p = sel->min;
             }
             // toggle switch state
-            if(btn_idx == 4){ // hi-lo
+            if(btn_idx == 5){ // hi-lo
                 alt_switch_state = *sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
             }
         }
