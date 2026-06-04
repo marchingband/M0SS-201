@@ -27,8 +27,8 @@ int max(int a, int b)
 }
 
 
-static uint16_t tic[BUF_SIZE];
-static uint16_t toc[BUF_SIZE];
+static uint16_t tic[BUF_SIZE * 2];
+static uint16_t toc[BUF_SIZE * 2];
 
 static struct bflb_device_s *i2s0;
 static struct bflb_device_s *i2s_dma_hd;
@@ -103,8 +103,8 @@ static void i2s_dma_init(void) {
         .dst_req = DMA_REQUEST_I2S_TX,
         .src_addr_inc = DMA_ADDR_INCREMENT_ENABLE,
         .dst_addr_inc = DMA_ADDR_INCREMENT_DISABLE,
-        .src_burst_count = DMA_BURST_INCR4,
-        .dst_burst_count = DMA_BURST_INCR4,
+        .src_burst_count = DMA_BURST_INCR1,
+        .dst_burst_count = DMA_BURST_INCR1,
         .src_width = DMA_DATA_WIDTH_16BIT,
         .dst_width = DMA_DATA_WIDTH_16BIT,
     };

@@ -97,7 +97,7 @@ float note_to_freq(int note)
     return (a / 32) * pow(2, ((note - 9) / 12.0));
 }
 
-float *buf[1];
+float *buf;
 size_t buf_len;
 
 
@@ -115,7 +115,7 @@ void dsp_init(size_t buf_size)
     link_ui();
     reset_params();
     printf("malloc\n");
-    buf[0] = (float *)malloc(buf_size * sizeof(float));
+    buf = (float *)malloc(buf_size * sizeof(float));
     buf_len = buf_size;
     // buf[0] = (float *)malloc(cnt * sizeof(float));
     // buf_len = cnt;
@@ -132,17 +132,17 @@ void print_bench(void)
 
 int loop_cnt = 0;
 
-void dsp_run(int16_t *dest)
+void dsp_run(uint16_t *dest)
 {
     int now = bflb_mtimer_get_time_us();
     period = now - last_start;
     last_start = now;
     // poll_uart();
-    compute_dsp(buf_len, buf[0]);
+    compute_dsp(buf_len, buf);
     // computemydsp(&dsp, buf_len, NULL, buf);
     for (int i = 0; i < buf_len; i++)
     {
-        float val = buf[0][i];
+        float val = buf[i];
         // if(val > 1.0 || val < -1.0)
         // {
             // printf("clip :%f", val);
@@ -152,7 +152,9 @@ void dsp_run(int16_t *dest)
         // the AUDAC expects int16_t but the buffer is typed uint16_t so do this awkward thing.
         // dest[i] = (uint16_t)(int16_t)(val * 32767);
         int32_t raw = (int32_t)(val * 32767);
-        dest[i] = (uint16_t)((raw < -32768)? -32768 : ((raw > 32767)? 32767 : raw));
+        uint16_t capped = (raw < -32768)? -32768 : ((raw > 32767)? 32767 : raw);
+        dest[2*i + 0] = capped;
+        dest[2*i + 1] = capped;
     }
     consumed = bflb_mtimer_get_time_us() - now;
     poll_gpio();

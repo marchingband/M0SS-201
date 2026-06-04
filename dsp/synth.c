@@ -53,6 +53,9 @@ void smooth_signals() {
 
 #define OVERSAMPLE_RATIO 4
 
+#define DBG_TIMING
+#define DBG_TIMING_PIN 15
+
 void init_dsp() {
     for (uint16_t i = 0; i < MAX_SG_LENGTH; i++) {
         sg_state.arr[i] = randf();
@@ -63,6 +66,11 @@ void init_dsp() {
 
     dly.buffer_size = DELAY_LINE_LEN;
     dly.ptr = 0;
+
+    #ifdef DBG_TIMING
+    struct bflb_device_s* gpio = bflb_device_get_by_name("gpio");
+    bflb_gpio_init(gpio, DBG_TIMING_PIN, GPIO_OUTPUT | GPIO_SMT_EN | GPIO_DRV_0);
+    #endif
 }
 
 float midi_note;
@@ -83,6 +91,10 @@ const int smoothing_ratio = 16;
 int smoothing_rate_ctr = 0;
 
 void compute_dsp(size_t len, float* buf) {
+    #ifdef DBG_TIMING
+    struct bflb_device_s* gpio = bflb_device_get_by_name("gpio");
+    bflb_gpio_set(gpio, DBG_TIMING_PIN);
+    #endif
 
     for (size_t i = 0; i < len; i++) {
         // phase += freq;
@@ -125,8 +137,11 @@ void compute_dsp(size_t len, float* buf) {
     all_sigs_raw.ind_sg = sg_state.val;
     all_sigs_raw.ind_os1 = os1_state.val;
     all_sigs_raw.ind_amp = buf[0]; //0.5f*buf[len-1] + 0.5f;
-}
 
+    #ifdef DBG_TIMING
+    bflb_gpio_reset(gpio, DBG_TIMING_PIN);
+    #endif
+}
 
 // os1 is bipolar, sg and env are unipolar
 // therefore just by adding the signals the range is [-1, 3]
