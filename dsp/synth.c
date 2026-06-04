@@ -176,9 +176,11 @@ void compute_sg_rate() {
     sg_state.high = sg_state.phase < 0.5f;
 }
 
+bool env_gate = false;
+
 void compute_sg() {
     // TODO: shouldn't be all_sigs.gate, should be start of envelope cycle
-    bool gate = (all_sigs_raw.gate_sel == GATESEL_ENV)? all_sigs_raw.gate : sg_state.high;
+    bool gate = (all_sigs_raw.gate_sel == GATESEL_ENV)? env_gate : sg_state.high;
 
     uint16_t len_int = all_sigs_raw.sg_len;
     len_int = CLAMP(len_int, MIN_SG_LENGTH, MAX_SG_LENGTH);
@@ -222,8 +224,9 @@ inline float bias_clip(float b) {
 }
 
 void compute_env() {
-    bool trig = all_sigs_raw.gate && !env_state.prev_gate;
-    env_state.prev_gate = all_sigs_raw.gate;
+    bool gate_in = (all_sigs_raw.gate_sel == GATESEL_SG)? sg_state.high : all_sigs_raw.gate;
+    bool trig = gate_in && !env_state.prev_gate;
+    env_state.prev_gate = gate_in;
 
     if (trig || (env_state.stage == ENV_OFF && all_sigs_raw.env_mode == ENVMODE_ARL)) {
         env_state.stage = ENV_ATT;
@@ -272,6 +275,7 @@ void compute_env() {
             break;
         }
     }
+    env_gate = env_state.stage == ENV_ATT;
 }
 
 void compute_os2() {
