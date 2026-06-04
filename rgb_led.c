@@ -25,7 +25,7 @@ const uint8_t matrix_leds[MAT_NUM_ROWS][MAT_NUM_COLS] = {
 };
 
 // numbers displayed on matrix take up a 3x3 grid
-const uint16_t matrix_number_bit_patterns[10] = {0xF780, 0x4900, 0xE780, 0xEF80, 0xBC80, 0xF380, 0x9F80, 0xE480, 0xFF80, 0xFC80};
+const uint16_t matrix_number_bit_patterns[10] = {0xF780, 0x4900, 0xCF80, 0xEF80, 0xBC80, 0xF980, 0x9F80, 0xE480, 0xFF80, 0xFC80};
 
 #define PIXEL_SIZE 3 // each colour takes 4 bytes
 #define NUM_LED 64
