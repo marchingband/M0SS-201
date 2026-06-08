@@ -505,6 +505,15 @@ float compute_mixer() {
         + os1_state.val * power_law_os1 + os2_state.val * power_law_os2;
 }
 
+float wavefolder_tone_lowpass(float x) {
+    const float ctf_hz = 1330.0f;
+    const float a = 0.615431144f;
+    static float y1 = 0.0f;
+
+    y1 += a * (x - y1);
+    return y1;
+}
+
 float compute_wavefolder(float in) {    
     in += all_sigs.fold_bias;
     in *= 0.5f;
@@ -529,7 +538,8 @@ float compute_wavefolder(float in) {
         os_outputs[i] = process_biquad(&dec_filt3, process_biquad(&dec_filt2, process_biquad(&dec_filt1, folded_sample)));
     }
     prev_in = in;
-    return os_outputs[OVERSAMPLE_RATIO - 1] * 0.25;
+    float filtered_output = wavefolder_tone_lowpass(os_outputs[OVERSAMPLE_RATIO - 1] * 0.25f);
+    return filtered_output;
 }
 
 Vactrol_t vact;
