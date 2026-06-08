@@ -198,6 +198,7 @@ void set_led_display(float *val, float min, float max, bool numeric){
     led_disp_min = min;
     led_disp_max = max;
     led_selection_is_numeric = numeric;
+    alt_switch_state = ALT_SWITCH_STATE_NONE;
 }
 
 void update_led_display(void){
@@ -302,7 +303,7 @@ void render_lights(void){
             }
 
             // matrix
-            if (!led_selection_is_numeric) {
+            if (!led_selection_is_numeric || alt_switch_state != ALT_SWITCH_STATE_NONE) {
                 for (uint i = 0; i < MAT_NUM_ROWS; i++) {
                     for (uint j = 0; j < MAT_NUM_COLS; j++) {
                         size_t pixel_idx = matrix_leds[i][j];
