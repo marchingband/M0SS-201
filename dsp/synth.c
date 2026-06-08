@@ -80,8 +80,9 @@ float midi_note;
 void compute_midi_note() {
     static float lp_state;
     // TODO: midi pitch bend
-    float glide_s = linear_map(all_sigs.os1_gld, 0.0f, 1.0f, 0.01f, 0.6f);
-    float coeff = pow2f(-1.0f * LOG2_E * SR_INV / glide_s);
+    float glide = normalized_linear_to_logexp(all_sigs.os1_gld, 3);
+    float glide_s = linear_map(glide, 0.0f, 1.0f, 0.00001f, 0.4f);
+    float coeff = 1.0f - pow2f(-1.0f * LOG2_E * SR_INV / glide_s);
     lp_state += (all_sigs_raw.pitch - lp_state) * coeff;
     midi_note = lp_state;
 }
