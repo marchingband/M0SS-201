@@ -5,8 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "biquad.h"
-
 #define SR 48000U
 #define SR_INV 2.08333e-5f
 
@@ -92,6 +90,13 @@ typedef struct {
     float val;
     EnvStages_t stage;
 } EnvState_t;
+
+typedef struct {
+    float gain;
+    float threshold;
+    float bias;
+    float mix;
+} BuchlaWF_Cell_t;
 
 #define MAX_SG_LENGTH 32
 #define MIN_SG_LENGTH 4

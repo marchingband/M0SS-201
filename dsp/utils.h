@@ -97,6 +97,13 @@ static inline float expf(float x) {
     return pow2f(x * log2e);
 }
 
+static inline float tanhf(float x) {
+	const float xm = CLAMP(x, -2.115287308554551f, 2.115287308554551f);
+	const float axm = absf(xm);
+	const float y = xm * axm * (0.01218073260037716f * axm - 0.2750231331124371f) + xm;
+	return y;
+}
+
 // template <int c>
 // constexpr float normalized_linear_to_logexp(float x) {
 //     constexpr float coeff = 1.0f / (pow2f(c) - 1.0f);

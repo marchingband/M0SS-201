@@ -9,7 +9,7 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_MOD,     .p=&all_sigs_raw.sg_rate,   .cc=3,  .btn=21, .min=0,   .max=1,    .init=0.1, .step=1e-4, .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.sg_rcl,    .cc=4,  .btn=20, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.gate_sel,  .cc=5,  .btn=0,  .min=0,   .max=2,    .init=0,   .step=1   , .numeric=false},
-    {.type=PARAM_SEL,     .p=&all_sigs_raw.env_mode,  .cc=6,  .btn=1,  .min=0,   .max=2,    .init=0,   .step=1   , .numeric=false},
+    {.type=PARAM_SEL,     .p=&all_sigs_raw.env_mode,  .cc=6,  .btn=1,  .min=0,   .max=2,    .init=1,   .step=1   , .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.env_att,   .cc=7,  .btn=3,  .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.env_rel,   .cc=8,  .btn=4,  .min=0,   .max=1,    .init=0.3, .step=1e-4, .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.env_crv,   .cc=9,  .btn=3,  .min=0,   .max=1,    .init=0.5, .step=1e-4, .numeric=false},

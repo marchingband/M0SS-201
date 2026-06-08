@@ -4,8 +4,10 @@
 
 #include "synth.h"
 #include "interface.h"
-#include "utils.h"
 #include "fold_lut.h"
+#include "utils.h"
+#include "biquad.h"
+#include "wavefolder.h"
 
 extern DSP_All_Signals all_sigs_raw;
 
@@ -51,7 +53,7 @@ void smooth_signals() {
     }
 }
 
-#define OVERSAMPLE_RATIO 4
+#define OVERSAMPLE_RATIO 8
 
 #define DBG_TIMING
 #define DBG_TIMING_PIN 15
@@ -62,7 +64,7 @@ void init_dsp() {
     }
     sg_state.idx = 0;
 
-    dec_filt1 = dec_filt2 = dec_filt3 = generate_lowpass(SR * OVERSAMPLE_RATIO, SR >> 1, 0.707f);
+    dec_filt1 = dec_filt2 = dec_filt3 = generate_lowpass(SR * OVERSAMPLE_RATIO, 0.45f*(float)SR, 0.707f);
 
     dly.buffer_size = DELAY_LINE_LEN;
     dly.ptr = 0;
@@ -503,56 +505,14 @@ float compute_mixer() {
         + os1_state.val * power_law_os1 + os2_state.val * power_law_os2;
 }
 
-float parabolic_fold(float x) {
-    const float a = 0.6f;
-    const float b = 1.0f / (2.0f * a);
-    const float xm2 = (x - 1.0f)*(x - 1.0f);
-    const float xp2 = (x + 1.0f)*(x + 1.0f);
-    if (x < -1.0f-a) return -2.0f - x;
-    if (x < -1.0f+a) return b*xp2 - 1.0f + 0.5f*a;
-    if (x <  1.0f-a) return x;
-    if (x <  1.0f+a) return -b*xm2 + 1.0f - 0.5f*a;
-    return 2.0f - x;
-}
-
-float plaits_fold(float in) {
-    in *= 0.02f;
-    if (in > 1.0f) return 1.0f;
-    if (in < -1.0f) return -1.0f;
-    return InterpolateHermite(fold_lut + 1, in*0.5f + 0.5f, 512.0f);
-}
-
-float compute_wavefolder(float in) {
-    // originally, signal is normalized to be between -1 and 1.
-    // The mixer adds four signals together, so if they all line up
-    // the signal could technically be between +/-4
-    // generally though, there's just going to be one signal (or maybe two).
-    // mixing two together with no folding applied should sound clean,
-    // adding the modulators (ENV and SG) it would be acceptable for them
-    // to hit the wavefolder (that's intended as an automated bias control).
-    // Emilie's LUT has a linear region of around +/-0.02, and the first
-    // fold crests at 0.06
-    // when the signal gets all the way to +/-1, the output reaches 1,
-    // which is our 0dBFS level.
-
-    // gain-staging wise, this is the point in the signal chain where we need
-    // to reduce levels from their full-scale representation to their normal
-    // version. In this case, that means that +/-0.5 is an acceptable level
-    // for normal volume. Increasing to +/-1 would be making it loud, which
-    // the wavefolder LUT does do.
-
-    // add bias before gain-staging
-    // okay for it to be unipolar, it would sound the same on
-    // the negative side anyway
+float compute_wavefolder(float in) {    
     in += all_sigs.fold_bias;
-
-    // minimum timbre is no change in signal level
-    // maximum timbre is all the way to +/-1, so 50x
-    // above that value the folder will simply saturate
-    float t = fb_dests.timb * 40.0f;
+    in *= 0.5f;
+    float timbre = normalized_linear_to_logexp(fb_dests.timb, 4);
+    float t = fb_dests.timb * 19.0f; // * 40.0f;
     if (all_sigs_raw.bus_sel == BUS_SEL_TM) {
         const float max_timbre_modulation = 1.0f;
-        t += max_timbre_modulation * fb_dests.idx * os2_state.val * 40.0f;
+        t += max_timbre_modulation * fb_dests.idx * os2_state.val; // * 40.0f;
     }
     t += 1.0f;
 
@@ -561,21 +521,15 @@ float compute_wavefolder(float in) {
     static float prev_in = 0.0f;
     float os_outputs[OVERSAMPLE_RATIO];
     for (uint16_t i = 0; i < OVERSAMPLE_RATIO; i++) {
-        // 0.25f for a 4x oversample ratio
-        float frac = (float)i * 0.25f;
+        float frac = (float)i * 0.125f;
         float interpolated_sample = prev_in + (in - prev_in) * frac;
 
-        //float folded_sample = plaits_fold(interpolated_sample);
-        #define FOLD_STAGES 2
-        for (uint16_t j = 0; j < FOLD_STAGES; j++) {
-            interpolated_sample = plaits_fold(interpolated_sample);
-        }
-        float folded_sample = interpolated_sample;
+        float folded_sample = naive_buchla_wf_compute(interpolated_sample);
 
         os_outputs[i] = process_biquad(&dec_filt3, process_biquad(&dec_filt2, process_biquad(&dec_filt1, folded_sample)));
     }
     prev_in = in;
-    return os_outputs[OVERSAMPLE_RATIO - 1];
+    return os_outputs[OVERSAMPLE_RATIO - 1] * 0.25;
 }
 
 Vactrol_t vact;
