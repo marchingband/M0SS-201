@@ -234,6 +234,7 @@ void compute_env() {
     }
 
     float bias = bias_clip(1.0f - all_sigs.env_crv);
+    const size_t env_control_curve = 4;
 
     switch (env_state.stage) {
         case ENV_OFF: {
@@ -241,7 +242,8 @@ void compute_env() {
             break;
         }
         case ENV_ATT: {
-            float att_samples = fb_dests.att * MAX_ENV_STAGE_LEN_SAMPLES;
+            float attack = normalized_linear_to_logexp(fb_dests.att, env_control_curve);
+            float att_samples = attack * MAX_ENV_STAGE_LEN_SAMPLES;
             att_samples = CLAMP(att_samples, MIN_ENV_STAGE_LEN_SAMPLES, MAX_ENV_STAGE_LEN_SAMPLES);
             float slope = 1.0f / att_samples;
             
@@ -261,7 +263,8 @@ void compute_env() {
             break;
         }
         case ENV_REL: {
-            float rel_samples = fb_dests.rel * MAX_ENV_STAGE_LEN_SAMPLES;
+            float release = normalized_linear_to_logexp(fb_dests.rel, env_control_curve);
+            float rel_samples = release * MAX_ENV_STAGE_LEN_SAMPLES;
             rel_samples = CLAMP(rel_samples, MIN_ENV_STAGE_LEN_SAMPLES, MAX_ENV_STAGE_LEN_SAMPLES);
             float slope = 1.0f / rel_samples;
             
@@ -431,7 +434,7 @@ float compute_os1_rate() {
 
     float freq_hz = freq_multiplier * midi_note_to_freq_hz(midi_note);
     if (all_sigs_raw.bus_sel == BUS_SEL_FM) {
-        float max_fm_index = 0.5f;
+        float max_fm_index = 0.9f;
         freq_hz *= 1.0f + max_fm_index*fb_dests.idx*os2_state.val;
     }
     return freq_hz;
