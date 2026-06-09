@@ -85,7 +85,7 @@ float midi_note;
 void compute_midi_note() {
     static float lp_state;
     // TODO: midi pitch bend
-    float glide = all_sigs.os1_gld * all_sigs.os1_gld;
+    float glide = x3(all_sigs.os1_gld);
     float glide_s = linear_map(glide, 0.0f, 1.0f, 0.00001f, 0.4f);
     float coeff = 1.0f - pow2f(-1.0f * LOG2_E * SR_INV / glide_s);
     lp_state += (all_sigs_raw.pitch - lp_state) * coeff;
@@ -481,7 +481,7 @@ void compute_os1() {
         os1_state.phase -= 1.0f;
         float t = os1_state.phase / freq_normalized;
         float discontinuity = 4.0f * freq_normalized;
-        
+
         this_tri += this_iblep(t) * discontinuity;
         os1_state.next_tri += next_iblep(t) * discontinuity;
 
