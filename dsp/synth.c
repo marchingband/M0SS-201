@@ -24,6 +24,11 @@ Biquad_t dec_filt1, dec_filt2, dec_filt3;
 
 const float param_smooth_coeff = 0.9997917f; //pow2f(-1.0f * LOG2_E * SR_INV / 0.1f);
 
+static inline float x3(float x) {
+    float x2 = x * x;
+    return x2 * x;
+}
+
 void smooth_signals() {
     // all parameters
     float c = 1.0f - param_smooth_coeff;
@@ -127,7 +132,7 @@ void compute_dsp(size_t len, float* buf) {
         signal = compute_amplifier(signal);
         signal = compute_delay(signal);
 
-        float volume = volume * volume * volume;
+        float volume = x3(all_sigs.vol);
         buf[i] = signal * volume;
     }
     all_sigs_raw.ind_env = env_state.val; //  env_state.val;
@@ -441,9 +446,15 @@ float compute_os1_rate() {
 
     float freq_hz = freq_multiplier * midi_note_to_freq_hz(midi_note);
     if (all_sigs_raw.bus_sel == BUS_SEL_FM) {
-        float max_fm_index = 0.9f;
+        float max_fm_index = 4.0f;
         freq_hz *= 1.0f + max_fm_index*fb_dests.idx*os2_state.val;
     }
+    if (all_sigs_raw.os2_hilo) freq_hz *= -1.0f;
+
+    // prevent zero frequency
+    float sign = (freq_hz > 0.0f) - (freq_hz < 0.0f);
+    if (absf(freq_hz) < 1e-6f) freq_hz = 1e-6f * sign;
+
     return freq_hz;
 }
 
@@ -455,25 +466,39 @@ void compute_os1() {
 
     os1_state.phase += freq_normalized;
 
-    if (os1_state.high && os1_state.phase > 0.5f) {
+    if (os1_state.high ^ (os1_state.phase < 0.5f)) {
         float t = (os1_state.phase - 0.5f) / freq_normalized;
         float discontinuity = 4.0f * freq_normalized;
+        if (freq_normalized < 0.0f) discontinuity = -discontinuity;
+
+        this_tri -= this_iblep(t) * discontinuity;
+        os1_state.next_tri -= next_iblep(t) * discontinuity;
+
+        os1_state.high = os1_state.phase < 0.5f;
+    }
+
+    if (os1_state.phase >= 1.0f) {
+        os1_state.phase -= 1.0f;
+        float t = os1_state.phase / freq_normalized;
+        float discontinuity = 4.0f * freq_normalized;
+        
+        this_tri += this_iblep(t) * discontinuity;
+        os1_state.next_tri += next_iblep(t) * discontinuity;
+
+        os1_state.high = true;
+    }
+
+    if (freq_normalized < 0.0f && os1_state.phase < 0.0f) {
+        float t = os1_state.phase / freq_normalized;
+        os1_state.phase += 1.0f;
+        float discontinuity = 4.0f * freq_normalized;
+
         this_tri -= this_iblep(t) * discontinuity;
         os1_state.next_tri -= next_iblep(t) * discontinuity;
 
         os1_state.high = false;
     }
 
-    if (os1_state.phase >= 1.0f) {
-        os1_state.phase -= 1.0f;
-
-        float t = os1_state.phase / freq_normalized;
-        float discontinuity = 4.0f * freq_normalized;
-        this_tri += this_iblep(t) * discontinuity;
-        os1_state.next_tri += next_iblep(t) * discontinuity;
-
-        os1_state.high = true;
-    }
 
     this_tri += 2.0f * (os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase)) - 1.0f;
     float this_sine = sin2pif(os1_state.phase);
@@ -496,11 +521,6 @@ void compute_os1() {
         selected_signal *= 1.0f - fb_dests.idx*(1.0f - os2_state.val);
     }
     os1_state.val = selected_signal;
-}
-
-static inline float x3(float x) {
-    float x2 = x * x;
-    return x2 * x;
 }
 
 float compute_mixer() {
