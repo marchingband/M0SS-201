@@ -80,7 +80,7 @@ float midi_note;
 void compute_midi_note() {
     static float lp_state;
     // TODO: midi pitch bend
-    float glide = normalized_linear_to_logexp(all_sigs.os1_gld, 3);
+    float glide = all_sigs.os1_gld * all_sigs.os1_gld;
     float glide_s = linear_map(glide, 0.0f, 1.0f, 0.00001f, 0.4f);
     float coeff = 1.0f - pow2f(-1.0f * LOG2_E * SR_INV / glide_s);
     lp_state += (all_sigs_raw.pitch - lp_state) * coeff;
@@ -127,7 +127,7 @@ void compute_dsp(size_t len, float* buf) {
         signal = compute_amplifier(signal);
         signal = compute_delay(signal);
 
-        float volume = normalized_linear_to_logexp(all_sigs.vol, 4);
+        float volume = volume * volume * volume;
         buf[i] = signal * volume;
     }
     all_sigs_raw.ind_env = env_state.val; //  env_state.val;
@@ -169,7 +169,9 @@ void compute_sg_rate() {
     const float max_freq = 4000.0f;  // 4kHz
 
     const int curvature = 10;
-    float rate_hz = normalized_linear_to_logexp(fb_dests.rate, curvature)*max_freq + min_freq;
+    float r2 = fb_dests.rate * fb_dests.rate;
+    float r6 = r2 * r2 * r2;
+    float rate_hz = r6*max_freq + min_freq;
 
     sg_state.rate_normalized = rate_hz * SR_INV;
     sg_state.phase += sg_state.rate_normalized;
@@ -245,8 +247,9 @@ void compute_env() {
             break;
         }
         case ENV_ATT: {
-            float attack = normalized_linear_to_logexp(fb_dests.att, env_control_curve);
-            float att_samples = attack * MAX_ENV_STAGE_LEN_SAMPLES;
+            float a2 = fb_dests.att * fb_dests.att;
+            float a4 = a2 * a2;
+            float att_samples = a4 * MAX_ENV_STAGE_LEN_SAMPLES;
             att_samples = CLAMP(att_samples, MIN_ENV_STAGE_LEN_SAMPLES, MAX_ENV_STAGE_LEN_SAMPLES);
             float slope = 1.0f / att_samples;
             
@@ -266,8 +269,9 @@ void compute_env() {
             break;
         }
         case ENV_REL: {
-            float release = normalized_linear_to_logexp(fb_dests.rel, env_control_curve);
-            float rel_samples = release * MAX_ENV_STAGE_LEN_SAMPLES;
+            float r2 = fb_dests.rel * fb_dests.rel;
+            float r4 = r2 * r2;
+            float rel_samples = r4 * MAX_ENV_STAGE_LEN_SAMPLES;
             rel_samples = CLAMP(rel_samples, MIN_ENV_STAGE_LEN_SAMPLES, MAX_ENV_STAGE_LEN_SAMPLES);
             float slope = 1.0f / rel_samples;
             
@@ -494,14 +498,18 @@ void compute_os1() {
     os1_state.val = selected_signal;
 }
 
+static inline float x3(float x) {
+    float x2 = x * x;
+    return x2 * x;
+}
+
 float compute_mixer() {
-    const int16_t power_law_coeff = 4;
     float bipolar_sg = 2.0f*sg_state.val - 1.0f;
     float bipolar_env = 2.0f*env_state.val - 1.0f;
-    float power_law_sg = normalized_linear_to_logexp(all_sigs.mx_sg,   power_law_coeff);
-    float power_law_env = normalized_linear_to_logexp(all_sigs.mx_env, power_law_coeff);
-    float power_law_os1 = normalized_linear_to_logexp(all_sigs.mx_os1, power_law_coeff);
-    float power_law_os2 = normalized_linear_to_logexp(all_sigs.mx_os2, power_law_coeff);
+    float power_law_sg =  x3(all_sigs.mx_sg);
+    float power_law_env = x3(all_sigs.mx_env);
+    float power_law_os1 = x3(all_sigs.mx_os1);
+    float power_law_os2 = x3(all_sigs.mx_os2);
     return bipolar_sg * power_law_sg + bipolar_env * power_law_env \
         + os1_state.val * power_law_os1 + os2_state.val * power_law_os2;
 }
@@ -518,7 +526,7 @@ float wavefolder_tone_lowpass(float x) {
 float compute_wavefolder(float in) {    
     in += all_sigs.fold_bias;
     in *= 0.5f;
-    float timbre = normalized_linear_to_logexp(fb_dests.timb, 4);
+    float timbre = x3(fb_dests.timb);
     float t = fb_dests.timb * 19.0f; // * 40.0f;
     if (all_sigs_raw.bus_sel == BUS_SEL_TM) {
         const float max_timbre_modulation = 1.0f;
@@ -578,7 +586,7 @@ float compute_amplifier(float in) {
 float compute_delay(float in) {
     // compute parameters
     float delay_time = all_sigs.dly_tm * (float)(dly.buffer_size - 1);
-    float feedback = normalized_linear_to_logexp(all_sigs.dly_fb, 4);
+    float feedback = x3(all_sigs.dly_fb);
     float mix = all_sigs.dly_mx;
 
     // get read pointer
