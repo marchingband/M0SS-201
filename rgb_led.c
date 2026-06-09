@@ -164,11 +164,13 @@ void matrix_display_number(uint8_t number) {
 }
 
 struct pixel_t pixel_fade(float val){
-    struct pixel_t pixel = {
-        .red = (uint8_t)(10.0 * val),
-        .green = (uint8_t)(150.0 * val),
-        .blue = (uint8_t)(50.0 * val)
-    };
+    val *= val;  // quadratic nonlinearity to smooth light brightness
+    struct pixel_t pixel = {.red = 0, .green = 0, .blue = 0};
+    if (val == 0) return pixel;
+
+    pixel.red = (uint8_t)(10.0 * val) + 1;
+    pixel.green = (uint8_t)(150.0 * val) + 1;
+    pixel.blue = (uint8_t)(50.0 * val) + 1;
     return pixel;
 }
 

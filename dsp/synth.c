@@ -133,7 +133,7 @@ void compute_dsp(size_t len, float* buf) {
     all_sigs_raw.ind_env = env_state.val; //  env_state.val;
     all_sigs_raw.ind_sg = sg_state.val;
     all_sigs_raw.ind_os2 = os2_state.val;
-    all_sigs_raw.ind_amp = buf[0]; //0.5f*buf[len-1] + 0.5f;
+    all_sigs_raw.ind_amp = buf[0];
 
     #ifdef DBG_TIMING
     bflb_gpio_reset(gpio, DBG_TIMING_PIN);
