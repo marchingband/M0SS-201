@@ -117,17 +117,18 @@ void link_ui() {
         DSP_Param_t param = dsp_ui[i];
 
         printf("idx %d, ptr %p\n", i, (void*)param.p);
-
-        struct CC *cc = &CCs[param.cc];
-        cc->p = param.p;
-        cc->min = param.min;
-        cc->max = param.max;
-        cc->init = param.init;
-        cc->step = param.step;
-        float steps = (param.max - param.min) / param.step;
-        float per = steps / 128.0;
-        cc->mul = per;
-        cc->numeric = param.numeric;
+        if (param.cc != 0) {
+            struct CC *cc = &CCs[param.cc];
+            cc->p = param.p;
+            cc->min = param.min;
+            cc->max = param.max;
+            cc->init = param.init;
+            cc->step = param.step;
+            float steps = (param.max - param.min) / param.step;
+            float per = steps / 128.0;
+            cc->mul = per;
+            cc->numeric = param.numeric;
+        }
 
         switch (param.type) {
             case PARAM_MOD: {
@@ -181,6 +182,7 @@ void link_ui() {
         }
     }
     // attach special signals
+    all_sigs_raw.midi_chan = MIDI_CHANNEL_OMNI;
     Signals.pitch = &all_sigs_raw.pitch;
     *Signals.pitch = 48.0f; // initial value
     Signals.gate = &all_sigs_raw.gate;
@@ -276,6 +278,7 @@ void handle_midi(uint8_t *msg, uint8_t len)
     // printf("msg len %d -> %d %d %d\n\r\r", len, msg[0], msg[1], msg[2]);
     
     uint8_t channel = msg[0] & 0b00001111;
+    cur_midi_chan = (int)all_sigs_raw.midi_chan;
     if(cur_midi_chan != MIDI_CHANNEL_OMNI && cur_midi_chan != (channel + 1)) // channels are 0 indexed but we use 1 indexed
     {
         return;

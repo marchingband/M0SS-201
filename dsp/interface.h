@@ -25,7 +25,7 @@ typedef struct {
     const bool numeric;
 } DSP_Param_t;
 
-#define NUM_UI_ELS 62
+#define NUM_UI_ELS 63
 
 #define NUM_MOD_SRCS 3
 #define NUM_MOD_DESTS 10
@@ -90,6 +90,8 @@ typedef struct {
     float ind_env;
     float ind_os2;
     float ind_amp;
+
+    float midi_chan;
 } DSP_All_Signals;
 
 #endif  // DSP_INTERFACE_H_
