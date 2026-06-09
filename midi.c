@@ -278,6 +278,11 @@ void handle_midi(uint8_t *msg, uint8_t len)
     // printf("msg len %d -> %d %d %d\n\r\r", len, msg[0], msg[1], msg[2]);
     
     uint8_t channel = msg[0] & 0b00001111;
+    if (cur_midi_chan != (int)all_sigs_raw.midi_chan) {
+        note_lifo_p = 0;
+        *Signals.gate = 0;
+        cur_midi_chan = (int)all_sigs_raw.midi_chan;
+    }
     cur_midi_chan = (int)all_sigs_raw.midi_chan;
     if(cur_midi_chan != MIDI_CHANNEL_OMNI && cur_midi_chan != (channel + 1)) // channels are 0 indexed but we use 1 indexed
     {

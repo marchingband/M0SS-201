@@ -25,7 +25,10 @@ const uint8_t matrix_leds[MAT_NUM_ROWS][MAT_NUM_COLS] = {
 };
 
 // numbers displayed on matrix take up a 3x3 grid
-const uint16_t matrix_number_bit_patterns[10] = {0xF780, 0x4900, 0xCF80, 0xEF80, 0xBC80, 0xF980, 0x9F80, 0xE480, 0xFF80, 0xFC80};
+const uint16_t matrix_number_bit_patterns[10] = {
+    0xF780, 0x4900, 0xCF80, 0xEF80, 0xBC80, 
+    0xF980, 0x9F80, 0xE480, 0xFF80, 0xFC80
+};
 
 #define PIXEL_SIZE 3 // each colour takes 4 bytes
 #define NUM_LED 64
@@ -164,13 +167,21 @@ void matrix_display_number(uint8_t number) {
 }
 
 struct pixel_t pixel_fade_matrix(float val) {
+    bool negative = val < 0.0f;
     val *= val;  // quadratic nonlinearity to smooth light brightness
     struct pixel_t pixel = {.red = 0, .green = 0, .blue = 0};
     if (val == 0) return pixel;
 
-    pixel.red = (uint8_t)(10.0 * val) + 1;
-    pixel.green = (uint8_t)(150.0 * val) + 1;
-    pixel.blue = (uint8_t)(50.0 * val) + 1;
+    if (!negative) {
+        pixel.red = (uint8_t)(10.0 * val) + 1;
+        pixel.green = (uint8_t)(150.0 * val) + 1;
+        pixel.blue = (uint8_t)(50.0 * val) + 1;
+    } else {
+        pixel.red = (uint8_t)(150.0 * val) + 1;
+        pixel.green = (uint8_t)(10.0 * val) + 1;
+        pixel.blue = (uint8_t)(50.0 * val) + 1;
+    }
+
     return pixel;
 }
 
@@ -221,23 +232,22 @@ void update_led_display(void){
     float max = led_disp_max;
 
     if (!led_selection_is_numeric) {
+        bool negative = val < 0.0f;
+        if (negative) val *= -1.0f;
+
+        // handle bipolar values
+        bool bipolar = led_disp_min < 0;
+        if (bipolar) led_disp_min = 0;
+
         val -= led_disp_min;
         max -= led_disp_min;
         float out = val / max * 10;
-        for(int i=0; i<11; i++)
-        {
-            if(out > (i + 1))
-            {
-                led_display[i] = 1;
-            }
-            else if(out < i)
-            {
-                led_display[i] = 0;
-            }
-            else
-            {
-                led_display[i] = out - i; // just the fractional part
-            }
+
+        for(int i=0; i<11; i++) {
+            int idx = negative? 10 - i : i;
+            if(out > (idx + 1)) led_display[i] = 1;
+            else if(out < idx) led_display[i] = 0;
+            else led_display[i] = negative? idx - out : out - idx; // just the fractional part
         }
     } else {
         matrix_display_number((uint8_t)val);
@@ -278,7 +288,7 @@ void render_lights(void){
 
                     if (led_display[i] == 0) colour = pixel_off;
                     else if (led_display[i] == 1) colour = pixel_on;
-                    else colour = pixel_fade(led_display[i]);
+                    else colour = pixel_fade_matrix(led_display[i]);
 
                     pixel_buf[i] = colour;
                 }
