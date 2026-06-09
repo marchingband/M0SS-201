@@ -163,7 +163,7 @@ void matrix_display_number(uint8_t number) {
     }
 }
 
-struct pixel_t pixel_fade(float val){
+struct pixel_t pixel_fade_matrix(float val) {
     val *= val;  // quadratic nonlinearity to smooth light brightness
     struct pixel_t pixel = {.red = 0, .green = 0, .blue = 0};
     if (val == 0) return pixel;
@@ -171,6 +171,15 @@ struct pixel_t pixel_fade(float val){
     pixel.red = (uint8_t)(10.0 * val) + 1;
     pixel.green = (uint8_t)(150.0 * val) + 1;
     pixel.blue = (uint8_t)(50.0 * val) + 1;
+    return pixel;
+}
+
+struct pixel_t pixel_fade(float val) {
+    struct pixel_t pixel = {
+        .red = (uint8_t)(10.0 * val),
+        .green = (uint8_t)(150.0 * val),
+        .blue = (uint8_t)(50.0 * val)
+    };
     return pixel;
 }
 
@@ -240,31 +249,6 @@ void update_led_display(void){
 }
 
 void render_lights(void){
-    // for (uint i = 0; i < NUM_LED; i++) {
-    //     bool offset_led = i <= 20 && i >= 11;
-    //     offset_led = offset_led || (i <= 40 && i >= 31);
-    //     offset_led = offset_led || (i == 55);
-    //     bool extra_dim = (i <= 40 && i >= 38) || (i <= 20 && i >= 11);
-    //     bool matrix_led = i <= 40;
-
-    //     float brightness = 0;
-    //     if (matrix_led) {
-    //         if (offset_led) {
-    //             if (extra_dim) {
-    //                 brightness = 0.4;
-    //             } else {
-    //                 brightness = 0.2;
-    //             }
-    //         } else {
-    //             brightness = 0.1;
-    //         }
-    //     } else {
-    //         brightness = 0.08;
-    //     }
-    //     pixel_buf[i] = pixel_fade(brightness);
-    // }
-    // bflb_mtimer_delay_ms(100);
-    // return;
 
     int current_slot = get_current_slot();
     struct CC *ccs = get_ccs();
@@ -310,7 +294,7 @@ void render_lights(void){
                     for (uint j = 0; j < MAT_NUM_COLS; j++) {
                         size_t pixel_idx = matrix_leds[i][j];
                         size_t cc_num = param_matrix[i][j];
-                        pixel_buf[pixel_idx] = pixel_fade(*(ccs[cc_num].p));
+                        pixel_buf[pixel_idx] = pixel_fade_matrix(*(ccs[cc_num].p));
                     }
                 }
             }

@@ -33,7 +33,7 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_ALT,     .p=&all_sigs_raw.pb_down,   .cc=27, .btn=9,  .min=1,   .max=24,   .init=12,  .step=1,    .numeric=true},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.amp_sel,   .cc=28, .btn=2,  .min=0,   .max=1,    .init=0,   .step=1   , .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.vol,       .cc=29, .btn=2,  .min=0,   .max=1,    .init=0.5, .step=1e-4, .numeric=false},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_tm,    .cc=30, .btn=10, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_tm,    .cc=30, .btn=10, .min=0,   .max=1,    .init=0.1, .step=1e-4, .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_mx,    .cc=31, .btn=11, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_fb,    .cc=32, .btn=12, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
 
