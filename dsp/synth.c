@@ -82,14 +82,24 @@ void init_dsp() {
 
 float midi_note;
 
+size_t counter = 0;
+
 void compute_midi_note() {
     static float lp_state;
     // TODO: midi pitch bend
     float glide = x3(all_sigs.os1_gld);
-    float glide_s = linear_map(glide, 0.0f, 1.0f, 0.00001f, 0.4f);
+    float glide_s = linear_map(glide, 0.0f, 1.0f, 1e-4f, 0.4f);
     float coeff = 1.0f - pow2f(-1.0f * LOG2_E * SR_INV / glide_s);
     lp_state += (all_sigs_raw.pitch - lp_state) * coeff;
-    midi_note = lp_state;
+
+    float normalized_pb = all_sigs_raw.pitch_bend - 8192;
+    normalized_pb /= 8192.0f;
+    float semitone_bend = (normalized_pb > 0.0f)? 
+        normalized_pb*all_sigs_raw.pb_up : normalized_pb*all_sigs_raw.pb_down;
+    static float bend_state;
+    bend_state += (semitone_bend - bend_state) * 1e-3f;
+
+    midi_note = lp_state + bend_state;
 }
 
 float phase = 0.0f;
@@ -102,12 +112,6 @@ void compute_dsp(size_t len, float* buf) {
     #endif
 
     for (size_t i = 0; i < len; i++) {
-        // phase += freq;
-        // if (phase >= 1.0f) phase -= 1.0f;
-        // buf[i] = sin2pif(phase) * 0.1f;
-        // continue;
-
-
         // compute parameter amounts through matrix
         // takes matrix signals from all_sigs as well as previous outputs (stored in peripheral structs)
         // and writes to fb_dests
@@ -135,7 +139,8 @@ void compute_dsp(size_t len, float* buf) {
         float volume = x3(all_sigs.vol);
         buf[i] = signal * volume;
     }
-    all_sigs_raw.ind_env = env_state.val; //  env_state.val;
+
+    all_sigs_raw.ind_env = env_state.val;
     all_sigs_raw.ind_sg = sg_state.val;
     all_sigs_raw.ind_os2 = os2_state.val;
     all_sigs_raw.ind_amp = buf[0];

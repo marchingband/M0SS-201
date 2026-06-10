@@ -66,7 +66,7 @@ static struct Sigs Signals = {
     .amp = 0,
     // .lfo = 0,
     // .env = 0,
-    .pitch_bend = 0,
+    .pitch_bend = 0
     // .vca = 0,
 };
 
@@ -190,6 +190,7 @@ void link_ui() {
     Signals.le = &all_sigs_raw.ind_env;
     Signals.sg = &all_sigs_raw.ind_sg;
     Signals.mo = &all_sigs_raw.ind_os2;
+    Signals.pitch_bend = &all_sigs_raw.pitch_bend;
 }
 
 void reset_params(void){
@@ -450,9 +451,11 @@ void handle_midi(uint8_t *msg, uint8_t len)
     }
     case MIDI_PITCH_BEND:
     {
+        uint8_t pb_up = msg[1];
+        uint8_t pb_down = msg[2];
         uint16_t val = msg[1] | (msg[2] << 7);  // 0 to 16,383
         *Signals.pitch_bend = (float)val;
-        // printf("pitchbend %d", val) ;
+        printf("pb: %d\n", val);
         break;
     }
     case MIDI_AFTERTOUCH: {

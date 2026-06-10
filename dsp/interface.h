@@ -75,8 +75,8 @@ typedef struct {
     float mx_env;   
     float fold_timb;
     float fold_bias;
-    float pb_up;    
-    float pb_down;  
+    float pb_up;
+    float pb_down;
     float amp_sel;  
     float vol;      
     float dly_tm;   
@@ -92,6 +92,7 @@ typedef struct {
     float ind_amp;
 
     float midi_chan;
+    float pitch_bend;  
 } DSP_All_Signals;
 
 #endif  // DSP_INTERFACE_H_
