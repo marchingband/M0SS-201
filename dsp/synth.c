@@ -157,7 +157,7 @@ void compute_dsp(size_t len, float* buf) {
 
 #define E_MAT env_state.val * all_sigs.mtx[ENV_I_S]
 #define S_MAT sg_state.val * all_sigs.mtx[SG_I_S]
-#define O_MAT os1_state.val * all_sigs.mtx[OS2_I_S]
+#define O_MAT os2_state.val * all_sigs.mtx[OS2_I_S]
 
 #define MAT(x, y) CLAMP((E_MAT[x]) + (S_MAT[x]) + (O_MAT[x]) + (y), 0.0f, 1.0f)
 
@@ -259,8 +259,8 @@ void compute_env() {
         }
         case ENV_ATT: {
             float a2 = fb_dests.att * fb_dests.att;
-            float a4 = a2 * a2;
-            float att_samples = a4 * MAX_ENV_STAGE_LEN_SAMPLES;
+            // float a4 = a2 * a2;
+            float att_samples = a2 * MAX_ENV_STAGE_LEN_SAMPLES;
             att_samples = CLAMP(att_samples, MIN_ENV_STAGE_LEN_SAMPLES, MAX_ENV_STAGE_LEN_SAMPLES);
             float slope = 1.0f / att_samples;
             
@@ -281,8 +281,8 @@ void compute_env() {
         }
         case ENV_REL: {
             float r2 = fb_dests.rel * fb_dests.rel;
-            float r4 = r2 * r2;
-            float rel_samples = r4 * MAX_ENV_STAGE_LEN_SAMPLES;
+            // float r4 = r2 * r2;
+            float rel_samples = r2 * MAX_ENV_STAGE_LEN_SAMPLES;
             rel_samples = CLAMP(rel_samples, MIN_ENV_STAGE_LEN_SAMPLES, MAX_ENV_STAGE_LEN_SAMPLES);
             float slope = 1.0f / rel_samples;
             
@@ -322,9 +322,15 @@ void compute_os2() {
         float multiplier = pow2f(total_interval);
         freq_hz = ((all_sigs_raw.os2_kt)? midi_freq * 0.001953f : slow_mode_base_freq_hz) * multiplier;
     } else {
-        float total_interval = fb_dests.os2 * fast_mode_course_max_interval;
-        float multiplier = pow2f(total_interval);
-        freq_hz = ((all_sigs_raw.os2_kt)? midi_freq * 0.125f : fast_mode_base_freq_hz) * multiplier;
+        if (all_sigs_raw.os2_kt == true) {
+            float tune_val = fb_dests.os2 * 2.0f - 1.0f;
+            int num_semitones_offset = CLAMP(tune_val * 25 + 0.5, -24, 24);
+            freq_hz = midi_note_to_freq_hz(midi_note + num_semitones_offset);
+        } else {
+            float total_interval = fb_dests.os2 * fast_mode_course_max_interval;
+            float multiplier = pow2f(total_interval);
+            freq_hz = fast_mode_base_freq_hz * multiplier;
+        }
     }
 
     float freq_normalized = freq_hz * SR_INV;

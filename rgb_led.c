@@ -315,12 +315,12 @@ void render_lights(void){
             pixel_buf[61] = pixel_fade(*sigs->amp); // AMP
             pixel_buf[41] = *(sels[22].p) == 1 || *(sels[22].p) == 2 ? pixel_on : pixel_off; // os1-tri
             pixel_buf[42] = *(sels[22].p) == 0 || *(sels[22].p) == 2 ? pixel_on : pixel_off; // os1-sin
-            pixel_buf[46] = *(sels[23].p) == 0 ? pixel_on : pixel_off; // bus-am
-            pixel_buf[47] = *(sels[23].p) == 1 ? pixel_on : pixel_off; // bus-fm
-            pixel_buf[48] = *(sels[23].p) == 2 ? pixel_on : pixel_off; // bus-tm
-            pixel_buf[49] = *(sels[7].p) == 0 ? pixel_on : pixel_off; // os2-tri
-            pixel_buf[50] = *(sels[7].p) == 1 ? pixel_on : pixel_off; // os2-sqr
-            pixel_buf[51] = *(sels[7].p) == 2 ? pixel_on : pixel_off; // os2-saw
+            pixel_buf[46] = *(altSels[23].p) == 0 ? pixel_on : pixel_off; // bus-am
+            pixel_buf[47] = *(altSels[23].p) == 1 ? pixel_on : pixel_off; // bus-fm
+            pixel_buf[48] = *(altSels[23].p) == 2 ? pixel_on : pixel_off; // bus-tm
+            pixel_buf[49] = *(altSels[7].p) == 0 ? pixel_on : pixel_off; // os2-tri
+            pixel_buf[50] = *(altSels[7].p) == 1 ? pixel_on : pixel_off; // os2-sqr
+            pixel_buf[51] = *(altSels[7].p) == 2 ? pixel_on : pixel_off; // os2-saw
             pixel_buf[54] = os2_hi ? pixel_fade_lfo(mo_freq, 1) : pixel_fade(mo); // OS1
             pixel_buf[53] = pixel_fade(sg); // SG
             pixel_buf[52] = pixel_fade(*(sigs->le)); // ENV
