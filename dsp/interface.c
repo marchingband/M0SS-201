@@ -12,7 +12,7 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_SEL,     .p=&all_sigs_raw.env_mode,  .cc=6,  .btn=1,  .min=0,   .max=2,    .init=1,   .step=1   , .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.env_att,   .cc=7,  .btn=3,  .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.env_rel,   .cc=8,  .btn=4,  .min=0,   .max=1,    .init=0.3, .step=1e-4, .numeric=false},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.env_crv,   .cc=9,  .btn=3,  .min=0,   .max=1,    .init=0.5, .step=1e-4, .numeric=false},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.env_crv,   .cc=9,  .btn=3,  .min=-1,  .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.os1_oct,   .cc=10, .btn=16, .min=0,   .max=2,    .init=0,   .step=1,    .numeric=false},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.os1_wave,  .cc=11, .btn=22, .min=0,   .max=2,    .init=0,   .step=1,    .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.os1_qtz,   .cc=12, .btn=16, .min=0,   .max=6,    .init=0,   .step=1   , .numeric=true},
@@ -33,7 +33,7 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_ALT,     .p=&all_sigs_raw.pb_down,   .cc=27, .btn=9,  .min=1,   .max=24,   .init=12,  .step=1,    .numeric=true},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.amp_sel,   .cc=28, .btn=2,  .min=0,   .max=1,    .init=0,   .step=1   , .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.vol,       .cc=29, .btn=2,  .min=0,   .max=1,    .init=0.5, .step=1e-4, .numeric=false},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_tm,    .cc=30, .btn=10, .min=0,   .max=1,    .init=0.1, .step=1e-4, .numeric=false},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_tm,    .cc=30, .btn=10, .min=0,   .max=1,    .init=0.4, .step=1e-4, .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_mx,    .cc=31, .btn=11, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_fb,    .cc=32, .btn=12, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
 

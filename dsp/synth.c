@@ -248,7 +248,8 @@ void compute_env() {
         env_state.stage = ENV_ATT;
     }
 
-    float bias = bias_clip(1.0f - all_sigs.env_crv);
+    float bias = 0.5f * (all_sigs.env_crv + 1.0f);
+    bias = bias_clip(1.0f - bias);
     const size_t env_control_curve = 4;
 
     switch (env_state.stage) {
@@ -608,9 +609,41 @@ float compute_amplifier(float in) {
     return vact.lpf_state + (in - vact.lpf_state) * vact.hf_bleed;
 }
 
+float delay_filter(float x) {
+    static float prev_x, prev_y;
+
+    float ctrl = all_sigs.env_crv;  // bipolar, -1 to 1
+    int sign = (ctrl > 0) - (ctrl < 0);
+    if (sign == -1) ctrl += 1; // now it's in the 0 to 1 range
+    ctrl *= ctrl; // add nonlinearity to get more frequency control
+
+    float y = 0.0f;
+    if (sign == 0) {
+        y = x;
+    } else if (sign == 1) {
+        // hipass mode
+        float ctf_freq = linear_map(ctrl, 0, 1, 20, 3000);
+        float tau = 1.0f / (2.0f * PI * ctf_freq);
+        float alpha = tau / (tau + SR_INV);
+
+        y = alpha * (prev_y + x - prev_x);
+    } else {
+        // lopass mode;
+        float ctf_freq = linear_map(ctrl, 0, 1, 100, 5000);
+        float tau = 1.0f / (2.0f * PI * ctf_freq);
+        float alpha = SR_INV / (tau + SR_INV);
+
+        y = prev_y + alpha * (x - prev_y);
+    }
+    prev_y = y;
+    prev_x = x;
+    return y;
+}
+
 float compute_delay(float in) {
     // compute parameters
-    float delay_time = all_sigs.dly_tm * (float)(dly.buffer_size - 1);
+    float time = x3(all_sigs.dly_tm);
+    float delay_time = time * (float)(dly.buffer_size - 1);
     float feedback = x3(all_sigs.dly_fb);
     float mix = all_sigs.dly_mx;
 
@@ -627,7 +660,7 @@ float compute_delay(float in) {
     if (absf(delayed_sample) < 1e-15f) delayed_sample = 0.0f;
 
     // handle feedback
-    dly.buffer[dly.ptr] = in + feedback*delayed_sample;
+    dly.buffer[dly.ptr] = in + delay_filter(feedback*delayed_sample);
 
     // update pointer
     dly.ptr = (dly.ptr + 1) % dly.buffer_size;
