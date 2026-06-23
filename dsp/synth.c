@@ -22,7 +22,7 @@ DSP_All_Signals all_sigs;
 
 Biquad_t dec_filt1, dec_filt2, dec_filt3;
 
-const float param_smooth_coeff = 0.9997917f; //pow2f(-1.0f * LOG2_E * SR_INV / 0.1f);
+const float param_smooth_coeff = 0.99958342f; //pow2f(-1.0f * LOG2_E * SR_INV / 0.1f);
 
 static inline float x3(float x) {
     float x2 = x * x;
@@ -51,6 +51,7 @@ void smooth_signals() {
     all_sigs.dly_tm += c * (all_sigs_raw.dly_tm - all_sigs.dly_tm);
     all_sigs.dly_mx += c * (all_sigs_raw.dly_mx - all_sigs.dly_mx);
     all_sigs.dly_fb += c * (all_sigs_raw.dly_fb - all_sigs.dly_fb);
+    all_sigs.dly_flt += c * (all_sigs_raw.dly_flt - all_sigs.dly_flt);
     for (uint16_t i = 0; i < NUM_MOD_SRCS; i++) {
         for (uint16_t j = 0; j < NUM_MOD_DESTS; j++) {
            all_sigs.mtx[i][j] += c * (all_sigs_raw.mtx[i][j] - all_sigs.mtx[i][j]); 
@@ -629,7 +630,7 @@ float compute_amplifier(float in) {
 float delay_filter(float x) {
     static float prev_x, prev_y;
 
-    float ctrl = all_sigs.env_crv;  // bipolar, -1 to 1
+    float ctrl = all_sigs.dly_flt;  // bipolar, -1 to 1
     int sign = (ctrl > 0) - (ctrl < 0);
     if (sign == -1) ctrl += 1; // now it's in the 0 to 1 range
     ctrl *= ctrl; // add nonlinearity to get more frequency control
@@ -661,7 +662,7 @@ float compute_delay(float in) {
     // compute parameters
     float time = x3(all_sigs.dly_tm);
     float delay_time = time * (float)(dly.buffer_size - 1);
-    float feedback = x3(all_sigs.dly_fb);
+    float feedback = x3(all_sigs.dly_fb) * 1.05f;
     float mix = all_sigs.dly_mx;
 
     // get read pointer
@@ -677,7 +678,7 @@ float compute_delay(float in) {
     if (absf(delayed_sample) < 1e-15f) delayed_sample = 0.0f;
 
     // handle feedback
-    dly.buffer[dly.ptr] = in + delay_filter(feedback*delayed_sample);
+    dly.buffer[dly.ptr] = soft_clip(in + delay_filter(feedback*delayed_sample));
 
     // update pointer
     dly.ptr = (dly.ptr + 1) % dly.buffer_size;

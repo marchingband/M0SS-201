@@ -25,7 +25,7 @@ typedef struct {
     const bool numeric;
 } DSP_Param_t;
 
-#define NUM_UI_ELS 63
+#define NUM_UI_ELS 64
 
 #define NUM_MOD_SRCS 3
 #define NUM_MOD_DESTS 10
@@ -81,7 +81,8 @@ typedef struct {
     float vol;      
     float dly_tm;   
     float dly_mx;   
-    float dly_fb;   
+    float dly_fb;
+    float dly_flt;   
 
     float mtx[NUM_MOD_SRCS][NUM_MOD_DESTS];
 

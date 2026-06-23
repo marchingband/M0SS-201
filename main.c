@@ -130,7 +130,7 @@ int main(void)
     /* board init */
     // board_init();
     // m0ss_board_init( /*set console*/ false );
-    m0ss_board_init(true);  // baud rate 31250
+    m0ss_board_init(false);  // baud rate 31250
 
     /* dsp init */
     printf("dsp_init\r\n");

@@ -2,7 +2,7 @@
 
 DSP_All_Signals all_sigs_raw;
 
-#define NUM_UI_ELS 63
+#define NUM_UI_ELS 64
 DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_MOD,     .p=&all_sigs_raw.sg_len,    .cc=1,  .btn=18, .min=4,   .max=32,   .init=8,   .step=1   , .numeric=true },
     {.type=PARAM_MOD,     .p=&all_sigs_raw.sg_smth,   .cc=2,  .btn=17, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
@@ -13,6 +13,7 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_MOD,     .p=&all_sigs_raw.env_att,   .cc=7,  .btn=3,  .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.env_rel,   .cc=8,  .btn=4,  .min=0,   .max=1,    .init=0.3, .step=1e-4, .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.env_crv,   .cc=9,  .btn=3,  .min=-1,  .max=1,    .init=0,   .step=1e-4, .numeric=false},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_flt,   .cc=63, .btn=4,  .min=-1,  .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.os1_oct,   .cc=10, .btn=16, .min=0,   .max=2,    .init=0,   .step=1,    .numeric=false},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.os1_wave,  .cc=11, .btn=22, .min=0,   .max=2,    .init=0,   .step=1,    .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.os1_qtz,   .cc=12, .btn=16, .min=0,   .max=6,    .init=0,   .step=1   , .numeric=true},
