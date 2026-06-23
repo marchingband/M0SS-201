@@ -174,7 +174,19 @@ void compute_matrix() {
     fb_dests.os2  = MAT(OS2_I,  all_sigs.os2_tune);
     fb_dests.idx  = MAT(IDX_I,  all_sigs.bus_idx);
     fb_dests.timb = MAT(TIMB_I, all_sigs.fold_timb);
-    fb_dests.amp  = MAT(AMP_I,  0.0f);
+
+    // this signal specifically behaves differently with modulation
+    // the volume control already changes the volume,
+    // so there's no point in having the matrix control just reduce the volume.
+    // instead, reducing the strength of env->amp decrease the effect env has
+    // on amp by increasing the baseline volume level
+    // env->amp at 50% means the audio is normally passing through at 50%,
+    // and the other 50% is triggered by the envelope.
+    // this also works for negative modulations, if env->amp is negative
+    // it acts like a ducking effect on a normally open signal
+    float env_to_amp = all_sigs.mtx[ENV_I_S][AMP_I];
+    float baseline_gain = (env_to_amp >= 0)? (1.0f - env_to_amp) : 1.0f;
+    fb_dests.amp  = MAT(AMP_I,  baseline_gain);
 }
 
 void compute_sg_rate() {
@@ -600,19 +612,7 @@ void compute_vactrol_params(float level, float short_decay, float decay_tail, fl
 
 const float PI = 3.1415926f;
 float compute_amplifier(float in) {
-    // this signal specifically behaves differently with modulation
-    // the volume control already changes the volume,
-    // so there's no point in having the matrix control just reduce the volume.
-    // instead, reducing the strength of env->amp decrease the effect env has
-    // on amp by increasing the baseline volume level
-    // env->amp at 50% means the audio is normally passing through at 50%,
-    // and the other 50% is triggered by the envelope.
-    // this also works for negative modulations, if env->amp is negative
-    // it acts like a ducking effect on a normally open signal
-    float env_to_amp = all_sigs.mtx[ENV_I_S][AMP_I];
-    float gain = 1.0f;
-    if (env_to_amp < 0.0f) gain -= env_to_amp * fb_dests.amp;
-    else gain -= env_to_amp * (fb_dests.amp + 1.0f);
+    float gain = fb_dests.amp;
 
     if (all_sigs_raw.amp_sel == AMP_VCA) return in * gain;
 

@@ -42,7 +42,7 @@ static void on_encoder(bool up){
     uint64_t now = bflb_mtimer_get_time_us();
     uint64_t passed = now - last_click;
     last_click = now;
-    int click_multiplier = passed > 100000 ? 1 : passed > 50000 ? 100 : passed > 10000 ? 500 : 2000;
+    int click_multiplier = passed > 100000 ? 5 : passed > 50000 ? 50 : passed > 10000 ? 500 : 2000;
     printf("time %llu\n\r", passed);
     printf("mul %d\n\r", click_multiplier);
     // uint8_t *button_states = get_button_states();
