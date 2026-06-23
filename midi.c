@@ -329,7 +329,7 @@ void handle_midi(uint8_t *msg, uint8_t len)
             uint8_t cc_num = cc_map[CC_MAP_VELOCITY_IDX];
             struct CC cc = CCs[cc_num];
             if (cc.p != 0) {
-                float steps = cc.mul * (float)velocity;
+                float steps = cc.mul * (float)velocity * 64.0f;
                 int whole_steps = round(steps);
                 float val = (cc.step * whole_steps) + cc.min;
                 *cc.p = val;
@@ -471,7 +471,7 @@ void handle_midi(uint8_t *msg, uint8_t len)
         } else {
             struct CC cc = CCs[cc_num];
             if (cc.p != 0) {
-                float steps = cc.mul * (float)cc_val;
+                float steps = cc.mul * (float)cc_val * 64.0f;
                 int whole_steps = round(steps);
                 float val = (cc.step * whole_steps) + cc.min;
                 *cc.p = val;
