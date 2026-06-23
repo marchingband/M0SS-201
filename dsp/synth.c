@@ -85,6 +85,12 @@ float midi_note;
 
 size_t counter = 0;
 
+#define LEGATO_MODE false
+
+bool prev_gate_in;
+bool retrigger;
+float prev_note_in;
+
 void compute_midi_note() {
     static float lp_state;
     // TODO: midi pitch bend
@@ -102,6 +108,12 @@ void compute_midi_note() {
     bend_state += (semitone_bend - bend_state) * 1e-3f;
 
     midi_note = lp_state + bend_state;
+
+    // if the midi note changes but the gate has been on the whole time, that's a retrigger
+    retrigger = (prev_note_in != all_sigs_raw.pitch) && prev_gate_in && all_sigs_raw.gate;
+    retrigger = retrigger && !LEGATO_MODE;  // turn it off if we're in legato mode
+    prev_note_in = all_sigs_raw.pitch;
+    prev_gate_in = all_sigs_raw.gate;
 }
 
 float phase = 0.0f;
@@ -257,7 +269,7 @@ inline float bias_clip(float b) {
 
 void compute_env() {
     bool gate_in = (all_sigs_raw.gate_sel == GATESEL_SG)? sg_state.high : all_sigs_raw.gate;
-    bool trig = gate_in && !env_state.prev_gate;
+    bool trig = gate_in && !env_state.prev_gate || retrigger;
     env_state.prev_gate = gate_in;
 
     if (trig || (env_state.stage == ENV_OFF && all_sigs_raw.env_mode == ENVMODE_ARL)) {
