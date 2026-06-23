@@ -662,7 +662,7 @@ float compute_delay(float in) {
     // compute parameters
     float time = x3(all_sigs.dly_tm);
     float delay_time = time * (float)(dly.buffer_size - 1);
-    float feedback = x3(all_sigs.dly_fb) * 1.05f;
+    float feedback = normalized_linear_to_logexp(all_sigs.dly_fb, -3) * 1.05f;
     float mix = all_sigs.dly_mx;
 
     // get read pointer

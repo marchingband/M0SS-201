@@ -92,8 +92,9 @@ typedef struct {
     float ind_os2;
     float ind_amp;
 
+    // special signals
     float midi_chan;
-    float pitch_bend;  
+    float pitch_bend; 
 } DSP_All_Signals;
 
 #endif  // DSP_INTERFACE_H_
