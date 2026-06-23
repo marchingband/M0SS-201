@@ -173,4 +173,18 @@ inline float InterpolateHermite(const float* table, float index, float size) {
 	return (((a * f) - b_neg) * f + c) * f + x0;
 }
 
+inline float soft_limit(float x) {
+  	return x * (27.0f + x * x) / (27.0f + 9.0f * x * x);
+}
+
+inline float soft_clip(float x) {
+	if (x < -3.0f) {
+		return -1.0f;
+	} else if (x > 3.0f) {
+		return 1.0f;
+	} else {
+		return soft_limit(x);
+	}
+}
+
 #endif  // DSP_UTILS_H_

@@ -90,7 +90,8 @@ void compute_midi_note() {
     float glide = x3(all_sigs.os1_gld);
     float glide_s = linear_map(glide, 0.0f, 1.0f, 1e-4f, 0.4f);
     float coeff = 1.0f - pow2f(-1.0f * LOG2_E * SR_INV / glide_s);
-    lp_state += (all_sigs_raw.pitch - lp_state) * coeff;
+    float input_note = CLAMP(all_sigs_raw.pitch, 0, 108);
+    lp_state += (input_note - lp_state) * coeff;
 
     float normalized_pb = all_sigs_raw.pitch_bend - 8192;
     normalized_pb /= 8192.0f;
@@ -137,7 +138,9 @@ void compute_dsp(size_t len, float* buf) {
         signal = compute_delay(signal);
 
         float volume = x3(all_sigs.vol);
-        buf[i] = signal * volume;
+        signal *= volume;
+        signal = soft_clip(signal);
+        buf[i] = signal;
     }
 
     all_sigs_raw.ind_env = env_state.val;
@@ -306,7 +309,7 @@ void compute_os2() {
     // tune (fine/course), waveform
 
     // intervals determine number of octaves range
-    const float fast_mode_course_max_interval = 6.0f;
+    const float fast_mode_course_max_interval = 4.0f;
     const float fast_mode_fine_max_interval = 1.0f;
     const float fast_mode_base_freq_hz = 20.0f;
 
@@ -322,15 +325,9 @@ void compute_os2() {
         float multiplier = pow2f(total_interval);
         freq_hz = ((all_sigs_raw.os2_kt)? midi_freq * 0.001953f : slow_mode_base_freq_hz) * multiplier;
     } else {
-        if (all_sigs_raw.os2_kt == true) {
-            float tune_val = fb_dests.os2 * 2.0f - 1.0f;
-            int num_semitones_offset = CLAMP(tune_val * 25 + 0.5, -24, 24);
-            freq_hz = midi_note_to_freq_hz(midi_note + num_semitones_offset);
-        } else {
-            float total_interval = fb_dests.os2 * fast_mode_course_max_interval;
-            float multiplier = pow2f(total_interval);
-            freq_hz = fast_mode_base_freq_hz * multiplier;
-        }
+        float total_interval = fb_dests.os2 * fast_mode_course_max_interval;
+        float multiplier = pow2f(total_interval);
+        freq_hz = ((all_sigs_raw.os2_kt)? midi_freq * 0.125f : fast_mode_base_freq_hz) * multiplier;
     }
 
     float freq_normalized = freq_hz * SR_INV;
@@ -542,8 +539,9 @@ float compute_mixer() {
     float power_law_env = x3(all_sigs.mx_env);
     float power_law_os1 = x3(all_sigs.mx_os1);
     float power_law_os2 = x3(all_sigs.mx_os2);
-    return bipolar_sg * power_law_sg + bipolar_env * power_law_env \
+    float sum = bipolar_sg * power_law_sg + bipolar_env * power_law_env \
         + os1_state.val * power_law_os1 + os2_state.val * power_law_os2;
+    return 3.0f * soft_clip(sum * 0.33f);
 }
 
 float wavefolder_tone_lowpass(float x) {
@@ -557,15 +555,14 @@ float wavefolder_tone_lowpass(float x) {
 
 float compute_wavefolder(float in) {    
     in += all_sigs.fold_bias;
-    in *= 0.5f;
+    in *= 0.5f;  // gainstaging for wavefolder
     float timbre = x3(fb_dests.timb);
-    float t = fb_dests.timb * 19.0f; // * 40.0f;
+    float t = fb_dests.timb * 19.0f;
     if (all_sigs_raw.bus_sel == BUS_SEL_TM) {
         const float max_timbre_modulation = 1.0f;
-        t += max_timbre_modulation * fb_dests.idx * os2_state.val; // * 40.0f;
+        t += max_timbre_modulation * fb_dests.idx * os2_state.val * 13.0f;
     }
-    t += 1.0f;
-
+    t += 1.0f;  // baseline unity gain
     in *= t;
 
     static float prev_in = 0.0f;
@@ -603,9 +600,23 @@ void compute_vactrol_params(float level, float short_decay, float decay_tail, fl
 
 const float PI = 3.1415926f;
 float compute_amplifier(float in) {
-    float gain = fb_dests.amp; // .amp;
+    // this signal specifically behaves differently with modulation
+    // the volume control already changes the volume,
+    // so there's no point in having the matrix control just reduce the volume.
+    // instead, reducing the strength of env->amp decrease the effect env has
+    // on amp by increasing the baseline volume level
+    // env->amp at 50% means the audio is normally passing through at 50%,
+    // and the other 50% is triggered by the envelope.
+    // this also works for negative modulations, if env->amp is negative
+    // it acts like a ducking effect on a normally open signal
+    float env_to_amp = all_sigs.mtx[ENV_I_S][AMP_I];
+    float gain = 1.0f;
+    if (env_to_amp < 0.0f) gain -= env_to_amp * fb_dests.amp;
+    else gain -= env_to_amp * (fb_dests.amp + 1.0f);
+
     if (all_sigs_raw.amp_sel == AMP_VCA) return in * gain;
 
+    // LPG mode, uses vactrol simulation
     compute_vactrol_params(gain, 0.01f, 0.005f, 0.15f);
     float freq_coeff = 1.0f - expf(-2.0f * PI * vact.normalized_freq);
     in *= vact.gain;
