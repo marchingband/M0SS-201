@@ -183,7 +183,7 @@ void compute_matrix() {
     fb_dests.rcl  = MAT(RCL_I,  all_sigs.sg_rcl);
     fb_dests.att  = MAT(ATT_I,  all_sigs.env_att);
     fb_dests.rel  = MAT(REL_I,  all_sigs.env_rel);
-    fb_dests.os1  = MAT(OS1_I,  0.0f);
+    fb_dests.os1  = MAT(OS1_I,  0.5f);
     fb_dests.os2  = MAT(OS2_I,  all_sigs.os2_tune);
     fb_dests.idx  = MAT(IDX_I,  all_sigs.bus_idx);
     fb_dests.timb = MAT(TIMB_I, all_sigs.fold_timb);
@@ -348,7 +348,7 @@ void compute_os2() {
     if (all_sigs_raw.os2_hilo == OS2_RANGE_LO) {
         float total_interval = fb_dests.os2 * slow_mode_course_max_interval;
         float multiplier = pow2f(total_interval);
-        freq_hz = ((all_sigs_raw.os2_kt)? midi_freq * 0.001953f : slow_mode_base_freq_hz) * multiplier;
+        freq_hz = ((all_sigs_raw.os2_kt)? midi_freq * 0.0009765f : slow_mode_base_freq_hz) * multiplier;
     } else {
         float total_interval = fb_dests.os2 * fast_mode_course_max_interval;
         float multiplier = pow2f(total_interval);
