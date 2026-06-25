@@ -125,7 +125,7 @@ void link_ui() {
             cc->init = param.init;
             cc->step = param.step;
             float steps = (param.max - param.min) / param.step;
-            float per = steps / 8192.0;
+            float per = steps / 1024.0;
             cc->mul = per;
             cc->numeric = param.numeric;
         }
@@ -139,7 +139,7 @@ void link_ui() {
                 mod->init = param.init;
                 mod->step = param.step;
                 float steps = (param.max - param.min) / param.step;
-                float per = steps / 8192.0;
+                float per = steps / 1024.0;
                 mod->mul = per;
                 mod->numeric = param.numeric;
                 break;
@@ -152,7 +152,7 @@ void link_ui() {
                 alt->init = param.init;
                 alt->step = param.step;
                 float steps = (param.max - param.min) / param.step;
-                float per = steps / 8192.0;
+                float per = steps / 1024.0;
                 alt->mul = per;
                 alt->numeric = param.numeric;
                 break;
@@ -329,7 +329,7 @@ void handle_midi(uint8_t *msg, uint8_t len)
             uint8_t cc_num = cc_map[CC_MAP_VELOCITY_IDX];
             struct CC cc = CCs[cc_num];
             if (cc.p != 0) {
-                float steps = cc.mul * (float)velocity * 64.0f;
+                float steps = cc.mul * (float)velocity * 8.0f;
                 int whole_steps = round(steps);
                 float val = (cc.step * whole_steps) + cc.min;
                 *cc.p = val;
@@ -444,7 +444,7 @@ void handle_midi(uint8_t *msg, uint8_t len)
             // printf("got unknown CC %d\n\r\r", cc_num);
             break;
         }
-        float steps = cc.mul * (float)cc_val * 64.0f;
+        float steps = cc.mul * (float)cc_val * 8.0f;
         int whole_steps = round(steps);
         float val = (cc.step * whole_steps) + cc.min;
         *cc.p = val;
@@ -471,7 +471,7 @@ void handle_midi(uint8_t *msg, uint8_t len)
         } else {
             struct CC cc = CCs[cc_num];
             if (cc.p != 0) {
-                float steps = cc.mul * (float)cc_val * 64.0f;
+                float steps = cc.mul * (float)cc_val * 8.0f;
                 int whole_steps = round(steps);
                 float val = (cc.step * whole_steps) + cc.min;
                 *cc.p = val;

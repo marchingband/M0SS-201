@@ -42,7 +42,7 @@ static void on_encoder(bool up){
     uint64_t now = bflb_mtimer_get_time_us();
     uint64_t passed = now - last_click;
     last_click = now;
-    int click_multiplier = passed > 80000 ? 5 : passed > 50000 ? 50 : passed > 10000 ? 500 : 2000;
+    int click_multiplier = passed > 80000 ? 1 : passed > 50000 ? 10 : passed > 10000 ? 100 : 200;
     printf("time %llu\n\r", passed);
     printf("mul %d\n\r", click_multiplier);
     // uint8_t *button_states = get_button_states();
@@ -74,6 +74,7 @@ static void on_encoder(bool up){
         struct Asb asb = get_asbs()[cur_asb];
         float cur = *asb.p;
         float step = asb.step * asb.mul * click_multiplier;
+        if (asb.numeric) step = 1.0f;
         float next = up ? cur + step : cur - step;
         float clamped = next > asb.max ? asb.max : next < asb.min ? asb.min : next;
         *asb.p = clamped;
