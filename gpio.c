@@ -195,14 +195,14 @@ void matrix_pick(int num){
     }
 }
 
-bool check_martix_press(int num){
+int check_matrix_press(int num){
     int matrix_column_selected = -1;
     int matrix_row_selected = ENV_held() ? 2 : SG_held() ? 1 : OS2_held() ? 0 : -1;
     if(matrix_row_selected == -1){
-        return false;
+        return -1;
     }
     // printf("%s held", matrix_row_selected == 2 ? "ENV" : matrix_row_selected == 1 ? "SG" : matrix_row_selected == 0 ? "OS1" : "NONE");
-    switch (num){
+    switch (num) {
         case BUTTON_NUM_MATRIX_COLUMN_OS1:
             matrix_column_selected = 0;
             break;
@@ -227,7 +227,7 @@ bool check_martix_press(int num){
         case BUTTON_NUM_MATRIX_COLUMN_REL:
             matrix_column_selected = 7;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_TIMB :
+        case BUTTON_NUM_MATRIX_COLUMN_TIMB:
             matrix_column_selected = 8;
             break;
         case BUTTON_NUM_MATRIX_COLUMN_AMP:
@@ -242,10 +242,10 @@ bool check_martix_press(int num){
         // only pick if in play mode, in save or load mode this selects a preset
         matrix_pick(param);
         // printf("matrix picked %d", param);
-        return true;
+        return param;
     }
 
-    return false;
+    return -1;
 }
 
 int save_load_cursor_pos;
@@ -330,7 +330,7 @@ static void process_buttons(){
                 continue;
             }
 
-            if(check_martix_press(i)){
+            if(check_matrix_press(i) != -1 && ui_mode == UI_MODE_PLAY){
                 continue;
             };
 
@@ -375,6 +375,13 @@ static void process_buttons(){
                             learn_mode_state = LEARN_MODE_SELECTED;
                             alt_consumed = true;
                         } 
+                    } else if (ENV_held() || OS2_held() || SG_held()) {
+                        int cc_num = check_matrix_press(i);
+                        printf("matrix num: %d\n", cc_num);
+                        if (cc_num != -1) {
+                            mode_learn_current_cc = cc_num;
+                            learn_mode_state = LEARN_MODE_SELECTED;
+                        }
                     } else {
                         int cc_num = get_cc(i, false);
                         if (cc_num != -1) {
