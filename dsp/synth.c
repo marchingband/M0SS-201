@@ -480,8 +480,9 @@ float compute_os1_rate() {
 
     float freq_hz = freq_multiplier * midi_note_to_freq_hz(midi_note);
     if (all_sigs_raw.bus_sel == BUS_SEL_FM) {
-        float max_fm_index = 4.0f;
-        freq_hz *= 1.0f + max_fm_index*fb_dests.idx*os2_state.val;
+        float max_fm_index = 8.0f;
+        float fm_idx = x3(fb_dests.idx);
+        freq_hz *= 1.0f + max_fm_index*fm_idx*os2_state.val;
     }
     if (all_sigs_raw.os2_hilo) freq_hz *= -1.0f;
 
@@ -566,7 +567,7 @@ float compute_mixer() {
     float power_law_os2 = x3(all_sigs.mx_os2);
     float sum = bipolar_sg * power_law_sg + bipolar_env * power_law_env \
         + os1_state.val * power_law_os1 + os2_state.val * power_law_os2;
-    return 3.0f * soft_clip(sum * 0.33f);
+    return sum;  // 3.0f * soft_clip(sum * 0.33f);
 }
 
 float wavefolder_tone_lowpass(float x) {
@@ -581,8 +582,8 @@ float wavefolder_tone_lowpass(float x) {
 float compute_wavefolder(float in) {    
     in += all_sigs.fold_bias;
     in *= 0.5f;  // gainstaging for wavefolder
-    float timbre = x3(fb_dests.timb);
-    float t = fb_dests.timb * 19.0f;
+    float timbre = fb_dests.timb * fb_dests.timb;
+    float t = timbre * 19.0f;
     if (all_sigs_raw.bus_sel == BUS_SEL_TM) {
         const float max_timbre_modulation = 1.0f;
         t += max_timbre_modulation * fb_dests.idx * os2_state.val * 13.0f;
@@ -673,7 +674,7 @@ float delay_filter(float x) {
 float compute_delay(float in) {
     // compute parameters
     float time = x3(all_sigs.dly_tm);
-    float delay_time = time * (float)(dly.buffer_size - 1);
+    float delay_time = linear_map(time, 0.0f, 1.0f, DELAY_LINE_MIN, DELAY_LINE_LEN - 1);
     float feedback = normalized_linear_to_logexp(all_sigs.dly_fb, -3) * 1.05f;
     float mix = all_sigs.dly_mx;
 

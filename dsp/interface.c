@@ -4,7 +4,7 @@ DSP_All_Signals all_sigs_raw;
 
 #define NUM_UI_ELS 64
 DSP_Param_t dsp_ui[NUM_UI_ELS] = {
-    {.type=PARAM_MOD,     .p=&all_sigs_raw.sg_len,    .cc=1,  .btn=18, .min=4,   .max=32,   .init=8,   .step=1   , .numeric=true },
+    {.type=PARAM_MOD,     .p=&all_sigs_raw.sg_len,    .cc=1,  .btn=18, .min=2,   .max=32,   .init=8,   .step=1   , .numeric=true },
     {.type=PARAM_MOD,     .p=&all_sigs_raw.sg_smth,   .cc=2,  .btn=17, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.sg_rate,   .cc=3,  .btn=21, .min=0,   .max=1,    .init=0.1, .step=1e-4, .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.sg_rcl,    .cc=4,  .btn=20, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},

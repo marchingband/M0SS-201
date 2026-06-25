@@ -180,6 +180,7 @@ typedef struct {
 
 // delay line length in seconds: 1.5
 #define DELAY_LINE_LEN 72000  // SR * delay_line_s
+#define DELAY_LINE_MIN 960  // SR * 20ms
 
 typedef struct {
     float buffer[DELAY_LINE_LEN];
