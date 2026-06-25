@@ -467,7 +467,7 @@ float compute_os1_rate() {
     // so the tuning slider, modulations, and FM need to be added.
     // tuning slider and modulations get quantized, then FM is added.
 
-    float freq_multiplier = pow2f(fb_dests.os1 * 2.0f); // maximum two octave range for normalized value
+    float freq_multiplier = pow2f(fb_dests.os1 * 2.0f - 1.0f); // maximum two octave range for normalized value
     if (all_sigs_raw.os1_oct == OS1_OCT_n1) freq_multiplier *= 0.5f;
     else if (all_sigs_raw.os1_oct == OS1_OCT_n2) freq_multiplier *= 0.25f;
 
