@@ -156,22 +156,14 @@ void read_buttons(){
         }
         
         bflb_mtimer_delay_us(5); // let it settle
-        // bflb_mtimer_delay_us(2); // let it settle
 
         // read the pins
         for(int k=0; k<3; k++)
         {
             uint8_t idx = i + (k * 8);
-            // if(idx == 15 || idx == 21){
-            //     // these are bad buttons
-            //     button_state[idx] = 1;
-            //     continue;
-            // }
             button_state[idx] = bflb_gpio_read(b_gpio, mux_drain_pins[k]);
         }
     }
-    // button_state[24] = bflb_gpio_read(b_gpio, BUTTON_25_PIN);
-    // button_state[25] = bflb_gpio_read(b_gpio, BUTTON_26_PIN);
     button_state[26] = bflb_gpio_read(b_gpio, ENCODER_BUTTON_PIN);
 }
 
@@ -254,9 +246,23 @@ void handle_encoder_press(bool down)
 {
     switch (get_ui_mode()) {
         case UI_MODE_PLAY: {
-            struct Sigs *sigs = get_signals();
-            *sigs->gate = down ? 1 : 0;
-            encoder_pressed = down;
+            if (alt_held()) {
+                struct Param prm = get_param_selected();
+                if (prm.alt) {
+                    struct Alt alt = get_alts()[prm.button];
+                    if (alt.p != 0) *alt.p = alt.init;
+                } else if (prm.cc) {
+                    struct CC cc = get_ccs()[prm.button];
+                    if (cc.p != 0) *cc.p = cc.init;
+                } else {
+                    struct Mod mod = get_mods()[prm.button];
+                    if (mod.p != 0) *mod.p = mod.init;
+                }
+            } else {
+                struct Sigs *sigs = get_signals();
+                *sigs->gate = down ? 1 : 0;
+                encoder_pressed = down;
+            }
             break;
         }
         case UI_MODE_LOAD: {
@@ -462,7 +468,7 @@ void handle_normal_mode_button_press(int btn_idx) {
             }
 
             // toggle switch state
-            if(btn_idx == 5){ // k-t and quantize
+            if(btn_idx == 5 || btn_idx == 0){ // k-t and legato
                 alt_switch_state = *alt_sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
             }
         }

@@ -103,7 +103,7 @@ void compute_midi_note() {
 
     // if the midi note changes but the gate has been on the whole time, that's a retrigger
     retrigger = (prev_note_in != all_sigs_raw.pitch) && prev_gate_in && all_sigs_raw.gate;
-    retrigger = retrigger && !LEGATO_MODE;  // turn it off if we're in legato mode
+    retrigger = retrigger && !all_sigs_raw.legato;  // turn it off if we're in legato mode
     prev_note_in = all_sigs_raw.pitch;
     prev_gate_in = all_sigs_raw.gate;
 }

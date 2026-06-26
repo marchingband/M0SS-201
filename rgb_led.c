@@ -173,13 +173,13 @@ struct pixel_t pixel_fade_matrix(float val) {
     if (val == 0) return pixel;
 
     if (!negative) {
-        pixel.red = (uint8_t)(10.0 * val) + 1;
-        pixel.green = (uint8_t)(150.0 * val) + 1;
-        pixel.blue = (uint8_t)(50.0 * val) + 1;
+        pixel.red = (uint8_t)(10.0 * val);
+        pixel.green = (uint8_t)(150.0 * val);
+        pixel.blue = (uint8_t)(50.0 * val);
     } else {
-        pixel.red = (uint8_t)(150.0 * val) + 1;
-        pixel.green = (uint8_t)(10.0 * val) + 1;
-        pixel.blue = (uint8_t)(50.0 * val) + 1;
+        pixel.red = (uint8_t)(150.0 * val);
+        pixel.green = (uint8_t)(10.0 * val);
+        pixel.blue = (uint8_t)(50.0 * val);
     }
 
     return pixel;
