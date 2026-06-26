@@ -275,6 +275,11 @@ void remove_note(uint8_t note){
     note_lifo_p --;
 }
 
+void midi_clear() {
+    note_lifo_p = 0;
+    *Signals.gate = 0.0f;
+}
+
 void handle_midi(uint8_t *msg, uint8_t len)
 {
     // printf("msg len %d -> %d %d %d\n\r\r", len, msg[0], msg[1], msg[2]);
@@ -506,28 +511,9 @@ static void uart_receive_isr(int irq, void *arg)
     }
 }
 
-void poll_uart(void)
-{
-    ch = bflb_uart_getchar(uart0);
-    if (ch != -1)
-    {
-        int ret = parse(ch);
-        if (ret)
-        {
-            handle_midi(getMidiMsg(), getMidiMsgLen());
-        }
-    }
-}
-
 void usb_midi_in(char ch)
 {
-    bflb_uart_putchar(uart0, ch); // send to midi out
-    int ret = parse(ch);
-    if (ret == 1)
-    {
-        handle_midi(getMidiMsg(), getMidiMsgLen());
-        // printf("USB: %02X\n", ch);
-    }
+    xQueueSendToBackFromISR(uart_queue, &ch, NULL);
 }
 
 void uart_task(void *args){

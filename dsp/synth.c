@@ -59,10 +59,7 @@ void smooth_signals() {
     }
 }
 
-#define OVERSAMPLE_RATIO 8
-
-#define DBG_TIMING
-#define DBG_TIMING_PIN 15
+#define OVERSAMPLE_RATIO 4
 
 void init_dsp() {
     for (uint16_t i = 0; i < MAX_SG_LENGTH; i++) {
@@ -74,11 +71,6 @@ void init_dsp() {
 
     dly.buffer_size = DELAY_LINE_LEN;
     dly.ptr = 0;
-
-    #ifdef DBG_TIMING
-    struct bflb_device_s* gpio = bflb_device_get_by_name("gpio");
-    bflb_gpio_init(gpio, DBG_TIMING_PIN, GPIO_OUTPUT | GPIO_SMT_EN | GPIO_DRV_0);
-    #endif
 }
 
 float midi_note;
@@ -120,11 +112,6 @@ float phase = 0.0f;
 const float freq = 260.0f * SR_INV;
 
 void compute_dsp(size_t len, float* buf) {
-    #ifdef DBG_TIMING
-    struct bflb_device_s* gpio = bflb_device_get_by_name("gpio");
-    bflb_gpio_set(gpio, DBG_TIMING_PIN);
-    #endif
-
     for (size_t i = 0; i < len; i++) {
         // compute parameter amounts through matrix
         // takes matrix signals from all_sigs as well as previous outputs (stored in peripheral structs)
@@ -160,10 +147,6 @@ void compute_dsp(size_t len, float* buf) {
     all_sigs_raw.ind_sg = sg_state.val;
     all_sigs_raw.ind_os2 = os2_state.val;
     all_sigs_raw.ind_amp = buf[0];
-
-    #ifdef DBG_TIMING
-    bflb_gpio_reset(gpio, DBG_TIMING_PIN);
-    #endif
 }
 
 // os1 is bipolar, sg and env are unipolar
@@ -594,7 +577,7 @@ float compute_wavefolder(float in) {
     static float prev_in = 0.0f;
     float os_outputs[OVERSAMPLE_RATIO];
     for (uint16_t i = 0; i < OVERSAMPLE_RATIO; i++) {
-        float frac = (float)i * 0.125f;
+        float frac = (float)i * 0.25f;
         float interpolated_sample = prev_in + (in - prev_in) * frac;
 
         float folded_sample = naive_buchla_wf_compute(interpolated_sample);

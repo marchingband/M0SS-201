@@ -284,20 +284,19 @@ static void process_buttons(){
 
         // check params reset logic
         if(ui_mode == UI_MODE_RST){
-            if(button_state[BUTTON_NUM_ALT] || button_state[8] || button_state[BUTTON_NUM_ENCODER]) // one was released
+            if(button_state[BUTTON_NUM_ALT] || button_state[19] || button_state[13]) // one was released
             {
                 set_ui_mode(UI_MODE_PLAY);
             }
              
             if(now - reset_mode_started > ONE_SECOND)
             {
-                if(button_state[2] == 0 && button_state[17] == 0) // factory reset
+                if(button_state[BUTTON_NUM_ENCODER] == 0)
                 {
                     // factory reset
                     set_ui_mode(UI_MODE_FACTORY_RST);
                 } else {
-                    reset_params();
-                    set_ui_mode(UI_MODE_PLAY);
+                    GLB_SW_System_Reset();
                 }
             }
             return;
@@ -319,15 +318,7 @@ static void process_buttons(){
             printf("value: %.2f\n", *get_ccs()[i].p);
 
             if( i == BUTTON_NUM_ENCODER ){
-                // check for reset command
-                if(button_state[BUTTON_NUM_ALT] == 0 && button_state[8] == 0) // alt and idx are held
-                {
-                    set_ui_mode(UI_MODE_RST);
-                    reset_mode_started = bflb_mtimer_get_time_us();
-                } else {
-                    handle_encoder_press(true);
-                }
-                continue;
+                handle_encoder_press(true);
             }
 
             if(check_matrix_press(i) != -1 && ui_mode == UI_MODE_PLAY){
@@ -335,6 +326,14 @@ static void process_buttons(){
             };
 
             if (i == BUTTON_NUM_ALT) alt_consumed = false;
+
+            // alt and the two mixer buttons are all next to each other. One thumb press
+            if (alt_held() && !button_state[19] && !button_state[13] && bflb_mtimer_get_time_ms() > 1000) {
+                set_ui_mode(UI_MODE_RST);
+                reset_mode_started = bflb_mtimer_get_time_us();
+                alt_consumed = true;
+                continue;
+            }
             
             // set ui modes
             if (alt_held() && i == BUTTON_NUM_LEARN) {

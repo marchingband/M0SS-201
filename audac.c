@@ -72,14 +72,26 @@ static void refresh_dma(int tictoc)
 static uint64_t times[100] = {0};
 static size_t time_p = 0;
 
+#define DBG_TIMING
+#define DBG_TIMING_PIN 15
+
 void audio_dma_callback(void *arg)
 {
+    #ifdef DBG_TIMING
+    struct bflb_device_s* gpio = bflb_device_get_by_name("gpio");
+    bflb_gpio_set(gpio, DBG_TIMING_PIN);
+    #endif
+
     static int tictoc = 1;
     process_encoder();
     refresh_dma(tictoc);
     compute(tictoc == 0 ? 1 : 0);
     tictoc = tictoc == 0 ? 1 : 0;
     update_leds();
+
+    #ifdef DBG_TIMING
+    bflb_gpio_reset(gpio, DBG_TIMING_PIN);
+    #endif
 }
 
 static void i2s_gpio_init(void)
@@ -94,6 +106,10 @@ static void i2s_gpio_init(void)
     bflb_gpio_init(gpio, GPIO_PIN_3, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
     /* I2S_BCLK / BCK */
     bflb_gpio_init(gpio, GPIO_PIN_0, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+
+    #ifdef DBG_TIMING
+    bflb_gpio_init(gpio, DBG_TIMING_PIN, GPIO_OUTPUT | GPIO_SMT_EN | GPIO_DRV_0);
+    #endif
 }
 
 static void i2s_dma_init(void) {

@@ -22,9 +22,6 @@
 // from midi.c
 void *declare(UIGlue *uiInterface, float *p, const char* key, const char* val);
 
-// from midi.c
-void poll_uart(void);
-
 struct voice_s
 {
     bool on;
@@ -137,7 +134,6 @@ void dsp_run(uint16_t *dest)
     int now = bflb_mtimer_get_time_us();
     period = now - last_start;
     last_start = now;
-    // poll_uart();
     compute_dsp(buf_len, buf);
     // computemydsp(&dsp, buf_len, NULL, buf);
     for (int i = 0; i < buf_len; i++)
