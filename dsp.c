@@ -150,7 +150,7 @@ void dsp_run(uint16_t *dest)
         int32_t raw = (int32_t)(val * 32767);
         uint16_t capped = (raw < -32768)? -32768 : ((raw > 32767)? 32767 : raw);
         dest[2*i + 0] = capped;
-        dest[2*i + 1] = capped;
+        dest[2*i + 1] = -capped;  // balanced output
     }
     consumed = bflb_mtimer_get_time_us() - now;
     poll_gpio();
