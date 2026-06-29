@@ -129,6 +129,7 @@ static void on_encoder(bool up){
             {
                 float cur = *alt.p;
                 float step = alt.step * alt.mul * click_multiplier;
+                if (alt.numeric) step = 1;
                 float next = up ? cur + step : cur - step;
                 float clamped = next > alt.max ? alt.max : next < alt.min ? alt.min : next;
                 *alt.p = clamped;
@@ -149,6 +150,7 @@ static void on_encoder(bool up){
             {
                 float cur = *cc.p;
                 float step = cc.step * cc.mul * click_multiplier;
+                if (cc.numeric) step = 1;
                 float next = up ? cur + step : cur - step;
                 float clamped = next > cc.max ? cc.max : next < cc.min ? cc.min : next;
                 *cc.p = clamped;
