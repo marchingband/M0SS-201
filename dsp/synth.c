@@ -169,7 +169,7 @@ void compute_matrix() {
     fb_dests.rcl  = MAT(RCL_I,  all_sigs.sg_rcl);
     fb_dests.att  = MAT(ATT_I,  all_sigs.env_att);
     fb_dests.rel  = MAT(REL_I,  all_sigs.env_rel);
-    fb_dests.os1  = MAT(OS1_I,  0.5f);
+    fb_dests.os1  = CLAMP((E_MAT[OS1_I]) + (S_MAT[OS1_I]) + (O_MAT[OS1_I]), -1.0f, 1.0f);
     fb_dests.os2  = MAT(OS2_I,  all_sigs.os2_tune);
     fb_dests.idx  = MAT(IDX_I,  all_sigs.bus_idx);
     fb_dests.timb = MAT(TIMB_I, all_sigs.fold_timb);
@@ -402,50 +402,105 @@ void compute_os2() {
 }
 
 float quantize(float freq_hz, const Scale* scale) {
-    // the scale contains a root frequency, need to get the
-    // input frequency to be in the same octave.
-    float rel_octave = pow2f((floorf(log2f(freq_hz / scale->root_freq_hz))));
-    float norm_ratio = freq_hz / (scale->root_freq_hz * rel_octave);
+    const float root = scale->root_freq_hz;
 
-    float quantized_ratio = 1.0f;
-    float min_ratio_diff = 1e8f;
-    for (uint32_t i = 0; i < scale->num_intervals; i++) {
-        float ratio_diff = absf(norm_ratio - scale->intervals[i]);
-        if (ratio_diff < min_ratio_diff) {
-            min_ratio_diff = ratio_diff;
-            quantized_ratio = scale->intervals[i];
+    float rel_octave = 1.0f;
+    float norm_ratio = freq_hz / root;
+
+    while (norm_ratio >= 2.0f) {
+        norm_ratio *= 0.5f;
+        rel_octave *= 2.0f;
+    }
+
+    while (norm_ratio < 1.0f) {
+        norm_ratio *= 2.0f;
+        rel_octave *= 0.5f;
+    }
+
+    const float* intervals = scale->intervals;
+    uint32_t n = scale->num_intervals;
+
+    uint32_t lo = 0;
+    uint32_t hi = n - 1;
+    while (lo < hi) {
+        uint32_t mid = (lo + hi) >> 1;
+        if (norm_ratio < intervals[mid]) {
+            hi = mid;
+        } else {
+            lo = mid + 1;
         }
     }
 
-    return scale->root_freq_hz * rel_octave * quantized_ratio;
+    // lo is now the first interval >= norm_ratio (upper bound candidate)
+    uint32_t idx_hi = lo;
+    uint32_t idx_lo = (lo == 0) ? 0 : (lo - 1);
+
+    // choose closest of the two neighbors
+    float diff_hi = absf(norm_ratio - intervals[idx_hi]);
+    float diff_lo = absf(norm_ratio - intervals[idx_lo]);
+
+    float quantized_ratio = (diff_lo <= diff_hi)
+        ? intervals[idx_lo]
+        : intervals[idx_hi];
+
+    return root * rel_octave * quantized_ratio;
 }
 
-const Scale pentatonic = {.root_freq_hz = 0.0f, .num_intervals = 5, .intervals = {
-    1.0f, 1.189207f, 1.3348398f, 1.49830708f, 1.781797f
-}};
-
 const Scale chromatic = {.root_freq_hz = 0.0f, .num_intervals = 12, .intervals = {
-    1.0f, 1.05946f, 1.122462f, 1.189207f, 1.259921f, 1.334839f,
+    1.000000f, 1.059463f, 1.122462f, 1.189207f, 1.259921f, 1.334840f,
     1.414214f, 1.498307f, 1.587401f, 1.681793f, 1.781797f, 1.887749f
 }};
 
 const Scale major = {.root_freq_hz = 0.0f, .num_intervals = 7, .intervals = {
-    1.0f, 1.122462f, 1.259921f, 1.334839f,
-    1.498307f, 1.681793f, 1.887749f 
+    1.000000f, 1.122462f, 1.259921f, 1.334840f,
+    1.498307f, 1.681793f, 1.887749f
 }};
 
-const Scale minor = {.root_freq_hz = 0.0f, .num_intervals = 7, .intervals = {
-    1.0f, 1.122462f, 1.189207f, 1.334839f,
+const Scale natural_minor = {.root_freq_hz = 0.0f, .num_intervals = 7, .intervals = {
+    1.000000f, 1.122462f, 1.189207f, 1.334840f,
     1.498307f, 1.587401f, 1.781797f
 }};
 
-const Scale root_fifth = {.root_freq_hz = 0.0f, .num_intervals = 2, .intervals = {
-    1.0f, 1.498307f
+const Scale harmonic_minor = {.root_freq_hz = 0.0f, .num_intervals = 7, .intervals = {
+    1.000000f, 1.122462f, 1.189207f, 1.334840f,
+    1.498307f, 1.587401f, 1.887749f
 }};
 
-const Scale octaves = {.root_freq_hz = 0.0f, .num_intervals = 1, .intervals = {1.0f}};
+const Scale major_pentatonic = {.root_freq_hz = 0.0f, .num_intervals = 5, .intervals = {
+    1.000000f, 1.122462f, 1.259921f, 1.498307f, 1.681793f
+}};
 
-Scale quantizer_scales[] = {chromatic, major, minor, pentatonic, root_fifth, octaves};
+const Scale minor_pentatonic = {.root_freq_hz = 0.0f, .num_intervals = 5, .intervals = {
+    1.000000f, 1.189207f, 1.334840f, 1.498307f, 1.781797f
+}};
+
+const Scale blues = {.root_freq_hz = 0.0f, .num_intervals = 6, .intervals = {
+    1.000000f, 1.189207f, 1.259921f, 1.334840f,
+    1.414214f, 1.781797f
+}};
+
+const Scale whole_tone = {.root_freq_hz = 0.0f, .num_intervals = 6, .intervals = {
+    1.000000f, 1.122462f, 1.259921f,
+    1.414214f, 1.587401f, 1.781797f
+}};
+
+const Scale octatonic = {.root_freq_hz = 0.0f, .num_intervals = 8, .intervals = {
+    1.000000f, 1.059463f, 1.189207f, 1.259921f,
+    1.414214f, 1.498307f, 1.681793f, 1.781797f
+}};
+
+const Scale just_major = {.root_freq_hz = 0.0f, .num_intervals = 7, .intervals = {
+    1.000000f, 1.125000f, 1.250000f, 1.333333f,
+    1.500000f, 1.666667f, 1.875000f
+}};
+
+const Scale slendro = {.root_freq_hz = 0.0f, .num_intervals = 5, .intervals = {
+    1.000000f, 1.148698f, 1.319508f,
+    1.515717f, 1.741101f
+}};
+
+Scale quantizer_scales[] = {chromatic, major, natural_minor, harmonic_minor, 
+    major_pentatonic, minor_pentatonic, blues, whole_tone, octatonic, just_major, slendro};
 
 float compute_os1_rate() {
     // care about midi frequency, tuning, and mod bus
@@ -455,7 +510,7 @@ float compute_os1_rate() {
     // so the tuning slider, modulations, and FM need to be added.
     // tuning slider and modulations get quantized, then FM is added.
 
-    float freq_multiplier = pow2f(fb_dests.os1 * 2.0f - 1.0f); // maximum two octave range for normalized value
+    float freq_multiplier = pow2f(fb_dests.os1 * 2.0f); // maximum two octave range for normalized value
     if (all_sigs_raw.os1_oct == OS1_OCT_n1) freq_multiplier *= 0.5f;
     else if (all_sigs_raw.os1_oct == OS1_OCT_n2) freq_multiplier *= 0.25f;
 

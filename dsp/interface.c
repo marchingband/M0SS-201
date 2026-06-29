@@ -17,7 +17,7 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_flt,   .cc=63, .btn=4,  .min=-1,  .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.os1_oct,   .cc=10, .btn=16, .min=0,   .max=2,    .init=0,   .step=1,    .numeric=false},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.os1_wave,  .cc=11, .btn=22, .min=0,   .max=2,    .init=0,   .step=1,    .numeric=false},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.os1_qtz,   .cc=12, .btn=16, .min=0,   .max=6,    .init=0,   .step=1   , .numeric=true},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.os1_qtz,   .cc=12, .btn=16, .min=0,   .max=11,    .init=0,   .step=1   , .numeric=true},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.os1_gld,   .cc=13, .btn=22, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_ALT_SEL, .p=&all_sigs_raw.os2_wave,  .cc=14, .btn=7,  .min=0,   .max=2,    .init=0,   .step=1   , .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.os2_tune,  .cc=15, .btn=7,  .min=0,   .max=1,    .init=0.5, .step=1e-4, .numeric=false},
