@@ -272,8 +272,8 @@ void render_lights(void){
 
     float sg = *sigs->sg;
     float mo = (*sigs->mo + 1) * 0.5;
-    // float mo_freq = *sigs->mo_freq / 3000; // the mosc range is about 3000
-    float mo_freq = *(get_alts()[7].p);
+    float mo_freq = *sigs->mo_freq / 300; // the mosc range is about 3000
+    // float mo_freq = *(get_mods()[7].p);
 
     struct pixel_t  display_toggle_on[11] = {pixel_off, pixel_off, pixel_off, pixel_off, pixel_off, pixel_on, pixel_on, pixel_on, pixel_on, pixel_on, pixel_on};
     struct pixel_t display_toggle_off[11] = {pixel_on, pixel_on, pixel_on, pixel_on, pixel_on, pixel_on, pixel_off, pixel_off, pixel_off, pixel_off, pixel_off};

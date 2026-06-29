@@ -108,6 +108,8 @@ void compute_midi_note() {
     prev_gate_in = all_sigs_raw.gate;
 }
 
+float os2freq;
+
 float phase = 0.0f;
 const float freq = 260.0f * SR_INV;
 
@@ -146,6 +148,7 @@ void compute_dsp(size_t len, float* buf) {
     all_sigs_raw.ind_env = env_state.val;
     all_sigs_raw.ind_sg = sg_state.val;
     all_sigs_raw.ind_os2 = os2_state.val;
+    all_sigs_raw.ind_os2_freq = os2freq;
     all_sigs_raw.ind_amp = buf[0];
 }
 
@@ -337,6 +340,8 @@ void compute_os2() {
         float multiplier = pow2f(total_interval);
         freq_hz = ((all_sigs_raw.os2_kt)? midi_freq * 0.125f : fast_mode_base_freq_hz) * multiplier;
     }
+
+    os2freq = freq_hz;
 
     float freq_normalized = freq_hz * SR_INV;
 

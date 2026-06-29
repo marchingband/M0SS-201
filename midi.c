@@ -190,6 +190,7 @@ void link_ui() {
     Signals.le = &all_sigs_raw.ind_env;
     Signals.sg = &all_sigs_raw.ind_sg;
     Signals.mo = &all_sigs_raw.ind_os2;
+    Signals.mo_freq = &all_sigs_raw.ind_os2_freq;
     Signals.pitch_bend = &all_sigs_raw.pitch_bend;
     *Signals.pitch_bend = 8192.0f;
 }
