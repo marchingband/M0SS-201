@@ -99,7 +99,7 @@ typedef struct {
 } BuchlaWF_Cell_t;
 
 #define MAX_SG_LENGTH 32
-#define MIN_SG_LENGTH 4
+#define MIN_SG_LENGTH 2
 typedef struct {
     float phase;
     bool high;

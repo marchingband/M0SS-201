@@ -13,8 +13,8 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_SEL,     .p=&all_sigs_raw.env_mode,  .cc=6,  .btn=1,  .min=0,   .max=2,    .init=1,   .step=1   , .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.env_att,   .cc=7,  .btn=3,  .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.env_rel,   .cc=8,  .btn=4,  .min=0,   .max=1,    .init=0.3, .step=1e-4, .numeric=false},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.env_crv,   .cc=9,  .btn=3,  .min=-1,  .max=1,    .init=0,   .step=1e-4, .numeric=false},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_flt,   .cc=63, .btn=4,  .min=-1,  .max=1,    .init=0,   .step=1e-4, .numeric=false},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.env_crv,   .cc=9,  .btn=1,  .min=-1,  .max=1,    .init=0,   .step=1e-4, .numeric=false},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_flt,   .cc=63, .btn=21, .min=-1,  .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.os1_oct,   .cc=10, .btn=16, .min=0,   .max=2,    .init=0,   .step=1,    .numeric=false},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.os1_wave,  .cc=11, .btn=22, .min=0,   .max=2,    .init=0,   .step=1,    .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.os1_qtz,   .cc=12, .btn=16, .min=0,   .max=11,    .init=0,   .step=1   , .numeric=true},
@@ -31,13 +31,13 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_ALT,     .p=&all_sigs_raw.mx_env,    .cc=23, .btn=13, .min=-1,  .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.fold_timb, .cc=24, .btn=6,  .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.fold_bias, .cc=25, .btn=9,  .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.pb_up,     .cc=26, .btn=6,  .min=1,   .max=24,   .init=2,   .step=1,    .numeric=true},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.pb_down,   .cc=27, .btn=9,  .min=1,   .max=24,   .init=2,   .step=1,    .numeric=true},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.pb_up,     .cc=26, .btn=10, .min=1,   .max=24,   .init=2,   .step=1,    .numeric=true},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.pb_down,   .cc=27, .btn=12, .min=1,   .max=24,   .init=2,   .step=1,    .numeric=true},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.amp_sel,   .cc=28, .btn=2,  .min=0,   .max=1,    .init=0,   .step=1   , .numeric=false},
     {.type=PARAM_ALT,     .p=&all_sigs_raw.vol,       .cc=29, .btn=2,  .min=0,   .max=1,    .init=0.5, .step=1e-4, .numeric=false},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_tm,    .cc=30, .btn=10, .min=0,   .max=1,    .init=0.4, .step=1e-4, .numeric=false},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_mx,    .cc=31, .btn=11, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_fb,    .cc=32, .btn=12, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_tm,    .cc=30, .btn=17, .min=0,   .max=1,    .init=0.4, .step=1e-4, .numeric=false},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_mx,    .cc=31, .btn=18, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.dly_fb,    .cc=32, .btn=20, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
 
     {.type=PARAM_MTX,     .p=&all_sigs_raw.mtx[OS2_I_S][OS1_I ], .cc=33, .btn=-1, .min=-1,.max=1, .init=0, .step=1e-4, .numeric=false},
     {.type=PARAM_MTX,     .p=&all_sigs_raw.mtx[OS2_I_S][IDX_I ], .cc=34, .btn=-1, .min=-1,.max=1, .init=0, .step=1e-4, .numeric=false},
@@ -71,5 +71,5 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_MTX,     .p=&all_sigs_raw.mtx[ENV_I_S][REL_I ], .cc=60, .btn=-1, .min=-1,.max=1, .init=0, .step=1e-4, .numeric=false},
     {.type=PARAM_MTX,     .p=&all_sigs_raw.mtx[ENV_I_S][TIMB_I], .cc=61, .btn=-1, .min=-1,.max=1, .init=0, .step=1e-4, .numeric=false},
     {.type=PARAM_MTX,     .p=&all_sigs_raw.mtx[ENV_I_S][AMP_I ], .cc=62, .btn=-1, .min=-1,.max=1, .init=1, .step=1e-4, .numeric=false},  // init to 1
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.midi_chan,            .cc=0,  .btn=20, .min=1, .max=17,.init=17,.step=1,    .numeric=true}
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.midi_chan,            .cc=0,  .btn=6,  .min=1, .max=17,.init=17,.step=1,    .numeric=true}
 };
