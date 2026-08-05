@@ -1,7 +1,7 @@
 #ifndef FLASH_H
 #define FLASH_H
 
-#define NUM_PRESETS 36
+#define NUM_PRESETS 30
 #define NUM_CC_MAP 128 + 1 + 1 // for velocity and aftertouch
 
 struct Config {

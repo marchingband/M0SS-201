@@ -1,23 +1,17 @@
-# M0SS-201
+# M0SS-201 Source Code
 
-## Compile Faust
+This repository contains the complete source code for the M0SS-201, the mono west-coast style synth in the M0SS line. It runs on the Bouffalo Labs BL616, and is written in C. Unlike the 101, which uses [faust](https://faust.grame.fr/) compiled into C for it's core DSP code, the 201 is written directly in C.
 
-```
-faust -lang c -o M0SS-201.h M0SS-201.dsp
-```
+## Structure
 
-## Compile
+`dsp/synth.c` is the file that contains nearly all the code in the audio signal path. It generates samples one by one, taking in parameters and outputting a mono audio sample.
 
-```
-make CHIP=bl616 BOARD=bl616dk
-```
+`dsp/interface.c` describes the button funcitons of the interface. Each parameter in the synth is assigned a button index, a type (main control, alt control, selector, etc), and a description for how it should be displayed.
 
-## Flash
+`main.c` is the entry point of the program, it initializes the peripherals and starts their various FreeRTOS tasks.
 
-```
-make flash CHIP=chip_name COMX=xxx # xxx is your com name
-```
+`gpio.c` handles reading the buttons, and largely manages UI state.
 
-## Front Panel
+## Help
 
-<img src="assets/IMG_7108.JPG" width="600">
+For assistance in modifying this code, please contact us on our [discord](https://discord.gg/w7DQAhY46v)

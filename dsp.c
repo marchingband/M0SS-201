@@ -8,25 +8,19 @@
 #include "dsp.h"
 #include "gpio.h"
 #include "rgb_led.h"
+#include "midi.h"
+#include "dsp/synth.h"
 
 // #include "square-diode-lfo.h"
 // #include "square-diode.h"
 // #include "moog-poly-8.h"
 // #include "moog-poly-8-verb.h"
 // #include "mg1.h"
-#include "M0SS-201.h"
 
 #define NUM_VOICES 1
 
 // from midi.c
-void extract(const char *name, float *p, float init, float min, float max, float step);
 void *declare(UIGlue *uiInterface, float *p, const char* key, const char* val);
-
-// from the dsp .h file
-void buildUserInterfacemydsp(mydsp* dsp, UIGlue* ui_interface);
-
-// from midi.c
-void poll_uart(void);
 
 struct voice_s
 {
@@ -100,48 +94,25 @@ float note_to_freq(int note)
     return (a / 32) * pow(2, ((note - 9) / 12.0));
 }
 
-mydsp dsp;
-
-float *buf[1];
+float *buf;
 size_t buf_len;
 
-void openVerticalBox(UIGlue *uiInterface, char* key){};
-void openHorizontalBox(UIGlue *uiInterface, char* key){};
-void openTabBox(UIGlue *uiInterface, char* key){};
-void *closeBox(UIGlue *uiInterface){};
-void *addVerticalBargraph(UIGlue *uiInterface, const char *name, float *p, float f1, float f2){};
-void *addButton(UIGlue *uiInterface, const char *name, float *p){extract(name, p, 0, 0, 0, 0);};
-void *addVerticalSlider(UIGlue *uiInterface, const char *name, float *p, float init, float min, float max, float step){extract(name, p, init, min, max, step);};
-void *addHorizontalSlider(UIGlue *uiInterface, const char *name, float *p, float init, float min, float max, float step){extract(name, p, init, min, max, step);};
-void *addNumEntry(UIGlue *uiInterface, const char *name, float *p, float init, float min, float max, float step){extract(name, p, init, min, max, step);};
-void *addCheckButton(UIGlue *uiInterface, const char *name, float *p){extract(name, p, 0, 0, 1, 1);};
-
-UIGlue ui_glue = {
-    .openVerticalBox = openVerticalBox,
-    .openHorizontalBox = openHorizontalBox,
-    .closeBox = closeBox,
-    .declare = declare,
-    .addVerticalSlider = addVerticalSlider,
-    .addHorizontalSlider = addHorizontalSlider,
-    .addNumEntry = addNumEntry,
-    .addVerticalBargraph = addVerticalBargraph,
-    .addButton = addButton,
-    .openTabBox = openTabBox,
-    .addCheckButton = addCheckButton
-};
 
 void dsp_init(size_t buf_size)
 {
 
     // size_t cnt = buf_size / 2;
     printf("initmydsp\n");
-    initmydsp(&dsp, 48000);
+    // initmydsp(&dsp, 48000);
+    init_dsp();
     // initmydsp(&dsp, 32000);
     // initmydsp(&dsp, 8000);
     printf("buildUserInterfacemydsp\n");
-    buildUserInterfacemydsp(&dsp, &ui_glue);
+    // buildUserInterfacemydsp(&dsp, &ui_glue);
+    link_ui();
+    reset_params();
     printf("malloc\n");
-    buf[0] = (float *)malloc(buf_size * sizeof(float));
+    buf = (float *)malloc(buf_size * sizeof(float));
     buf_len = buf_size;
     // buf[0] = (float *)malloc(cnt * sizeof(float));
     // buf_len = cnt;
@@ -158,16 +129,16 @@ void print_bench(void)
 
 int loop_cnt = 0;
 
-void dsp_run(int16_t *dest)
+void dsp_run(uint16_t *dest)
 {
     int now = bflb_mtimer_get_time_us();
     period = now - last_start;
     last_start = now;
-    // poll_uart();
-    computemydsp(&dsp, buf_len, NULL, buf);
+    compute_dsp(buf_len, buf);
+    // computemydsp(&dsp, buf_len, NULL, buf);
     for (int i = 0; i < buf_len; i++)
     {
-        float val = buf[0][i];
+        float val = buf[i];
         // if(val > 1.0 || val < -1.0)
         // {
             // printf("clip :%f", val);
@@ -177,7 +148,9 @@ void dsp_run(int16_t *dest)
         // the AUDAC expects int16_t but the buffer is typed uint16_t so do this awkward thing.
         // dest[i] = (uint16_t)(int16_t)(val * 32767);
         int32_t raw = (int32_t)(val * 32767);
-        dest[i] = (uint16_t)(raw < -32768 ? -32768 : raw > 32767 ? 32767 : raw);
+        uint16_t capped = (raw < -32768)? -32768 : ((raw > 32767)? 32767 : raw);
+        dest[2*i + 0] = capped;
+        dest[2*i + 1] = -capped;  // balanced output
     }
     consumed = bflb_mtimer_get_time_us() - now;
     poll_gpio();
@@ -224,26 +197,3 @@ void stop(uint8_t note)
 #endif
 
 }
-
-// void set_note(uint8_t note){
-//     float hz = note_to_freq(note);
-//     dsp.fEntry1 = hz;
-// }
-
-// void set_filter1(uint8_t val)
-// {
-//     float freq = (float)val / 127.0f; // 0 ~ 1
-//     dsp.fHslider0 = freq;
-// }
-
-// void set_filter2(uint8_t val)
-// {
-//     float freq = ((float)val / 127.0f) * 2000; // 0 ~ 2000
-//     dsp.fHslider1 = freq;
-// }
-
-// void set_filter3(uint8_t val)
-// {
-    // float freq = ((float)val / 127.0f) * 40;
-    // dsp.fHslider2 = freq;
-// }

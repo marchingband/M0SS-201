@@ -3,6 +3,7 @@
 #include "midi.h"
 #include "gpio.h"
 #include "flash.h"
+#include "dsp/synth.h"
 #include "bl616_glb.h"
 
 #define CONFIG_BASE 0x40000
@@ -17,26 +18,28 @@
 #define NUM_SELS NUM_BUTTONS
 #define NUM_ALTSELS NUM_BUTTONS
 #define NUM_ASBS NUM_BUTTONS
+#define SG_STATE_LENGTH 32
 
-#define NUM_FLOATS (NUM_CC + NUM_MODS + NUM_ALTS + NUM_SELS + NUM_ALTSELS + NUM_ASBS + NUM_CONFIG_VARS)
+#define NUM_FLOATS (NUM_CC + NUM_MODS + NUM_ALTS + NUM_SELS + NUM_ALTSELS + NUM_ASBS + NUM_CONFIG_VARS + SG_STATE_LENGTH)
 #define NUM_BYTES_PER_PRESET (NUM_FLOATS * sizeof(float)) // 612
 #define TOTAL_BYTES (NUM_BYTES_PER_PRESET * NUM_PRESETS) // 10,414
 
 extern int cur_midi_chan;
 extern bool is_initial_boot;
 
+extern SGState_t sg_state;
+
 static float presets[NUM_PRESETS][NUM_FLOATS];
 
 static int current_slot = -1;
 
 static struct Config default_config = {
-    // 36 presets
+    // 30 presets
     .empty = { true, true, true, true, true, true, 
                true, true, true, true, true, true, 
                true, true, true, true, true, true, 
                true, true, true, true, true, true, 
-               true, true, true, true, true, true, 
-               true, true, true, true, true, true },
+               true, true, true, true, true, true},
     .cc_map = {
         1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
         17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,
@@ -46,7 +49,7 @@ static struct Config default_config = {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0 // 130
     },
-    .magic = 15,
+    .magic = 19,
 };
 
 static struct Config current_config;
@@ -155,6 +158,10 @@ void save(int slot)
     floats_buf[idx++] = (float)cur_midi_chan;
     for(int i=0; i<NUM_CC_MAP; i++){
         floats_buf[idx++] = current_config.cc_map[i];
+    }
+
+    for (int i=0; i < SG_STATE_LENGTH; i++) {
+        floats_buf[idx++] = sg_state.arr[i];
     }
 
     // save to ram presets
@@ -307,6 +314,10 @@ void load(int slot)
     for(int i=0; i<NUM_CC_MAP; i++){
         current_config.cc_map[i] = floats_buf[idx++];
     }
+
+    for (int i=0; i < SG_STATE_LENGTH; i++) {
+        sg_state.arr[i] = floats_buf[idx++];
+    }
 }
 
 void load_all_presets_from_flash(void){
@@ -443,6 +454,10 @@ void load_preset(int slot){
     cur_midi_chan = (int)floats_buf[idx++];
     for(int i=0; i<NUM_CC_MAP; i++){
         current_config.cc_map[i] = floats_buf[idx++];
+    }
+
+    for (int i=0; i < SG_STATE_LENGTH; i++) {
+        sg_state.arr[i] = floats_buf[idx++];
     }
 }
 

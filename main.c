@@ -10,6 +10,7 @@
 #include "bflb_uart.h"
 #include "bflb_flash.h"
 #include "bflb_clock.h"
+#include "bflb_i2s.h"
 #include "mem.h"
 
 #include "bl616_glb.h"
@@ -45,6 +46,7 @@ static void uart_init(bool set_console){
 
     struct bflb_uart_config_s cfg = {0};
     cfg.baudrate = 31250;
+    // cfg.baudrate = 38400;
     cfg.data_bits = UART_DATA_BITS_8;
     cfg.stop_bits = UART_STOP_BITS_1;
     cfg.parity = UART_PARITY_NONE;
@@ -126,8 +128,8 @@ bool is_initial_boot = false;
 int main(void)
 {
     /* board init */
-    // board_init();
-    m0ss_board_init( /*set console*/ false );
+    // m0ss_board_init( /*set console*/ false );
+    m0ss_board_init(false);  // baud rate 31250
 
     /* dsp init */
     printf("dsp_init\r\n");
@@ -153,30 +155,17 @@ int main(void)
     printf("uart_receive_init\r\n");
     uart_receive_init();
 
-    // bring up default patch
-    // if(is_initial_boot){
-    //     save(16);
-    // }
-
-    // bflb_mtimer_delay_ms(100);
-    // load(16);
-
     /* usb midi host */
     printf("usb_midi_init\r\n");
     usb_midi_init();
 
     /* start the LEDs */
-    // printf("rgb_led_init\r\n");
+    printf("rgb_led_init\r\n");
     spi_rgb_init();
 
     /* setup encoder */
     printf("encoder_init\r\n");
     encoder_init();
-
-    // while(1){
-    //     read_buttons();
-    //     bflb_mtimer_delay_ms(1000);
-    // }
 
     vTaskStartScheduler();
 

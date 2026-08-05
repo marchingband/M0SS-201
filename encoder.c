@@ -42,9 +42,9 @@ static void on_encoder(bool up){
     uint64_t now = bflb_mtimer_get_time_us();
     uint64_t passed = now - last_click;
     last_click = now;
-    int click_multiplier = passed > 100000 ? 1 : passed > 50000 ? 4 : passed > 10000 ? 10 : 30;
-    // printf("time %llu\n\r", passed);
-    // printf("mul %d\n\r", click_multiplier);
+    int click_multiplier = passed > 80000 ? 1 : passed > 50000 ? 10 : passed > 10000 ? 100 : 200;
+    printf("time %llu\n\r", passed);
+    printf("mul %d\n\r", click_multiplier);
     // uint8_t *button_states = get_button_states();
 
     // handle navigation in save and load mode
@@ -74,6 +74,7 @@ static void on_encoder(bool up){
         struct Asb asb = get_asbs()[cur_asb];
         float cur = *asb.p;
         float step = asb.step * asb.mul * click_multiplier;
+        if (asb.numeric) step = 1.0f;
         float next = up ? cur + step : cur - step;
         float clamped = next > asb.max ? asb.max : next < asb.min ? asb.min : next;
         *asb.p = clamped;
@@ -128,11 +129,12 @@ static void on_encoder(bool up){
             {
                 float cur = *alt.p;
                 float step = alt.step * alt.mul * click_multiplier;
+                if (alt.numeric) step = 1;
                 float next = up ? cur + step : cur - step;
                 float clamped = next > alt.max ? alt.max : next < alt.min ? alt.min : next;
                 *alt.p = clamped;
                 // printf("set led %f %f %f\n\r", clamped, alt.min, alt.max);
-                set_led_display(alt.p, alt.min, alt.max);
+                set_led_display(alt.p, alt.min, alt.max, alt.numeric);
             }
 
         }
@@ -148,11 +150,12 @@ static void on_encoder(bool up){
             {
                 float cur = *cc.p;
                 float step = cc.step * cc.mul * click_multiplier;
+                if (cc.numeric) step = 1;
                 float next = up ? cur + step : cur - step;
                 float clamped = next > cc.max ? cc.max : next < cc.min ? cc.min : next;
                 *cc.p = clamped;
                 // printf("set led %f %f %f\n\r", clamped, mod.min, mod.max);
-                set_led_display(cc.p, cc.min, cc.max);
+                set_led_display(cc.p, cc.min, cc.max, cc.numeric);
             }
         }
         else
@@ -171,7 +174,9 @@ static void on_encoder(bool up){
                 float clamped = next > mod.max ? mod.max : next < mod.min ? mod.min : next;
                 *mod.p = clamped;
                 // printf("set led %f %f %f\n\r", clamped, mod.min, mod.max);
-                set_led_display(mod.p, mod.min, mod.max);
+                set_led_display(mod.p, mod.min, mod.max, mod.numeric);
+
+                // printf("assigning: idx %d, ptr %p, value %.2f\n", param.button, (void*)mod.p, clamped);
             }
         }
     }

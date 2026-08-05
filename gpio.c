@@ -30,8 +30,8 @@ const uint8_t mux_code[8][3] = {
 #define MUX_A2_PIN 29
 
 #define MUX_0_DRAIN_PIN 30
-#define MUX_1_DRAIN_PIN 0
-#define MUX_2_DRAIN_PIN 1
+#define MUX_1_DRAIN_PIN 10
+#define MUX_2_DRAIN_PIN 14
 
 #define ENCODER_BUTTON_PIN 20
 #define BUTTON_25_PIN 12
@@ -70,7 +70,7 @@ void set_param_selected(int num, bool alt, bool cc)
             return;
         }
         // printf("set led %f %f %f\n\r", val, alt.min, alt.max);
-        set_led_display(alt.p, alt.min, alt.max);
+        set_led_display(alt.p, alt.min, alt.max, alt.numeric);
     }
     else if(cc)
     {
@@ -79,7 +79,7 @@ void set_param_selected(int num, bool alt, bool cc)
         if(cc.p == 0){
             return;
         }
-        set_led_display(cc.p, cc.min, cc.max);
+        set_led_display(cc.p, cc.min, cc.max, cc.numeric);
     }
     else
     {
@@ -89,7 +89,7 @@ void set_param_selected(int num, bool alt, bool cc)
             return;
         }
         // printf("set led %f %f %f\n\r", val, mod.min, mod.max);
-        set_led_display(mod.p, mod.min, mod.max);
+        set_led_display(mod.p, mod.min, mod.max, mod.numeric);
     }
     // if we get here it is a valid Alt, Mod or CC
     param_selected.button = num;
@@ -135,8 +135,8 @@ static void mux_gpio_init(void){
 }
 
 static void connected_buttons_init(){
-    bflb_gpio_init(b_gpio, BUTTON_25_PIN, GPIO_INPUT | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_0);
-    bflb_gpio_init(b_gpio, BUTTON_26_PIN, GPIO_INPUT | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_0);
+    // bflb_gpio_init(b_gpio, BUTTON_25_PIN, GPIO_INPUT | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_0);
+    // bflb_gpio_init(b_gpio, BUTTON_26_PIN, GPIO_INPUT | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_0);
     bflb_gpio_init(b_gpio, ENCODER_BUTTON_PIN, GPIO_INPUT | GPIO_FLOAT | GPIO_SMT_EN | GPIO_DRV_0);
 }
 
@@ -156,36 +156,28 @@ void read_buttons(){
         }
         
         bflb_mtimer_delay_us(5); // let it settle
-        // bflb_mtimer_delay_us(2); // let it settle
 
         // read the pins
         for(int k=0; k<3; k++)
         {
             uint8_t idx = i + (k * 8);
-            if(idx == 15 || idx == 21){
-                // these are bad buttons
-                button_state[idx] = 1;
-                continue;
-            }
             button_state[idx] = bflb_gpio_read(b_gpio, mux_drain_pins[k]);
         }
     }
-    button_state[24] = bflb_gpio_read(b_gpio, BUTTON_25_PIN);
-    button_state[25] = bflb_gpio_read(b_gpio, BUTTON_26_PIN);
     button_state[26] = bflb_gpio_read(b_gpio, ENCODER_BUTTON_PIN);
 }
 
 bool alt_consumed = false;
 
 bool alt_held(void){return button_state[BUTTON_NUM_ALT] == 0;}
-bool OS1_held(void){return button_state[BUTTON_NUM_OS1] == 0;}
+bool OS2_held(void){return button_state[BUTTON_NUM_OS2] == 0;}
 bool SG_held(void){return button_state[BUTTON_NUM_SG] == 0;}
 bool ENV_held(void){return button_state[BUTTON_NUM_ENV] == 0;}
 
-const int param_matrix[3][12] = {
-    {54,55,56,57,58,59,60,61,62,63,64,65},
-    {42,43,44,45,46,47,48,49,50,51,52,53},
-    {30,31,32,33,34,35,36,37,38,39,40,41},
+const int param_matrix[3][10] = {
+    {33,34,35,36,37,38,39,40,41,42},
+    {43,44,45,46,47,48,49,50,51,52},
+    {53,54,55,56,57,58,59,60,61,62},
 };
 
 void matrix_pick(int num){
@@ -195,50 +187,44 @@ void matrix_pick(int num){
     }
 }
 
-bool check_martix_press(int num){
+int check_matrix_press(int num){
     int matrix_column_selected = -1;
-    int matrix_row_selected = ENV_held() ? 2 : SG_held() ? 1 : OS1_held() ? 0 : -1;
+    int matrix_row_selected = ENV_held() ? 2 : SG_held() ? 1 : OS2_held() ? 0 : -1;
     if(matrix_row_selected == -1){
-        return false;
+        return -1;
     }
     // printf("%s held", matrix_row_selected == 2 ? "ENV" : matrix_row_selected == 1 ? "SG" : matrix_row_selected == 0 ? "OS1" : "NONE");
-    switch (num){
-        case BUTTON_NUM_MATRIX_COLUMN_LEN:
+    switch (num) {
+        case BUTTON_NUM_MATRIX_COLUMN_OS1:
             matrix_column_selected = 0;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_RATE:
+        case BUTTON_NUM_MATRIX_COLUMN_IDX:
             matrix_column_selected = 1;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_RCL:
+        case BUTTON_NUM_MATRIX_COLUMN_OS2:
             matrix_column_selected = 2;
             break;
         case BUTTON_NUM_MATRIX_COLUMN_SMTH:
             matrix_column_selected = 3;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_ATT:
+        case BUTTON_NUM_MATRIX_COLUMN_RATE:
             matrix_column_selected = 4;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_REL:
+        case BUTTON_NUM_MATRIX_COLUMN_RCL:
             matrix_column_selected = 5;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_OS1:
+        case BUTTON_NUM_MATRIX_COLUMN_ATT:
             matrix_column_selected = 6;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_OS2:
+        case BUTTON_NUM_MATRIX_COLUMN_REL:
             matrix_column_selected = 7;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_BUS :
+        case BUTTON_NUM_MATRIX_COLUMN_TIMB:
             matrix_column_selected = 8;
             break;
-        case BUTTON_NUM_MATRIX_COLUMN_IDX:
-            matrix_column_selected = 9;
-            break;
-        case BUTTON_NUM_MATRIX_COLUMN_TIMB:
-            matrix_column_selected = 10;
-            break;
         case BUTTON_NUM_MATRIX_COLUMN_AMP:
-            matrix_column_selected = 11;
-            break;          
+            matrix_column_selected = 9;
+            break;      
         default:
             break;
     }
@@ -248,10 +234,10 @@ bool check_martix_press(int num){
         // only pick if in play mode, in save or load mode this selects a preset
         matrix_pick(param);
         // printf("matrix picked %d", param);
-        return true;
+        return param;
     }
 
-    return false;
+    return -1;
 }
 
 int save_load_cursor_pos;
@@ -260,9 +246,23 @@ void handle_encoder_press(bool down)
 {
     switch (get_ui_mode()) {
         case UI_MODE_PLAY: {
-            struct Sigs *sigs = get_signals();
-            *sigs->gate = down ? 1 : 0;
-            encoder_pressed = down;
+            if (alt_held()) {
+                struct Param prm = get_param_selected();
+                if (prm.alt) {
+                    struct Alt alt = get_alts()[prm.button];
+                    if (alt.p != 0) *alt.p = alt.init;
+                } else if (prm.cc) {
+                    struct CC cc = get_ccs()[prm.button];
+                    if (cc.p != 0) *cc.p = cc.init;
+                } else {
+                    struct Mod mod = get_mods()[prm.button];
+                    if (mod.p != 0) *mod.p = mod.init;
+                }
+            } else {
+                struct Sigs *sigs = get_signals();
+                *sigs->gate = down ? 1 : 0;
+                encoder_pressed = down;
+            }
             break;
         }
         case UI_MODE_LOAD: {
@@ -290,20 +290,19 @@ static void process_buttons(){
 
         // check params reset logic
         if(ui_mode == UI_MODE_RST){
-            if(button_state[BUTTON_NUM_ALT] || button_state[8] || button_state[BUTTON_NUM_ENCODER]) // one was released
+            if(button_state[BUTTON_NUM_ALT] || button_state[19] || button_state[13]) // one was released
             {
                 set_ui_mode(UI_MODE_PLAY);
             }
              
             if(now - reset_mode_started > ONE_SECOND)
             {
-                if(button_state[2] == 0 && button_state[17] == 0) // factory reset
+                if(button_state[BUTTON_NUM_ENCODER] == 0)
                 {
                     // factory reset
                     set_ui_mode(UI_MODE_FACTORY_RST);
                 } else {
-                    reset_params();
-                    set_ui_mode(UI_MODE_PLAY);
+                    GLB_SW_System_Reset();
                 }
             }
             return;
@@ -322,24 +321,25 @@ static void process_buttons(){
             button_time[i] = now;
 
             printf("button %d pushed\n", i);
+            printf("value: %.2f\n", *get_ccs()[i].p);
 
             if( i == BUTTON_NUM_ENCODER ){
-                // check for reset command
-                if(button_state[BUTTON_NUM_ALT] == 0 && button_state[8] == 0) // alt and idx are held
-                {
-                    set_ui_mode(UI_MODE_RST);
-                    reset_mode_started = bflb_mtimer_get_time_us();
-                } else {
-                    handle_encoder_press(true);
-                }
-                continue;
+                handle_encoder_press(true);
             }
 
-            if(check_martix_press(i)){
+            if(check_matrix_press(i) != -1 && ui_mode == UI_MODE_PLAY){
                 continue;
             };
 
             if (i == BUTTON_NUM_ALT) alt_consumed = false;
+
+            // alt and the two mixer buttons are all next to each other. One thumb press
+            if (alt_held() && !button_state[19] && !button_state[13] && bflb_mtimer_get_time_ms() > 1000) {
+                set_ui_mode(UI_MODE_RST);
+                reset_mode_started = bflb_mtimer_get_time_us();
+                alt_consumed = true;
+                continue;
+            }
             
             // set ui modes
             if (alt_held() && i == BUTTON_NUM_LEARN) {
@@ -380,6 +380,13 @@ static void process_buttons(){
                             learn_mode_state = LEARN_MODE_SELECTED;
                             alt_consumed = true;
                         } 
+                    } else if (ENV_held() || OS2_held() || SG_held()) {
+                        int cc_num = check_matrix_press(i);
+                        printf("matrix num: %d\n", cc_num);
+                        if (cc_num != -1) {
+                            mode_learn_current_cc = cc_num;
+                            learn_mode_state = LEARN_MODE_SELECTED;
+                        }
                     } else {
                         int cc_num = get_cc(i, false);
                         if (cc_num != -1) {
@@ -461,7 +468,7 @@ void handle_normal_mode_button_press(int btn_idx) {
             }
 
             // toggle switch state
-            if(btn_idx == 4 || btn_idx == 20){ // k-t and quantize
+            if(btn_idx == 5 || btn_idx == 0){ // k-t and legato
                 alt_switch_state = *alt_sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
             }
         }
@@ -479,7 +486,7 @@ void handle_normal_mode_button_press(int btn_idx) {
                 *sel->p = sel->min;
             }
             // toggle switch state
-            if(btn_idx == 4){ // hi-lo
+            if(btn_idx == 5){ // hi-lo
                 alt_switch_state = *sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
             }
         }

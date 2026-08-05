@@ -18,6 +18,10 @@ target_sources(app PRIVATE
     audac.c
     gpio.c
     spi_rgb.c
+    dsp/interface.c
+    dsp/synth.c
+    dsp/biquad.c
+    dsp/wavefolder.c
 )
 
 sdk_set_main_file(main.c)

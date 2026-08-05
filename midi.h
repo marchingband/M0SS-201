@@ -1,7 +1,7 @@
 #ifndef MIDI_H
 #define MIDI_H
 
-#define NUM_CC 66 // must be the highest CC value + 1, CC's are 1 indexed.
+#define NUM_CC 65 // must be the highest CC value + 1, CC's are 1 indexed.
 
 #define LEARN_MODE_READY 0
 #define LEARN_MODE_SELECTED 1
@@ -13,21 +13,20 @@
 
 #define MIDI_CHANNEL_OMNI 17
 
-#define BUTTON_NUM_MATRIX_ROW_OS1 16
-#define BUTTON_NUM_MATRIX_ROW_SG 25
-#define BUTTON_NUM_MATRIX_ROW_ENV 24
-#define BUTTON_NUM_MATRIX_COLUMN_LEN 1
-#define BUTTON_NUM_MATRIX_COLUMN_RATE 5
-#define BUTTON_NUM_MATRIX_COLUMN_RCL 7
-#define BUTTON_NUM_MATRIX_COLUMN_SMTH 3
-#define BUTTON_NUM_MATRIX_COLUMN_ATT 10
-#define BUTTON_NUM_MATRIX_COLUMN_REL 14
-#define BUTTON_NUM_MATRIX_COLUMN_OS1 2
-#define BUTTON_NUM_MATRIX_COLUMN_OS2 17
-#define BUTTON_NUM_MATRIX_COLUMN_BUS -1
-#define BUTTON_NUM_MATRIX_COLUMN_IDX 8
-#define BUTTON_NUM_MATRIX_COLUMN_TIMB 23
-#define BUTTON_NUM_MATRIX_COLUMN_AMP 19
+#define BUTTON_NUM_MATRIX_ROW_OS2 10
+#define BUTTON_NUM_MATRIX_ROW_SG 12
+#define BUTTON_NUM_MATRIX_ROW_ENV 11
+
+#define BUTTON_NUM_MATRIX_COLUMN_OS1 16
+#define BUTTON_NUM_MATRIX_COLUMN_IDX 23
+#define BUTTON_NUM_MATRIX_COLUMN_OS2 7
+#define BUTTON_NUM_MATRIX_COLUMN_SMTH 17
+#define BUTTON_NUM_MATRIX_COLUMN_RATE 21
+#define BUTTON_NUM_MATRIX_COLUMN_RCL 20
+#define BUTTON_NUM_MATRIX_COLUMN_ATT 3
+#define BUTTON_NUM_MATRIX_COLUMN_REL 4
+#define BUTTON_NUM_MATRIX_COLUMN_TIMB 6
+#define BUTTON_NUM_MATRIX_COLUMN_AMP 2
 
 #define CC_MAP_VELOCITY_IDX     128
 #define CC_MAP_AFTERTOUCH_IDX   129
@@ -42,7 +41,7 @@ struct CC {
     float init;
     float step;
     float mul;
-    char name[20];
+    bool numeric;
 };
 
 struct Mod {
@@ -52,7 +51,7 @@ struct Mod {
     float init;
     float step;
     float mul;
-    char name[20];
+    bool numeric;
 };
 
 struct Alt {
@@ -62,7 +61,7 @@ struct Alt {
     float init;
     float step;
     float mul;
-    char name[20];
+    bool numeric;
 };
 
 struct Sel {
@@ -70,7 +69,7 @@ struct Sel {
     float min;
     float max;
     float init;
-    char name[20];
+    bool numeric;
 };
 
 struct AltSel {
@@ -78,7 +77,7 @@ struct AltSel {
     float min;
     float max;
     float init;
-    char name[20];
+    bool numeric;
 };
 struct Asb {
     float *p;
@@ -87,7 +86,7 @@ struct Asb {
     float init;
     float step;
     float mul;
-    char name[20];
+    bool numeric;
 };
 
 struct Sigs {
@@ -118,5 +117,7 @@ int get_mode_learn_current_cc(void);
 void reset_params(void);
 
 void uart_receive_init(void);
+
+void link_ui();
 
 #endif
