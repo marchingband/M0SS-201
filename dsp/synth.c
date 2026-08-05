@@ -4,7 +4,6 @@
 
 #include "synth.h"
 #include "interface.h"
-#include "fold_lut.h"
 #include "utils.h"
 #include "biquad.h"
 #include "wavefolder.h"

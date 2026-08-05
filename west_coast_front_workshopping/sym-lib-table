@@ -1,4 +1,0 @@
-(sym_lib_table
-  (version 7)
-  (lib (name "M0SS-201_front")(type "KiCad")(uri "${KIPRJMOD}/M0SS-201_front.kicad_sym")(options "")(descr ""))
-)

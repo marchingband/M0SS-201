@@ -128,7 +128,6 @@ bool is_initial_boot = false;
 int main(void)
 {
     /* board init */
-    // board_init();
     // m0ss_board_init( /*set console*/ false );
     m0ss_board_init(false);  // baud rate 31250
 
@@ -156,14 +155,6 @@ int main(void)
     printf("uart_receive_init\r\n");
     uart_receive_init();
 
-    // bring up default patch
-    // if(is_initial_boot){
-    //     save(16);
-    // }
-
-    // bflb_mtimer_delay_ms(100);
-    // load(16);
-
     /* usb midi host */
     printf("usb_midi_init\r\n");
     usb_midi_init();
@@ -175,11 +166,6 @@ int main(void)
     /* setup encoder */
     printf("encoder_init\r\n");
     encoder_init();
-
-    // while(1){
-    //     read_buttons();
-    //     bflb_mtimer_delay_ms(1000);
-    // }
 
     vTaskStartScheduler();
 

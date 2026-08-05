@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include "pow2f_lut.h"
 
+// credit to Orastron for many of these optimized math functions, found in
+// github.com/Orastron/brickworks
+
 static inline int32_t clipi32(int32_t x, int32_t m, int32_t M) {
 	return x < m ? m : (x > M ? M : x);
 }

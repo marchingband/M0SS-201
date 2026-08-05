@@ -134,30 +134,6 @@ typedef struct {
     float intervals[MAX_SCALE_DEGREES];
 } Scale;
 
-// scales that should be included:
-// - equal-temperment chromatic
-// - ET major
-// - natural major?
-// - ET minor
-// - natural minor?
-// - ET minor pentatonic
-// - octaves and fifths
-// - just octaves
-
-// ionian (major) = (1,pow(2,2/12),pow(2,4/12),pow(2,5/12),pow(2,7/12),pow(2,9/12),pow(2,11/12));
-// dorian = (1,pow(2,2/12),pow(2,3/12),pow(2,5/12),pow(2,7/12),pow(2,9/12),pow(2,10/12));
-// phrygian = (1,pow(2,1/12),pow(2,3/12),pow(2,5/12),pow(2,7/12),pow(2,8/12),pow(2,10/12));
-// lydian = (1,pow(2,2/12),pow(2,4/12),pow(2,6/12),pow(2,7/12),pow(2,9/12),pow(2,11/12));
-// mixo = (1,pow(2,2/12),pow(2,4/12),pow(2,5/12),pow(2,7/12),pow(2,9/12),pow(2,10/12));
-// eolian (minor) = (1,pow(2,2/12),pow(2,3/12),pow(2,5/12),pow(2,7/12),pow(2,8/12),pow(2,10/12));
-// locrian = (1,pow(2,1/12),pow(2,3/12),pow(2,5/12),pow(2,6/12),pow(2,8/12),pow(2,10/12));
-// pentanat = (1,32/27,4/3,3/2,16/9);
-// kumoi = (1,16/15,4/3,3/2,8/5);
-// natural = (1,9/8,5/4,4/3,3/2,5/3,15/8);
-// dodeca = (1,pow(2,1/12),pow(2,2/12),pow(2,3/12),pow(2,4/12),pow(2,5/12),pow(2,6/12),pow(2,7/12),pow(2,8/12),pow(2,9/12),pow(2,10/12),pow(2,11/12));
-// dimin = (1,pow(2,1/12),pow(2,3/12),pow(2,4/12),pow(2,6/12),pow(2,7/12),pow(2,9/12),pow(2,10/12));
-// penta = (1,pow(2,3/12),pow(2,5/12),pow(2,7/12),pow(2,10/12));
-
 
 typedef struct {
     float threshold;
@@ -192,7 +168,6 @@ typedef struct {
 void compute_midi_note();
 
 void compute_matrix();
-// float compute_os2_rate();
 
 void compute_sg_rate();
 void compute_sg();

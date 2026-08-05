@@ -197,26 +197,3 @@ void stop(uint8_t note)
 #endif
 
 }
-
-// void set_note(uint8_t note){
-//     float hz = note_to_freq(note);
-//     dsp.fEntry1 = hz;
-// }
-
-// void set_filter1(uint8_t val)
-// {
-//     float freq = (float)val / 127.0f; // 0 ~ 1
-//     dsp.fHslider0 = freq;
-// }
-
-// void set_filter2(uint8_t val)
-// {
-//     float freq = ((float)val / 127.0f) * 2000; // 0 ~ 2000
-//     dsp.fHslider1 = freq;
-// }
-
-// void set_filter3(uint8_t val)
-// {
-    // float freq = ((float)val / 127.0f) * 40;
-    // dsp.fHslider2 = freq;
-// }
