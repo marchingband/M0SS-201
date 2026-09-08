@@ -19,9 +19,6 @@
 
 #define NUM_VOICES 1
 
-// from midi.c
-void *declare(UIGlue *uiInterface, float *p, const char* key, const char* val);
-
 struct voice_s
 {
     bool on;

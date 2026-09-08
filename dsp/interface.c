@@ -2,7 +2,7 @@
 
 DSP_All_Signals all_sigs_raw;
 
-#define NUM_UI_ELS 65
+#define NUM_UI_ELS 66
 DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_MOD,     .p=&all_sigs_raw.sg_len,    .cc=1,  .btn=18, .min=2,   .max=32,   .init=8,   .step=1   , .numeric=true },
     {.type=PARAM_MOD,     .p=&all_sigs_raw.sg_smth,   .cc=2,  .btn=17, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
@@ -23,6 +23,7 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_MOD,     .p=&all_sigs_raw.os2_tune,  .cc=15, .btn=7,  .min=0,   .max=1,    .init=0.5, .step=1e-4, .numeric=false},
     {.type=PARAM_SEL,     .p=&all_sigs_raw.os2_hilo,  .cc=16, .btn=5,  .min=0,   .max=1,    .init=0,   .step=1   , .numeric=false},
     {.type=PARAM_ALT_SEL, .p=&all_sigs_raw.os2_kt,    .cc=17, .btn=5,  .min=0,   .max=1,    .init=1,   .step=1   , .numeric=false},
+    {.type=PARAM_ALT_SEL, .p=&all_sigs_raw.os_retrig, .cc=64, .btn=11, .min=0,   .max=1,    .init=0,   .step=1   , .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.bus_idx,   .cc=18, .btn=23, .min=0,   .max=1,    .init=0,   .step=1e-4, .numeric=false},
     {.type=PARAM_ALT_SEL, .p=&all_sigs_raw.bus_sel,   .cc=19, .btn=23, .min=0,   .max=2,    .init=0,   .step=1   , .numeric=false},
     {.type=PARAM_MOD,     .p=&all_sigs_raw.mx_os1,    .cc=20, .btn=19, .min=0,   .max=1,    .init=1.0, .step=1e-4, .numeric=false},

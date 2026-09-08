@@ -252,6 +252,9 @@ inline float bias_clip(float b) {
     return CLAMP(b, 0.03f, 0.97f);
 }
 
+bool os1_retrigger = false;
+bool os2_retrigger = false;
+
 void compute_env() {
     bool gate_in = (all_sigs_raw.gate_sel == GATESEL_SG)? sg_state.high : all_sigs_raw.gate;
     bool trig = gate_in && !env_state.prev_gate || retrigger;
@@ -259,6 +262,7 @@ void compute_env() {
 
     if (trig || (env_state.stage == ENV_OFF && all_sigs_raw.env_mode == ENVMODE_ARL)) {
         env_state.stage = ENV_ATT;
+        os1_retrigger = os2_retrigger = all_sigs_raw.os_retrig;
     }
 
     float bias = 0.5f * (all_sigs.env_crv + 1.0f);
@@ -350,6 +354,10 @@ void compute_os2() {
     os2_state.next_tri = 0.0f;
     os2_state.next_saw = 0.0f;
     os2_state.next_sqr = 0.0f;
+
+    if (os2_retrigger) {
+        os2_state.phase = 0.0f;
+    }
 
     os2_state.phase += freq_normalized;
 
@@ -540,6 +548,10 @@ void compute_os1() {
 
     float this_tri = os1_state.next_tri;
     os1_state.next_tri = 0.0f;
+
+    if (os1_retrigger) {
+        os1_state.phase = 0.0f;
+    }
 
     os1_state.phase += freq_normalized;
 

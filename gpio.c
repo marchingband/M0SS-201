@@ -468,7 +468,7 @@ void handle_normal_mode_button_press(int btn_idx) {
             }
 
             // toggle switch state
-            if(btn_idx == 5 || btn_idx == 0){ // k-t and legato
+            if(btn_idx == 5 || btn_idx == 0  || btn_idx == 11){ // k-t, legato, os2-retrig
                 alt_switch_state = *alt_sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
             }
         }
