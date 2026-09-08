@@ -113,6 +113,7 @@ float phase = 0.0f;
 const float freq = 260.0f * SR_INV;
 
 void compute_dsp(size_t len, float* buf) {
+    static float amp_ind_lpf_state = 0.0f;
     for (size_t i = 0; i < len; i++) {
         // compute parameter amounts through matrix
         // takes matrix signals from all_sigs as well as previous outputs (stored in peripheral structs)
@@ -142,13 +143,14 @@ void compute_dsp(size_t len, float* buf) {
         signal *= volume;
         signal = soft_clip(signal);
         buf[i] = signal;
+        amp_ind_lpf_state += (absf(signal) - amp_ind_lpf_state) * 0.001f;
     }
 
     all_sigs_raw.ind_env = env_state.val;
     all_sigs_raw.ind_sg = sg_state.val;
     all_sigs_raw.ind_os2 = os2_state.val;
     all_sigs_raw.ind_os2_freq = os2freq;
-    all_sigs_raw.ind_amp = buf[0];
+    all_sigs_raw.ind_amp = amp_ind_lpf_state;
 }
 
 // os1 is bipolar, sg and env are unipolar
