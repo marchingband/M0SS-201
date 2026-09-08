@@ -72,5 +72,5 @@ DSP_Param_t dsp_ui[NUM_UI_ELS] = {
     {.type=PARAM_MTX,     .p=&all_sigs_raw.mtx[ENV_I_S][REL_I ], .cc=60, .btn=-1, .min=-1,.max=1, .init=0, .step=1e-4, .numeric=false},
     {.type=PARAM_MTX,     .p=&all_sigs_raw.mtx[ENV_I_S][TIMB_I], .cc=61, .btn=-1, .min=-1,.max=1, .init=0, .step=1e-4, .numeric=false},
     {.type=PARAM_MTX,     .p=&all_sigs_raw.mtx[ENV_I_S][AMP_I ], .cc=62, .btn=-1, .min=-1,.max=1, .init=1, .step=1e-4, .numeric=false},  // init to 1
-    {.type=PARAM_ALT,     .p=&all_sigs_raw.midi_chan,            .cc=0,  .btn=6,  .min=1, .max=17,.init=17,.step=1,    .numeric=true}
+    {.type=PARAM_ALT,     .p=&all_sigs_raw.midi_chan,            .cc=-1, .btn=6,  .min=1, .max=17,.init=17,.step=1,    .numeric=true}
 };
