@@ -687,7 +687,7 @@ float compute_amplifier(float in) {
     if (all_sigs_raw.amp_sel == AMP_VCA) return in * gain;
 
     // LPG mode, uses vactrol simulation
-    compute_vactrol_params(gain, 0.01f, 0.005f, 0.15f);
+    compute_vactrol_params(gain, 0.01f, 0.005f, 0.05f);
     float freq_coeff = 1.0f - expf(-2.0f * PI * vact.normalized_freq);
     in *= vact.gain;
 
