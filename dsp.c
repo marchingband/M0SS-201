@@ -95,102 +95,24 @@ float *buf;
 size_t buf_len;
 
 
-void dsp_init(size_t buf_size)
-{
-
-    // size_t cnt = buf_size / 2;
-    printf("initmydsp\n");
-    // initmydsp(&dsp, 48000);
+void dsp_init(size_t buf_size) {
     init_dsp();
-    // initmydsp(&dsp, 32000);
-    // initmydsp(&dsp, 8000);
-    printf("buildUserInterfacemydsp\n");
-    // buildUserInterfacemydsp(&dsp, &ui_glue);
     link_ui();
     reset_params();
     printf("malloc\n");
     buf = (float *)malloc(buf_size * sizeof(float));
     buf_len = buf_size;
-    // buf[0] = (float *)malloc(cnt * sizeof(float));
-    // buf_len = cnt;
 }
 
-int last_start = 0;
-int consumed = 0;
-int period = 0;
-
-void print_bench(void)
-{
-    // printf("%d of %d [us]\n", consumed, period);
-}
-
-int loop_cnt = 0;
-
-void dsp_run(uint16_t *dest)
-{
-    int now = bflb_mtimer_get_time_us();
-    period = now - last_start;
-    last_start = now;
+void dsp_run(uint16_t *dest) {
     compute_dsp(buf_len, buf);
-    // computemydsp(&dsp, buf_len, NULL, buf);
-    for (int i = 0; i < buf_len; i++)
-    {
+    for (int i = 0; i < buf_len; i++) {
         float val = buf[i];
-        // if(val > 1.0 || val < -1.0)
-        // {
-            // printf("clip :%f", val);
-        // }
-        // printf("%f\n", val);
-        // dest[i] = (uint16_t)((val + 1) * 32767);
-        // the AUDAC expects int16_t but the buffer is typed uint16_t so do this awkward thing.
-        // dest[i] = (uint16_t)(int16_t)(val * 32767);
+
         int32_t raw = (int32_t)(val * 32767);
         uint16_t capped = (raw < -32768)? -32768 : ((raw > 32767)? 32767 : raw);
         dest[2*i + 0] = capped;
         dest[2*i + 1] = -capped;  // balanced output
     }
-    consumed = bflb_mtimer_get_time_us() - now;
     poll_gpio();
-
-    // loop_cnt++;
-    // if(loop_cnt >= 20)
-    // {
-    //     render_lights();
-    //     loop_cnt = 0;
-    // }
-}
-
-void play(uint8_t note)
-{
-#ifdef POLY_MODE
-    int ret = get_next_voice(note);
-    if (ret == -1)
-    {
-        return;
-    }
-    float hz = note_to_freq(note);
-    // printf("playing %d [%fhz] on voice %d\n", note, hz, ret);
-    voices[ret].on = true;
-    voices[ret].note = note;
-    *voices[ret].pitch = hz;
-    *voices[ret].gate = 1.0f;
-    return;
-#endif
-
-}
-
-void stop(uint8_t note)
-{
-#ifdef POLY_MODE
-    for (int i = 0; i < NUM_VOICES; i++)
-    {
-        if (voices[i].note == note)
-        {
-            voices[i].on = false;
-            *voices[i].gate = 0.0f;
-        }
-    }
-    return;
-#endif
-
 }

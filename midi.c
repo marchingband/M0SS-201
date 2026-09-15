@@ -36,11 +36,6 @@ uint8_t getMidiMsgLen(void);
 bool parse(uint8_t byte);
 void init_midi_parser(void);
 
-void play(uint8_t note);
-void stop(uint8_t note);
-void set_note(uint8_t note);
-void set_filter(uint8_t val);
-
 static struct bflb_device_s *uart0;
 QueueHandle_t uart_queue;
 
