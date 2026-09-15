@@ -113,6 +113,7 @@ float phase = 0.0f;
 const float freq = 260.0f * SR_INV;
 
 void compute_dsp(size_t len, float* buf) {
+    static float amp_ind_lpf_state = 0.0f;
     for (size_t i = 0; i < len; i++) {
         // compute parameter amounts through matrix
         // takes matrix signals from all_sigs as well as previous outputs (stored in peripheral structs)
@@ -142,13 +143,14 @@ void compute_dsp(size_t len, float* buf) {
         signal *= volume;
         signal = soft_clip(signal);
         buf[i] = signal;
+        amp_ind_lpf_state += (absf(signal) - amp_ind_lpf_state) * 0.001f;
     }
 
     all_sigs_raw.ind_env = env_state.val;
     all_sigs_raw.ind_sg = sg_state.val;
     all_sigs_raw.ind_os2 = os2_state.val;
     all_sigs_raw.ind_os2_freq = os2freq;
-    all_sigs_raw.ind_amp = buf[0];
+    all_sigs_raw.ind_amp = amp_ind_lpf_state;
 }
 
 // os1 is bipolar, sg and env are unipolar
@@ -252,6 +254,9 @@ inline float bias_clip(float b) {
     return CLAMP(b, 0.03f, 0.97f);
 }
 
+bool os1_retrigger = false;
+bool os2_retrigger = false;
+
 void compute_env() {
     bool gate_in = (all_sigs_raw.gate_sel == GATESEL_SG)? sg_state.high : all_sigs_raw.gate;
     bool trig = gate_in && !env_state.prev_gate || retrigger;
@@ -259,6 +264,7 @@ void compute_env() {
 
     if (trig || (env_state.stage == ENV_OFF && all_sigs_raw.env_mode == ENVMODE_ARL)) {
         env_state.stage = ENV_ATT;
+        os1_retrigger = os2_retrigger = all_sigs_raw.os_retrig;
     }
 
     float bias = 0.5f * (all_sigs.env_crv + 1.0f);
@@ -350,6 +356,10 @@ void compute_os2() {
     os2_state.next_tri = 0.0f;
     os2_state.next_saw = 0.0f;
     os2_state.next_sqr = 0.0f;
+
+    if (os2_retrigger) {
+        os2_state.phase = 0.0f;
+    }
 
     os2_state.phase += freq_normalized;
 
@@ -541,6 +551,10 @@ void compute_os1() {
     float this_tri = os1_state.next_tri;
     os1_state.next_tri = 0.0f;
 
+    if (os1_retrigger) {
+        os1_state.phase = 0.0f;
+    }
+
     os1_state.phase += freq_normalized;
 
     if (os1_state.high ^ (os1_state.phase < 0.5f)) {
@@ -673,7 +687,7 @@ float compute_amplifier(float in) {
     if (all_sigs_raw.amp_sel == AMP_VCA) return in * gain;
 
     // LPG mode, uses vactrol simulation
-    compute_vactrol_params(gain, 0.01f, 0.005f, 0.15f);
+    compute_vactrol_params(gain, 0.01f, 0.005f, 0.05f);
     float freq_coeff = 1.0f - expf(-2.0f * PI * vact.normalized_freq);
     in *= vact.gain;
 

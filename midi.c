@@ -36,11 +36,6 @@ uint8_t getMidiMsgLen(void);
 bool parse(uint8_t byte);
 void init_midi_parser(void);
 
-void play(uint8_t note);
-void stop(uint8_t note);
-void set_note(uint8_t note);
-void set_filter(uint8_t val);
-
 static struct bflb_device_s *uart0;
 QueueHandle_t uart_queue;
 
@@ -117,7 +112,7 @@ void link_ui() {
         DSP_Param_t param = dsp_ui[i];
 
         printf("idx %d, ptr %p\n", i, (void*)param.p);
-        if (param.cc != 0) {
+        if (param.cc >= 0) {
             struct CC *cc = &CCs[param.cc];
             cc->p = param.p;
             cc->min = param.min;
@@ -373,14 +368,14 @@ void handle_midi(uint8_t *msg, uint8_t len)
     {
         uint8_t cc_num_in = msg[1] & 0b01111111;
         uint8_t cc_val = msg[2] & 0b01111111;
-        uint8_t cc_num = cc_map[cc_num_in - 1]; // -1 because ccs are indexed at 1
+        uint8_t cc_num = cc_map[cc_num_in];
 
         if(ui_mode == UI_MODE_LEARN)
         {
             if(mode_learn_current_cc > 0)
             {
                 if (cc_num_in <= 0) break;
-                cc_map[cc_num_in - 1] = mode_learn_current_cc; // -1 because ccs are indexed at 1
+                cc_map[cc_num_in] = mode_learn_current_cc;
                 learn_mode_state = LEARN_MODE_LEARNED;
             }
             // printf("no cc_learn selected\n\r\r");

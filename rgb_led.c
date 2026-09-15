@@ -241,13 +241,23 @@ void update_led_display(void){
 
         val -= led_disp_min;
         max -= led_disp_min;
-        float out = val / max * 10;
+        float out = val / max * 10;  // goes from 0 to 10
 
-        for(int i=0; i<11; i++) {
-            int idx = negative? 10 - i : i;
-            if(out > (idx + 1)) led_display[i] = 1;
-            else if(out < idx) led_display[i] = 0;
-            else led_display[i] = negative? idx - out : out - idx; // just the fractional part
+        // initial setting
+        led_display[0] = 1.0f;
+
+        for (int i = 1; i < 11; i++) {
+            if (out >= 1.0f) {
+                out -= 1.0f;
+                led_display[i] = 1.0f;
+                continue;
+            }
+            if (out == 0) {
+                led_display[i] = 0.0f;
+                continue;
+            }
+            led_display[i] = negative? -out : out;
+            out = 0.0f;
         }
     } else {
         matrix_display_number((uint8_t)val);
