@@ -256,7 +256,6 @@ inline float bias_clip(float b) {
     return CLAMP(b, 0.03f, 0.97f);
 }
 
-bool os1_retrigger = false;
 bool os2_retrigger = false;
 
 void compute_env() {
@@ -266,7 +265,7 @@ void compute_env() {
 
     if (trig || (env_state.stage == ENV_OFF && all_sigs_raw.env_mode == ENVMODE_ARL)) {
         env_state.stage = ENV_ATT;
-        os1_retrigger = os2_retrigger = all_sigs_raw.os_retrig;
+        os2_retrigger = all_sigs_raw.os_retrig;
     }
 
     float bias = 0.5f * (all_sigs.env_crv + 1.0f);
@@ -361,7 +360,7 @@ void compute_os2() {
 
     if (os2_retrigger) {
         os2_state.phase = 0.0f;
-        os2_state.high = false;
+        os2_retrigger = false;
     }
 
     os2_state.phase += freq_normalized;
@@ -554,10 +553,6 @@ void compute_os1() {
     float this_tri = os1_state.next_tri;
     os1_state.next_tri = 0.0f;
 
-    if (os1_retrigger) {
-        os1_state.phase = 0.0f;
-    }
-
     os1_state.phase += freq_normalized;
 
     if (os1_state.high ^ (os1_state.phase < 0.5f)) {
@@ -594,7 +589,7 @@ void compute_os1() {
     }
 
 
-    os2_state.next_tri += 2.0f * (os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase)) - 1.0f;
+    os1_state.next_tri += 2.0f * (os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase)) - 1.0f;
     float this_sine = sin2pif(os1_state.phase);
 
     float selected_signal;
@@ -667,14 +662,14 @@ float compute_wavefolder(float in) {
 
 Vactrol_t vact;
 
-void compute_vactrol_params(float level, float short_decay, float decay_tail, float hf) {
+void compute_vactrol_params(float level, float short_decay, float decay_tail, float hf, float atk_coeff) {
         float vactrol_input = level;
         float vactrol_error = (vactrol_input - vact.state);
         float vactrol_state_2 = vact.state * vact.state;
         float vactrol_state_4 = vactrol_state_2 * vactrol_state_2;
         float tail = 1.0f - vact.state;
         float tail_2 = tail * tail;
-        float vactrol_coefficient = (vactrol_error > 0.0f)? 0.6f \
+        float vactrol_coefficient = (vactrol_error > 0.0f)? atk_coeff \
             : short_decay + (1.0f - vactrol_state_4) * decay_tail;
 
         vact.state += vactrol_coefficient * vactrol_error;
@@ -690,7 +685,7 @@ float compute_amplifier(float in) {
     if (all_sigs_raw.amp_sel == AMP_VCA) return in * gain;
 
     // LPG mode, uses vactrol simulation
-    compute_vactrol_params(gain, 0.01f, 0.005f, 0.05f);
+    compute_vactrol_params(gain, 0.01f, 0.005f, 0.05f, 0.6f);
     float freq_coeff = 1.0f - expf(-2.0f * PI * vact.normalized_freq);
     in *= vact.gain;
 
