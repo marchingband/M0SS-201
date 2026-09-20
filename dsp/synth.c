@@ -200,8 +200,10 @@ void compute_sg_rate() {
 
     sg_state.rate_normalized = rate_hz * SR_INV;
     sg_state.phase += sg_state.rate_normalized;
-    if (sg_state.phase >= 1.0f) sg_state.phase -= 1.0f;
-    sg_state.high = sg_state.phase < 0.5f;
+    if (sg_state.phase >= 1.0f) {
+        sg_state.phase -= 1.0f;
+        sg_state.high = true;
+    } else sg_state.high = false;
 }
 
 bool env_gate = false;
