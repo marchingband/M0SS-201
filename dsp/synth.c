@@ -361,6 +361,7 @@ void compute_os2() {
 
     if (os2_retrigger) {
         os2_state.phase = 0.0f;
+        os2_state.high = false;
     }
 
     os2_state.phase += freq_normalized;
@@ -394,9 +395,9 @@ void compute_os2() {
         os2_state.high = true;
     }
 
-    this_tri += os2_state.high? 2.0f * os2_state.phase : 2.0f * (1.0f - os2_state.phase);
-    this_saw += os2_state.phase;
-    this_sqr += os2_state.high? 1.0f : 0.0f;
+    os2_state.next_tri += os2_state.high? 2.0f * os2_state.phase : 2.0f * (1.0f - os2_state.phase);
+    os2_state.next_saw += os2_state.phase;
+    os2_state.next_sqr += os2_state.high? 1.0f : 0.0f;
 
     switch ((uint32_t)all_sigs_raw.os2_wave) {
         case OS2_WAV_TRI:
@@ -593,7 +594,7 @@ void compute_os1() {
     }
 
 
-    this_tri += 2.0f * (os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase)) - 1.0f;
+    os2_state.next_tri += 2.0f * (os1_state.high? 2.0f * os1_state.phase : 2.0f * (1.0f - os1_state.phase)) - 1.0f;
     float this_sine = sin2pif(os1_state.phase);
 
     float selected_signal;
