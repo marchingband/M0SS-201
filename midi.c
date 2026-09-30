@@ -16,6 +16,7 @@ extern DSP_All_Signals all_sigs_raw;
 
 #define MIDI_NOTE_OFF 8
 #define MIDI_NOTE_ON 9
+#define MIDI_POLY_AFTERTOUCH 0xA
 #define MIDI_AFTERTOUCH 0xD
 #define MIDI_PITCH_BEND 0xE
 #define MIDI_PROGRAM_CHANGE 12
@@ -460,8 +461,10 @@ void handle_midi(uint8_t *msg, uint8_t len)
         printf("pb: %d\n", val);
         break;
     }
+    case MIDI_POLY_AFTERTOUCH:
     case MIDI_AFTERTOUCH: {
         uint8_t cc_val = msg[1] & 0b01111111;
+        if (code == MIDI_POLY_AFTERTOUCH) cc_val = msg[2] & 0b01111111;
         uint8_t cc_num = cc_map[CC_MAP_AFTERTOUCH_IDX];
 
         if (ui_mode == UI_MODE_LEARN) {
