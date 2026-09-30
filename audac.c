@@ -145,7 +145,7 @@ static void i2s_init(void) {
         .channel_mode = I2S_CHANNEL_MODE_NUM_2,
         .frame_width = I2S_SLOT_WIDTH_16,
         .data_width = I2S_SLOT_WIDTH_16,
-        .fs_offset_cycle = 0,
+        .fs_offset_cycle = 1,
         .tx_fifo_threshold = 0,
         .rx_fifo_threshold = 0,
     };
