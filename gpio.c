@@ -278,6 +278,8 @@ void handle_encoder_press(bool down)
     }
 }
 
+bool os1_wav_consumed = false;
+
 extern int mode_learn_current_cc;
 extern int learn_mode_state;
 
@@ -319,6 +321,7 @@ static void process_buttons(){
             button_pushes[i] = 1;
             button_state[i] = 0;
             button_time[i] = now;
+
 
             printf("button %d pushed\n", i);
             printf("value: %.2f\n", *get_ccs()[i].p);
@@ -413,6 +416,19 @@ static void process_buttons(){
 
             printf("button %d released\n", i);
 
+            if (i == 22 && os1_wav_consumed == false) {
+                struct Sel* Sels = get_sels();
+                struct Sel *sel = &Sels[22];
+                if(sel->p != 0){
+                    float cur = *sel->p;
+                    if(cur < sel->max){
+                        *sel->p += 1;
+                    }else{
+                        *sel->p = sel->min;
+                    }
+                }
+            }
+
             if( i == BUTTON_NUM_ENCODER ){
                 handle_encoder_press(false);
                 continue;
@@ -457,7 +473,14 @@ void handle_normal_mode_button_press(int btn_idx) {
     struct Mod *Mods = get_mods();
     struct Alt *Alts = get_alts();
 
-    if(alt_held()) {
+    if (btn_idx == 22) os1_wav_consumed = false;
+
+    // OS1 OCT and WAV
+    if (button_state[22] == 0 && btn_idx == 16) {
+        // accesses os1_dtn
+        set_param_selected(66, false, true);
+        os1_wav_consumed = true;
+    } else if (alt_held()) {
         struct AltSel *alt_sel = &AltSels[btn_idx];
         if(alt_sel->p != 0){
             float cur = *alt_sel->p;
@@ -477,22 +500,24 @@ void handle_normal_mode_button_press(int btn_idx) {
             set_param_selected(btn_idx, true, false);
         }   
     } else {
-        struct Sel *sel = &Sels[btn_idx];
-        if(sel->p != 0){
-            float cur = *sel->p;
-            if(cur < sel->max){
-                *sel->p += 1;
-            }else{
-                *sel->p = sel->min;
+        if (btn_idx != 22) {
+            struct Sel *sel = &Sels[btn_idx];
+            if(sel->p != 0){
+                float cur = *sel->p;
+                if(cur < sel->max){
+                    *sel->p += 1;
+                }else{
+                    *sel->p = sel->min;
+                }
+                // toggle switch state
+                if(btn_idx == 5){ // hi-lo
+                    alt_switch_state = *sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
+                }
             }
-            // toggle switch state
-            if(btn_idx == 5){ // hi-lo
-                alt_switch_state = *sel->p == 0 ? ALT_SWITCH_STATE_OFF : ALT_SWITCH_STATE_ON;
-            }
+            struct Mod *mod = &Mods[btn_idx];
+            if(mod->p != 0){
+                set_param_selected(btn_idx, false, false);
+            } 
         }
-        struct Mod *mod = &Mods[btn_idx];
-        if(mod->p != 0){
-            set_param_selected(btn_idx, false, false);
-        }                
     }
 }

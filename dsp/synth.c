@@ -37,6 +37,7 @@ void smooth_signals() {
     all_sigs.env_att += c * (all_sigs_raw.env_att - all_sigs.env_att);
     all_sigs.env_rel += c * (all_sigs_raw.env_rel - all_sigs.env_rel);
     all_sigs.env_crv += c * (all_sigs_raw.env_crv - all_sigs.env_crv);
+    all_sigs.os1_dtn += c * (all_sigs_raw.os1_dtn - all_sigs.os1_dtn);
     all_sigs.os2_tune += c * (all_sigs_raw.os2_tune - all_sigs.os2_tune);
     all_sigs.bus_idx += c * (all_sigs_raw.bus_idx - all_sigs.bus_idx); 
     all_sigs.os1_gld += c * (all_sigs_raw.os1_gld - all_sigs.os1_gld);
@@ -533,6 +534,8 @@ float compute_os1_rate() {
     }
 
     float freq_hz = freq_multiplier * midi_note_to_freq_hz(midi_note);
+    float detune_value_semitones = linear_map(CLAMP(all_sigs.os1_dtn, -1.0f, 1.0f), -1.0f, 1.0f, -12.0f, 12.0f);
+    freq_hz *= pow2f(detune_value_semitones * 0.08333f);
     if (all_sigs_raw.bus_sel == BUS_SEL_FM) {
         float max_fm_index = 8.0f;
         float fm_idx = x3(fb_dests.idx);

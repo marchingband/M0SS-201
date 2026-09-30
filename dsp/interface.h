@@ -9,7 +9,8 @@ typedef enum {
     PARAM_ALT,      // alt parameter
     PARAM_SEL,      // selector
     PARAM_ALT_SEL,  // alt selector
-    PARAM_MTX       // matrix parameter
+    PARAM_MTX,      // matrix parameter
+    PARAM_SPECIAL
 } DSP_Param_Type_t;
 
 
@@ -25,7 +26,7 @@ typedef struct {
     const bool numeric;
 } DSP_Param_t;
 
-#define NUM_UI_ELS 66
+#define NUM_UI_ELS 67
 
 #define NUM_MOD_SRCS 3
 #define NUM_MOD_DESTS 10
@@ -58,7 +59,8 @@ typedef struct {
     float env_mode; 
     float env_att;  
     float env_rel;  
-    float env_crv;  
+    float env_crv;
+    float os1_dtn;  
     float os1_oct;  
     float os1_wave; 
     float os1_qtz;  
