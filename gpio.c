@@ -390,6 +390,11 @@ static void process_buttons(){
                             mode_learn_current_cc = cc_num;
                             learn_mode_state = LEARN_MODE_SELECTED;
                         }
+                    } else if (button_state[22] == 0) {
+                        if (i == 16) {
+                            mode_learn_current_cc = 66;
+                            learn_mode_state = LEARN_MODE_SELECTED;
+                        }
                     } else {
                         int cc_num = get_cc(i, false);
                         if (cc_num != -1) {
