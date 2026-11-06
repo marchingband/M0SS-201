@@ -1,0 +1,167 @@
+diff --git a/bsp/board/bl616dk/board.c b/bsp/board/bl616dk/board.c
+index c6fb7e60..cd223cc1 100644
+--- a/bsp/board/bl616dk/board.c
++++ b/bsp/board/bl616dk/board.c
+@@ -244,7 +244,8 @@ static void console_init()
+     bflb_gpio_uart_init(gpio, GPIO_PIN_22, GPIO_UART_FUNC_UART0_RX);
+ 
+     struct bflb_uart_config_s cfg = {0};
+-    cfg.baudrate = 2000000;
++    // cfg.baudrate = 2000000;
++    cfg.baudrate = 31250;
+     cfg.data_bits = UART_DATA_BITS_8;
+     cfg.stop_bits = UART_STOP_BITS_1;
+     cfg.parity = UART_PARITY_NONE;
+@@ -542,10 +543,12 @@ void board_i2s_gpio_init()
+     struct bflb_device_s *gpio;
+ 
+     gpio = bflb_device_get_by_name("gpio");
+-    bflb_gpio_init(gpio, GPIO_PIN_16, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+-    bflb_gpio_init(gpio, GPIO_PIN_17, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
++    // bflb_gpio_init(gpio, GPIO_PIN_16, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
++    // bflb_gpio_init(gpio, GPIO_PIN_17, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+     bflb_gpio_init(gpio, GPIO_PIN_18, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+     bflb_gpio_init(gpio, GPIO_PIN_19, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
++    // bflb_gpio_init(gpio, GPIO_PIN_16, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
++    // bflb_gpio_init(gpio, GPIO_PIN_17, GPIO_FUNC_I2S | GPIO_ALTERNATE | GPIO_PULLUP | GPIO_SMT_EN | GPIO_DRV_1);
+ }
+ 
+ void board_acomp_init()
+diff --git a/cmake/bflb_flash.cmake b/cmake/bflb_flash.cmake
+index fce70a89..1ec60b8c 100644
+--- a/cmake/bflb_flash.cmake
++++ b/cmake/bflb_flash.cmake
+@@ -1,10 +1,5 @@
+-if(MINGW OR CYGWIN OR WIN32)
+-set(TOOL_SUFFIX ".exe")
+-elseif(UNIX)
+-set(TOOL_SUFFIX "-ubuntu")
+-elseif(APPLE)
++
+ set(TOOL_SUFFIX "-macos")
+-endif()
+ 
+ set(BL_FW_POST_PROC ${BL_SDK_BASE}/tools/bflb_tools/bflb_fw_post_proc/bflb_fw_post_proc${TOOL_SUFFIX})
+ 
+diff --git a/components/usb/cherryusb/CMakeLists.txt b/components/usb/cherryusb/CMakeLists.txt
+index 1d91964e..45cf9f94 100644
+--- a/components/usb/cherryusb/CMakeLists.txt
++++ b/components/usb/cherryusb/CMakeLists.txt
+@@ -53,7 +53,7 @@ sdk_library_add_sources(class/msc/usbh_msc.c)
+ sdk_library_add_sources(class/hid/usbh_hid.c)
+ sdk_library_add_sources(class/hub/usbh_hub.c)
+ sdk_library_add_sources(class/video/usbh_video.c)
+-sdk_library_add_sources(class/audio/usbh_audio.c)
++
+ 
+ if(CONFIG_CHERRYUSB_HOST_ECM)
+ sdk_library_add_sources(class/cdc/usbh_cdc_ecm.c)
+diff --git a/components/usb/cherryusb/class/audio/usbh_audio.c b/components/usb/cherryusb/class/audio/usbh_audio.c
+index fd232750..3aa4ef78 100644
+--- a/components/usb/cherryusb/class/audio/usbh_audio.c
++++ b/components/usb/cherryusb/class/audio/usbh_audio.c
+@@ -264,13 +264,16 @@ static int usbh_audio_ctrl_connect(struct usbh_hubport *hport, uint8_t intf)
+ {
+     int ret;
+     uint8_t cur_iface = 0xff;
+-    uint8_t cur_iface_count = 0xff;
++    uint8_t cur_iface_class = 0xff;
++    uint8_t cur_iface_subclass = 0xff;
+     uint8_t cur_alt_setting = 0xff;
+     uint8_t input_offset = 0;
+     uint8_t output_offset = 0;
+     uint8_t feature_unit_offset = 0;
+     uint8_t format_offset = 0;
+     uint8_t *p;
++    uint16_t total_len = hport->config.config_desc.wTotalLength;
++    uint32_t desc_len = 0;
+ 
+     struct usbh_audio *audio_class = usbh_audio_class_alloc();
+     if (audio_class == NULL) {
+@@ -285,14 +288,27 @@ static int usbh_audio_ctrl_connect(struct usbh_hubport *hport, uint8_t intf)
+     hport->config.intf[intf].priv = audio_class;
+ 
+     p = hport->raw_config_desc;
+-    while (p[DESC_bLength]) {
++    while (desc_len + 1 <= total_len) {
++        uint8_t this_desc_len = p[DESC_bLength];
++        if (this_desc_len < 2) {
++            USB_LOG_ERR("invalid descriptor bLength 0x%02x\r\n", this_desc_len);
++            return -USB_ERR_INVAL;
++        }
++        if ((desc_len + this_desc_len) > total_len) {
++            USB_LOG_ERR("descriptor overflow, desc_len:%u, this_desc_len:%u, total:%u\r\n", desc_len, this_desc_len, total_len);
++            return -USB_ERR_INVAL;
++        }
+         switch (p[DESC_bDescriptorType]) {
+             case USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION:
+-                cur_iface_count = p[3];
+                 break;
+             case USB_DESCRIPTOR_TYPE_INTERFACE:
+-                cur_iface = p[INTF_DESC_bInterfaceNumber];
+-                cur_alt_setting = p[INTF_DESC_bAlternateSetting];
++                if (this_desc_len >= USB_SIZEOF_INTERFACE_DESC) {
++                    struct usb_interface_descriptor *intf_desc = (struct usb_interface_descriptor *)p;
++                    cur_iface = intf_desc->bInterfaceNumber;
++                    cur_alt_setting = intf_desc->bAlternateSetting;
++                    cur_iface_class = intf_desc->bInterfaceClass;
++                    cur_iface_subclass = intf_desc->bInterfaceSubClass;
++                }
+                 break;
+             case USB_DESCRIPTOR_TYPE_ENDPOINT:
+                 break;
+@@ -348,7 +364,10 @@ static int usbh_audio_ctrl_connect(struct usbh_hubport *hport, uint8_t intf)
+                         default:
+                             break;
+                     }
+-                } else if ((cur_iface < (audio_class->ctrl_intf + cur_iface_count)) && (cur_iface > audio_class->ctrl_intf)) {
++                } else if ((cur_iface != audio_class->ctrl_intf) &&
++                           (cur_iface < CONFIG_USBHOST_MAX_INTERFACES) &&
++                           (cur_iface_class == USB_DEVICE_CLASS_AUDIO) &&
++                           (cur_iface_subclass == AUDIO_SUBCLASS_AUDIOSTREAMING)) {
+                     switch (p[DESC_bDescriptorSubType]) {
+                         case AUDIO_STREAMING_GENERAL:
+ 
+@@ -380,7 +399,8 @@ static int usbh_audio_ctrl_connect(struct usbh_hubport *hport, uint8_t intf)
+                 break;
+         }
+         /* skip to next descriptor */
+-        p += p[DESC_bLength];
++        p += this_desc_len;
++        desc_len += this_desc_len;
+     }
+ 
+     if ((input_offset != output_offset) && (input_offset != feature_unit_offset) && (input_offset != format_offset)) {
+diff --git a/components/usb/cherryusb/core/usbh_core.c b/components/usb/cherryusb/core/usbh_core.c
+index 224f3e16..18262f49 100644
+--- a/components/usb/cherryusb/core/usbh_core.c
++++ b/components/usb/cherryusb/core/usbh_core.c
+@@ -217,7 +217,16 @@ static int parse_config_descriptor(struct usbh_hubport *hport, struct usb_config
+ 
+         memset(hport->config.intf, 0, sizeof(struct usbh_interface) * CONFIG_USBHOST_MAX_INTERFACES);
+ 
+-        while (p[DESC_bLength] && (desc_len <= length)) {
++        while (desc_len + 1 <= length) {
++            uint8_t this_desc_len = p[DESC_bLength];
++            if (this_desc_len < 2) {
++                USB_LOG_ERR("invalid descriptor bLength 0x%02x\r\n", this_desc_len);
++                return -USB_ERR_INVAL;
++            }
++            if ((desc_len + this_desc_len) > length) {
++                USB_LOG_ERR("descriptor overflow, desc_len:%u, this_desc_len:%u, total:%u\r\n", desc_len, this_desc_len, length);
++                return -USB_ERR_INVAL;
++            }
+             switch (p[DESC_bDescriptorType]) {
+                 case USB_DESCRIPTOR_TYPE_INTERFACE:
+                     intf_desc = (struct usb_interface_descriptor *)p;
+@@ -262,8 +271,8 @@ static int parse_config_descriptor(struct usbh_hubport *hport, struct usb_config
+                     break;
+             }
+             /* skip to next descriptor */
+-            p += p[DESC_bLength];
+-            desc_len += p[DESC_bLength];
++            p += this_desc_len;
++            desc_len += this_desc_len;
+         }
+     }
+     return 0;
