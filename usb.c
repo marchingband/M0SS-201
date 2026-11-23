@@ -44,9 +44,10 @@ void usbh_midi_callback(void *arg, int nbytes)
         {
             for (int i=0; i< nbytes; i+=4)
             {
-                switch(midi_buffer[i]){
+                switch(midi_buffer[i] & 0x0F){
                     case 0x8: // note off
                     case 0x9: // note on
+                    case 0xA: // polyphonic aftertouch
                     case 0xB: // cc
                     case 0xE: // pitch bend
                         // all these are 3 bytes
@@ -54,11 +55,19 @@ void usbh_midi_callback(void *arg, int nbytes)
                         usb_midi_in(midi_buffer[i + 2]);
                         usb_midi_in(midi_buffer[i + 3]);
                         break;
+                    case 0xC: // program change
+                    case 0xD: // channel aftertouch
+                        // these are 2 bytes; the last USB packet byte is padding
+                        usb_midi_in(midi_buffer[i + 1]);
+                        usb_midi_in(midi_buffer[i + 2]);
+                        break;
                     default:
                         break;
                 }
             }
         }
+    }
+    if (nbytes >= 0 && midi_run == 1) {
         usbh_submit_urb(&midi_class->bulkin_urb);
     }
 }
@@ -78,12 +87,14 @@ find_class:
 
     memset(midi_buffer, 0, 512);
 
-    usbh_bulk_urb_fill(&midi_class->bulkin_urb, midi_class->hport, midi_class->bulkin, midi_buffer, 64, 3000, usbh_midi_callback, midi_class);
+    // Callback-based reception must stay pending while the keyboard is idle.
+    usbh_bulk_urb_fill(&midi_class->bulkin_urb, midi_class->hport, midi_class->bulkin, midi_buffer, 64, 0, usbh_midi_callback, midi_class);
     ret = usbh_submit_urb(&midi_class->bulkin_urb);
-    if ((ret < 0) && (ret != -16))
+    if ((ret < 0) && (ret != -USB_ERR_BUSY))
     {
         USB_LOG_RAW("bulk in error,ret:%d\r\n", ret);
-        // goto find_class;
+        usb_osal_msleep(10);
+        goto find_class;
     } else {
 
     }
